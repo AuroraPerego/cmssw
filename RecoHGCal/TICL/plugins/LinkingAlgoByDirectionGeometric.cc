@@ -70,7 +70,7 @@ void LinkingAlgoByDirectionGeometric::findTrackstersInWindow(const std::vector<T
     auto const &barycenter = t.barycenter();
     float trackster_eta = barycenter.eta();
     float trackster_phi = barycenter.phi();
-    float trackster_z = barycenter.phi();
+    float trackster_z = barycenter.z();
     float trackster_r_over_absz =
         sqrt(barycenter.x() * barycenter.x() + barycenter.y() * barycenter.y()) / std::abs(trackster_z);
     auto sideZ = trackster_eta > 0;  //forward or backward region
