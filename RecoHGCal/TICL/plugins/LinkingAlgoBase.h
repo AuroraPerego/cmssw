@@ -7,6 +7,8 @@
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "DataFormats/HGCalReco/interface/Trackster.h"
 #include "DataFormats/HGCalReco/interface/TICLCandidate.h"
+#include "DataFormats/HGCalReco/interface/EnergyRegressionAndIDModel.h"
+#include "DataFormats/CaloRecHit/interface/CaloCluster.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
@@ -38,8 +40,11 @@ namespace ticl {
                                 const edm::ValueMap<float>& tkTimeQual,
                                 const std::vector<reco::Muon>& muons,
                                 const edm::Handle<std::vector<Trackster>> tsH,
+                                const std::vector<reco::CaloCluster>& layerClusters,
+                                const edm::ValueMap<std::pair<float, float>> layerClustersTime,
                                 std::vector<TICLCandidate>& resultTracksters,
-                                std::vector<TICLCandidate>& resultFromTracks) = 0;
+                                std::vector<TICLCandidate>& resultFromTracks,
+                                const EnergyRegressionAndIDModel& model) = 0;
 
     static void fillPSetDescription(edm::ParameterSetDescription& desc) { desc.add<int>("algo_verbosity", 0); };
 

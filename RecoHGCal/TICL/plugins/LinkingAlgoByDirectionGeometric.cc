@@ -11,6 +11,7 @@
 
 #include "RecoParticleFlow/PFProducer/interface/PFMuonAlgo.h"
 
+#include "TrackstersPCA.h"
 using namespace ticl;
 
 LinkingAlgoByDirectionGeometric::LinkingAlgoByDirectionGeometric(const edm::ParameterSet &conf)
@@ -19,6 +20,7 @@ LinkingAlgoByDirectionGeometric::LinkingAlgoByDirectionGeometric(const edm::Para
       del_tk_ts_int_(conf.getParameter<double>("delta_tk_ts_interface")),
       del_ts_em_had_(conf.getParameter<double>("delta_ts_em_had")),
       del_ts_had_had_(conf.getParameter<double>("delta_ts_had_had")),
+      separation_threshold_(conf.getParameter<double>("separation")),
       timing_quality_threshold_(conf.getParameter<double>("track_time_quality_threshold")),
       cutTk_(conf.getParameter<std::string>("cutTk")) {}
 
@@ -56,11 +58,13 @@ void LinkingAlgoByDirectionGeometric::fillTrackstersTile(const std::vector<Track
 
 void LinkingAlgoByDirectionGeometric::findTrackstersInWindow(const std::vector<Trackster> &tracksters,
                                                              const std::array<TICLLayerTile, 2> &tracksterTiles,
-                                                             float delta,
+                                                             const float delta,
+                                                             const float separation,
                                                              std::vector<std::vector<unsigned>> &resultCollection,
                                                              bool useMask = false) {
   std::vector<int> mask(tracksters.size(), 0);
   float delta2 = delta * delta;
+  float separation2 = separation * separation;
   auto distance = [](float r0, float r1, float phi0, float phi1) {
     auto delta_phi = reco::deltaPhi(phi0, phi1);
     return (r0 - r1) * (r0 - r1) + r1 * r1 * delta_phi * delta_phi;
@@ -111,10 +115,8 @@ void LinkingAlgoByDirectionGeometric::findTrackstersInWindow(const std::vector<T
                                tracksterInTile_phi);
 
           trackster_n++;
-          if (sep2 > 0)
-            std::cout << "Separation2 " << sep2 << " Separation " << sqrt(sep2) << std::endl;
 
-          if (sep2 < delta2) {
+          if (sep2 < separation2) {
             in_delta.push_back(t_i);
             distances2.push_back(sep2);
           }
@@ -180,21 +182,42 @@ void LinkingAlgoByDirectionGeometric::buildLayers() {
             .get());
   }
 }
+void LinkingAlgoByDirectionGeometric::dumpLinksFound(std::vector<std::vector<unsigned>> &resultCollection,
+                                                     const char *label) const {
+  //#ifdef EDM_ML_DEBUG
+  //  if (!(LinkingAlgoBase::algo_verbosity_ > VerbosityLevel::Advanced))
+  //    return;
 
+  std::cout << "All links found - " << label << "\n";
+  std::cout << "(seed can either be a track or trackster depending on the step)\n";
+  for (unsigned i = 0; i < resultCollection.size(); ++i) {
+    std::cout << "seed " << i << " - tracksters : ";
+    const auto &links = resultCollection[i];
+    for (unsigned j = 0; j < links.size(); ++j) {
+      std::cout << j;
+    }
+    std::cout << "\n";
+  }
+  //#endif  // EDM_ML_DEBUG
+}
 void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vector<reco::Track>> tkH,
                                                      const edm::ValueMap<float> &tkTime,
                                                      const edm::ValueMap<float> &tkTimeErr,
                                                      const edm::ValueMap<float> &tkTimeQual,
                                                      const std::vector<reco::Muon> &muons,
                                                      const edm::Handle<std::vector<Trackster>> tsH,
+                                                     const std::vector<reco::CaloCluster> &layerClusters,
+                                                     const edm::ValueMap<std::pair<float, float>> layerClustersTimes,
                                                      std::vector<TICLCandidate> &resultLinked,
-                                                     std::vector<TICLCandidate> &chargedHadronsFromTk) {
+                                                     std::vector<TICLCandidate> &chargedHadronsFromTk,
+                                                     const EnergyRegressionAndIDModel &model) {
   const auto &tracks = *tkH;
   const auto &tracksters = *tsH;
 
   auto bFieldProd = bfield_.product();
   const Propagator &prop = (*propagator_);
 
+  std::vector<Trackster> resultTrackstersMerged;
   std::array<TICLLayerTile, 2> tracksterPropTiles = {};  // all Tracksters
 
   // auto isHadron = [&](const Trackster &t) -> bool {
@@ -255,8 +278,60 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
 
   fillTrackstersTile(tracksters, tracksterPropTiles);
   std::vector<std::vector<unsigned>> trackstersResults(tracksters.size());
-  findTrackstersInWindow(tracksters, tracksterPropTiles, 0.5, trackstersResults);
+  findTrackstersInWindow(tracksters, tracksterPropTiles, 0.03, separation_threshold_, trackstersResults);
+  dumpLinksFound(trackstersResults, "Tracksters Links");
 
+  // Merge included tracksters
+  for (const auto &linked_indices : trackstersResults) {
+    ticl::Trackster outTrackster;
+    auto updated_size = 0;
+    for (const auto &idx : linked_indices) {
+      auto &thisTrackster = tracksters[idx];
+      updated_size += thisTrackster.vertices().size();
+      outTrackster.vertices().reserve(updated_size);
+      outTrackster.vertex_multiplicity().reserve(updated_size);
+      std::copy(std::begin(thisTrackster.vertices()),
+                std::end(thisTrackster.vertices()),
+                std::back_inserter(outTrackster.vertices()));
+      std::copy(std::begin(thisTrackster.vertex_multiplicity()),
+                std::end(thisTrackster.vertex_multiplicity()),
+                std::back_inserter(outTrackster.vertex_multiplicity()));
+    }
+
+    // Find duplicate LCs
+    auto &orig_vtx = outTrackster.vertices();
+    auto vtx_sorted{orig_vtx};
+    std::sort(std::begin(vtx_sorted), std::end(vtx_sorted));
+    for (unsigned int iLC = 1; iLC < vtx_sorted.size(); ++iLC) {
+      if (vtx_sorted[iLC] == vtx_sorted[iLC - 1]) {
+        // Clean up duplicate LCs
+        const auto lcIdx = vtx_sorted[iLC];
+        const auto firstEl = std::find(orig_vtx.begin(), orig_vtx.end(), lcIdx);
+        const auto firstPos = std::distance(std::begin(orig_vtx), firstEl);
+        auto iDup = std::find(std::next(firstEl), orig_vtx.end(), lcIdx);
+        while (iDup != orig_vtx.end()) {
+          orig_vtx.erase(iDup);
+          outTrackster.vertex_multiplicity().erase(outTrackster.vertex_multiplicity().begin() +
+                                                   std::distance(std::begin(orig_vtx), iDup));
+          outTrackster.vertex_multiplicity()[firstPos] -= 1;
+          iDup = std::find(std::next(firstEl), orig_vtx.end(), lcIdx);
+        };
+      }
+    }
+
+    outTrackster.zeroProbabilities();
+    if (!outTrackster.vertices().empty()) {
+      resultTrackstersMerged.push_back(outTrackster);
+    }
+  }
+  resultTrackstersMerged.shrink_to_fit();
+  assignPCAtoTracksters(
+      resultTrackstersMerged, layerClusters, layerClustersTimes, rhtools_.getPositionLayer(rhtools_.lastLayerEE()).z());
+  model.energyRegressionAndID(layerClusters, resultTrackstersMerged);
+
+  // Create TrackstersMerge with assignPCA
+  // Create vector of Linked Tracksters
+  // Pass this vector to assignPCA to have the final TrackstersMerged?
 }  // linkTracksters
 void LinkingAlgoByDirectionGeometric::fillPSetDescription(edm::ParameterSetDescription &desc) {
   desc.add<std::string>("cutTk",
@@ -266,6 +341,7 @@ void LinkingAlgoByDirectionGeometric::fillPSetDescription(edm::ParameterSetDescr
   desc.add<double>("delta_tk_ts_interface", 0.03);
   desc.add<double>("delta_ts_em_had", 0.03);
   desc.add<double>("delta_ts_had_had", 0.03);
+  desc.add<double>("separation", 4);  //cm
   desc.add<double>("track_time_quality_threshold", 0.5);
   LinkingAlgoBase::fillPSetDescription(desc);
 }

@@ -15,6 +15,7 @@
 #include "DataFormats/HGCalReco/interface/Common.h"
 #include "DataFormats/HGCalReco/interface/TICLLayerTile.h"
 #include "DataFormats/HGCalReco/interface/Trackster.h"
+#include "DataFormats/HGCalReco/interface/EnergyRegressionAndIDModel.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/GeometrySurface/interface/BoundDisk.h"
@@ -33,8 +34,6 @@
 #include "RecoHGCal/TICL/plugins/LinkingAlgoByDirectionGeometric.h"
 
 #include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"
-#include "PhysicsTools/TensorFlow/interface/TensorFlow.h"
-
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateTransform.h"
 #include "TrackingTools/GeomPropagators/interface/Propagator.h"
 #include "TrackingTools/Records/interface/TrackingComponentsRecord.h"
@@ -134,6 +133,7 @@ private:
   static constexpr int eidNFeatures_ = 3;
 
   edm::ESGetToken<HGCalDDDConstants, IdealGeometryRecord> hdc_token_;
+  std::unique_ptr<EnergyRegressionAndIDModel> model;
 };
 
 TrackstersMergeProducer::TrackstersMergeProducer(const edm::ParameterSet &ps)
@@ -205,6 +205,16 @@ void TrackstersMergeProducer::beginRun(edm::Run const &iEvent, edm::EventSetup c
   edm::ESHandle<MagneticField> bfield = es.getHandle(bfield_token_);
   edm::ESHandle<Propagator> propagator = es.getHandle(propagator_token_);
 
+  tfSession_ = es.getData(tfDnnToken_).getSession();
+
+  model = std::make_unique<EnergyRegressionAndIDModel>(eidInputName_,
+                                                       eidOutputNameEnergy_,
+                                                       eidOutputNameId_,
+                                                       eidMinClusterEnergy_,
+                                                       eidNLayers_,
+                                                       eidNClusters_,
+                                                       tfSession_,
+                                                       rhtools_);
   linkingAlgo_->initialize(hgcons_, rhtools_, bfield, propagator);
 };
 
@@ -249,7 +259,6 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
   auto resultTrackstersMerged = std::make_unique<std::vector<Trackster>>();
   auto resultCandidates = std::make_unique<std::vector<TICLCandidate>>();
   auto resultFromTracks = std::make_unique<std::vector<TICLCandidate>>();
-  tfSession_ = es.getData(tfDnnToken_).getSession();
 
   edm::Handle<std::vector<Trackster>> trackstersclue3d_h;
   evt.getByToken(tracksters_clue3d_token_, trackstersclue3d_h);
@@ -266,8 +275,17 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
   const auto &trackTimeQual = evt.get(tracks_time_quality_token_);
 
   // Linking
-  linkingAlgo_->linkTracksters(
-      track_h, trackTime, trackTimeErr, trackTimeQual, muons, trackstersclue3d_h, *resultCandidates, *resultFromTracks);
+  linkingAlgo_->linkTracksters(track_h,
+                               trackTime,
+                               trackTimeErr,
+                               trackTimeQual,
+                               muons,
+                               trackstersclue3d_h,
+                               layerClusters,
+                               layerClustersTimes,
+                               *resultCandidates,
+                               *resultFromTracks,
+                               *model);
 
   // Print debug info
   LogDebug("TrackstersMergeProducer") << "Results from the linking step : " << std::endl
