@@ -57,6 +57,9 @@ namespace ticl {
 
     void fillTrackstersTile(const std::vector<Trackster> &t, std::array<TICLLayerTile, 2> &tracksterTiles);
 
+    void fillTracksTile(const std::vector<std::pair<Vector, unsigned>> &propTracks,
+                        std::array<TICLLayerTile, 2> &tracksTiles);
+
     void findTrackstersInWindow(const std::vector<Trackster> &tracksters,
                                 const std::array<TICLLayerTile, 2> &tracksterTiles,
                                 const float delta,
@@ -64,6 +67,12 @@ namespace ticl {
                                 std::vector<std::vector<unsigned>> &resultCollection,
                                 bool useMask);
 
+    void tracksterToTrackLinking(std::vector<Trackster> &tracksterMergeColletion,
+                                 std::vector<std::pair<Vector, unsigned>> &propTracks,
+                                 std::array<TICLLayerTile, 2> &tracksterMergeTiles,
+                                 std::array<TICLLayerTile, 2> &propTracksTiles,
+                                 const float delta,
+                                 const float separation_threshold);
     bool timeAndEnergyCompatible(float &total_raw_energy,
                                  const reco::Track &track,
                                  const Trackster &trackster,
