@@ -239,11 +239,11 @@ std::vector<Trackster> DFS(std::vector<std::vector<unsigned>> &graph,
   std::vector<bool> visits(graphSize, false);
   std::vector<Trackster> resultCollection;
   for (int i = 0; i < graphSize; i++) {
-    Trackster outTrackster = tracksters[i];
     if (!visits[i]) {
+      Trackster outTrackster = tracksters[i];
       DFSVisits(graph, visits, outTrackster, tracksters, layerClusters, i);
+      resultCollection.push_back(outTrackster);
     }
-    resultCollection.push_back(outTrackster);
   }
   resultCollection.shrink_to_fit();
   return resultCollection;
@@ -337,32 +337,10 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
   std::cout << " STARTING DFS " << std::endl;
   auto resultCollectionMerged = DFS(trackstersResults, tracksters, layerClusters);
   std::cout << " END DFS " << std::endl;
-
-  int countLinks = 0;
-  for (const auto &linked_indices : trackstersResults) {
-    ticl::Trackster outTrackster;
-    auto updated_size = 0;
-    std::cout << "------- Link " << countLinks << "----------- " << std::endl;
-    for (const auto &idx : linked_indices) {
-      if (maskTracksters[idx] == 1) {
-        auto &thisTrackster = tracksters[idx];
-        std::cout << "Trackster " << idx << " Energy " << thisTrackster.raw_energy() << " Position (eta-phi)"
-                  << thisTrackster.barycenter().eta() << " , " << thisTrackster.barycenter().phi() << " Z "
-                  << thisTrackster.barycenter().z() << std::endl;
-        updated_size += thisTrackster.vertices().size();
-        outTrackster.vertices().reserve(updated_size);
-        outTrackster.vertex_multiplicity().reserve(updated_size);
-        std::copy(std::begin(thisTrackster.vertices()),
-                  std::end(thisTrackster.vertices()),
-                  std::back_inserter(outTrackster.vertices()));
-        std::copy(std::begin(thisTrackster.vertex_multiplicity()),
-                  std::end(thisTrackster.vertex_multiplicity()),
-                  std::back_inserter(outTrackster.vertex_multiplicity()));
-        //        maskTracksters[idx] = 0;
-      }
-    }
-
-    // Find duplicate LCs
+  std::cout << "Input Tracksters " << trackstersResults.size() << " Output Tracksters " << resultCollectionMerged.size() << std::endl;
+  // Find duplicate LCs
+    int countTracksters = 0;
+    for(auto& outTrackster : resultCollectionMerged){
     auto &orig_vtx = outTrackster.vertices();
     auto vtx_sorted{orig_vtx};
     std::sort(std::begin(vtx_sorted), std::end(vtx_sorted));
@@ -390,9 +368,10 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
     std::vector<Trackster> vecOut = {outTrackster};
     assignPCAtoTracksters(
         vecOut, layerClusters, layerClustersTimes, rhtools_.getPositionLayer(rhtools_.lastLayerEE()).z());
-    std::cout << "Out Trackster " << countLinks << " Energy " << vecOut[0].raw_energy() << " Position (eta-phi)"
+    std::cout << "Out Trackster " << countTracksters << " Energy " << vecOut[0].raw_energy() << " Position (eta-phi)"
               << vecOut[0].barycenter().eta() << " , " << vecOut[0].barycenter().phi() << " Z "
               << vecOut[0].barycenter().z() << std::endl;
+    countTracksters++;
     std::cout << "-----------------------------------------" << std::endl;
   }
 
