@@ -116,15 +116,15 @@ void LinkingAlgoByDirectionGeometric::findTrackstersInWindow(const std::vector<T
             float tracksterInTile_r_over_absz = sqrt(tracksterInTile_barycenter.x() * tracksterInTile_barycenter.x() +
                                                      tracksterInTile_barycenter.y() * tracksterInTile_barycenter.y()) /
                                                 std::abs(tracksterInTile_z);
-            std::cout << "Trackster Name\tTrackster X\tTrackster Y\tTrackster Z\tTrackster ROverAbsZ\t Trackster R "
-                      << std::endl;
-            std::cout << "Trackster Ref \t" << barycenter.x() << "\t" << barycenter.y() << "\t" << barycenter.z()
-                      << "\t" << trackster_r_over_absz << "\t" << trackster_r_over_absz * trackster_z << std::endl;
-
-            std::cout << "Trackster " << trackster_n << "\t" << tracksterInTile_barycenter.x() << "\t"
-                      << tracksterInTile_barycenter.y() << "\t" << tracksterInTile_barycenter.z() << "\t"
-                      << tracksterInTile_r_over_absz << "\t" << tracksterInTile_r_over_absz * tracksterInTile_z
-                      << std::endl;
+            //            std::cout << "Trackster Name\tTrackster X\tTrackster Y\tTrackster Z\tTrackster ROverAbsZ\t Trackster R "
+            //                      << std::endl;
+            //            std::cout << "Trackster Ref \t" << barycenter.x() << "\t" << barycenter.y() << "\t" << barycenter.z()
+            //                      << "\t" << trackster_r_over_absz << "\t" << trackster_r_over_absz * trackster_z << std::endl;
+            //
+            //            std::cout << "Trackster " << trackster_n << "\t" << tracksterInTile_barycenter.x() << "\t"
+            //                      << tracksterInTile_barycenter.y() << "\t" << tracksterInTile_barycenter.z() << "\t"
+            //                      << tracksterInTile_r_over_absz << "\t" << tracksterInTile_r_over_absz * tracksterInTile_z
+            //                      << std::endl;
             auto sep2 = distance(trackster_r_over_absz * trackster_z,
                                  tracksterInTile_r_over_absz * trackster_z,
                                  trackster_phi,
@@ -159,13 +159,27 @@ void LinkingAlgoByDirectionGeometric::findTrackstersInWindow(const std::vector<T
   std::cout << "Result Collection size " << resultCollection.size() << std::endl;
 }
 
-void LinkingAlgoByDirectionGeometric::tracksterToTrackLinking(std::vector<Trackster> &tracksterMergeCollection,
-                                                              std::vector<std::pair<Vector, unsigned>> &propTracks,
-                                                              std::array<TICLLayerTile, 2> &tracksterMergeTiles,
-                                                              std::array<TICLLayerTile, 2> &propTracksTiles,
-                                                              const float delta,
-                                                              const float separation) {
-  std::vector<int> mask(tracksterMergeTiles.size(), 0);
+void LinkingAlgoByDirectionGeometric::tracksterToTrackLinking(
+    std::vector<Trackster> &tracksterMergeCollection,
+    std::vector<std::vector<unsigned>> &tracksterMergeCollectionIndices,
+    const std::vector<Trackster> &trackster,
+    const edm::Handle<std::vector<Trackster>> tsH,
+    const std::vector<reco::Track> &tracks,
+    const edm::Handle<std::vector<reco::Track>> tkH,
+    const edm::ValueMap<float> &tkTime,
+    const edm::ValueMap<float> &tkTimeErr,
+    const edm::ValueMap<float> &tkTimeQual,
+    std::vector<std::pair<Vector, unsigned>> &propTracks,
+    std::array<TICLLayerTile, 2> &tracksterMergeTiles,
+    const float delta,
+    const float separation,
+    std::vector<TICLCandidate> &chargedCandidates,
+    std::vector<TICLCandidate> &chargedCandidatesFromTracks,
+    std::vector<TICLCandidate> &neutralCandidates) {
+  std::vector<int> mask(tracksterMergeTiles.size(), 1);
+  std::vector<int> maskMergeCollection(tracksterMergeCollection.size(), 1);
+  std::vector<int> maskTracks(tracks.size(), 1);
+
   float delta2 = delta * delta;
   float separation2 = separation * separation;
   auto distance = [](float r0, float r1, float phi0, float phi1) {
@@ -173,7 +187,10 @@ void LinkingAlgoByDirectionGeometric::tracksterToTrackLinking(std::vector<Tracks
     return (r0 - r1) * (r0 - r1) + r1 * r1 * delta_phi * delta_phi;
   };
   unsigned int seedId = 0;
-  for (auto const &propTrack : propTracks) {
+  for (size_t track_i; track_i < tracks.size(); track_i++) {
+    auto const &propTrack = propTracks[track_i];
+    float bestSep2 = 9999;
+    int bestMergeTracksterIndex = -1;  //initialize as invalid index
     auto const &trackPosition = propTrack.first;
     float track_eta = trackPosition.eta();
     float track_phi = trackPosition.phi();
@@ -193,68 +210,121 @@ void LinkingAlgoByDirectionGeometric::tracksterToTrackLinking(std::vector<Tracks
       for (int phi_i = search_box[2]; phi_i <= search_box[3]; ++phi_i) {
         const auto &in_tile = tile[tile.globalBin(eta_i, (phi_i % TileConstants::nPhiBins))];
         for (const unsigned &t_i : in_tile) {
-          if (t_i != seedId) {
-            // calculate actual distances of tracksters to the seed for a more accurate cut
-            auto const &tracksterInTile = tracksterMergeCollection[t_i];
-            auto const &tracksterInTile_barycenter = tracksterInTile.barycenter();
-            float tracksterInTile_eta = tracksterInTile_barycenter.eta();
-            float tracksterInTile_phi = tracksterInTile_barycenter.phi();
-            float tracksterInTile_z = tracksterInTile_barycenter.z();
-            float tracksterInTile_r_over_absz = sqrt(tracksterInTile_barycenter.x() * tracksterInTile_barycenter.x() +
-                                                     tracksterInTile_barycenter.y() * tracksterInTile_barycenter.y()) /
-                                                std::abs(tracksterInTile_z);
-            std::cout << "Trackster Name\tTrackster X\tTrackster Y\tTrackster Z\tTrackster ROverAbsZ\t Trackster R "
-                      << std::endl;
-            std::cout << "Track Ref \t" << trackPosition.x() << "\t" << trackPosition.y() << "\t" << trackPosition.z()
-                      << "\t" << track_r_over_absz << "\t" << track_r_over_absz * tracksterInTile_z << std::endl;
+          // calculate actual distances of tracksters to the seed for a more accurate cut
+          auto const &tracksterInTile = tracksterMergeCollection[t_i];
+          auto const &tracksterInTile_barycenter = tracksterInTile.barycenter();
+          float tracksterInTile_eta = tracksterInTile_barycenter.eta();
+          float tracksterInTile_phi = tracksterInTile_barycenter.phi();
+          float tracksterInTile_z = tracksterInTile_barycenter.z();
+          float tracksterInTile_r_over_absz = sqrt(tracksterInTile_barycenter.x() * tracksterInTile_barycenter.x() +
+                                                   tracksterInTile_barycenter.y() * tracksterInTile_barycenter.y()) /
+                                              std::abs(tracksterInTile_z);
+          //          std::cout << "Trackster Name\tTrackster X\tTrackster Y\tTrackster Z\tTrackster ROverAbsZ\t Trackster R "
+          //                    << std::endl;
+          //          std::cout << "Track Ref \t" << trackPosition.x() << "\t" << trackPosition.y() << "\t" << trackPosition.z()
+          //                    << "\t" << track_r_over_absz << "\t" << track_r_over_absz * tracksterInTile_z << std::endl;
+          //
+          //          std::cout << "Trackster " << track_n << "\t" << tracksterInTile_barycenter.x() << "\t"
+          //                    << tracksterInTile_barycenter.y() << "\t" << tracksterInTile_barycenter.z() << "\t"
+          //                    << tracksterInTile_r_over_absz << "\t" << tracksterInTile_r_over_absz * tracksterInTile_z
+          //                    << std::endl;
+          auto sep2 = distance(
+              track_r_over_absz * track_z, tracksterInTile_r_over_absz * track_z, track_phi, tracksterInTile_phi);
 
-            std::cout << "Trackster " << track_n << "\t" << tracksterInTile_barycenter.x() << "\t"
-                      << tracksterInTile_barycenter.y() << "\t" << tracksterInTile_barycenter.z() << "\t"
-                      << tracksterInTile_r_over_absz << "\t" << tracksterInTile_r_over_absz * tracksterInTile_z
-                      << std::endl;
-            auto sep2 = distance(track_r_over_absz * track_z,
-                                 tracksterInTile_r_over_absz * track_z,
-                                 track_phi,
-                                 tracksterInTile_phi);
-
-            track_n++;
-
-            if (sep2 < separation2) {
-              in_delta.push_back(t_i);
-              distances2.push_back(sep2);
-            }
+          track_n++;
+          auto tkRef = reco::TrackRef(tkH, track_i);
+          auto track_time = tkTime[tkRef];
+          auto track_timeErr = tkTimeErr[tkRef];
+          auto track_timeQual = tkTimeQual[tkRef];
+          auto energyTimeCompatible = timeAndEnergyCompatible(
+              tracks[track_i], tracksterMergeCollection[t_i], track_time, track_timeErr, track_timeQual);
+          if (sep2 < separation2 && sep2 < bestSep2 && energyTimeCompatible) {
+            bestSep2 = sep2;
+            bestMergeTracksterIndex = t_i;
+            distances2.push_back(sep2);
           }
         }
       }
     }
     // sort tracksters found in ascending order of their distances from the seed
-    std::vector<unsigned> indices(in_delta.size());
-    std::iota(indices.begin(), indices.end(), 0);
-    std::sort(indices.begin(), indices.end(), [&](unsigned i, unsigned j) { return distances2[i] < distances2[j]; });
+    if (bestMergeTracksterIndex != -1) {  //matched track with trackster --> build charged candidate
 
-    // push back sorted tracksters in the result collection
-//    TICLCandidate outCandidate;
-//    for (const unsigned &index : indices) {
-//      const auto &t_i = in_delta[index];
-//      if (!mask[t_i]) {
-//        outCandidate.addTrackster(edm::Ptr<>)
-//        resultCollection[seedId].push_back(t_i);
-//        if (useMask)
-//          mask[t_i] = 1;
-//      }
-//    }
-//    seedId++;
-// }
-//  std::cout << "Result Collection size " << resultCollection.size() << std::endl;
+      maskMergeCollection[bestMergeTracksterIndex] = 0;
+
+      maskTracks[track_i] = 0;
+
+      if (maskTracks[track_i] && maskMergeCollection[bestMergeTracksterIndex]) {
+        TICLCandidate chargedCandidate;
+
+        for (auto const &t_indices : tracksterMergeCollectionIndices[bestMergeTracksterIndex]) {
+          chargedCandidate.addTrackster(edm::Ptr<Trackster>(tsH, t_indices));
+        }
+        chargedCandidate.setTrackPtr(edm::Ptr<reco::Track>(tkH, track_i));
+        chargedCandidates.push_back(chargedCandidate);
+      }
+
+      auto bestTrackster = tracksterMergeCollection[bestMergeTracksterIndex];
+
+      std::cout << "Track Ref Energy " << tracks[track_i].p() << " Position " << propTrack.first.x() << " "
+                << propTrack.first.y() << " " << propTrack.first.z() << std::endl;
+      std::cout << "Matched Trackster Energy " << bestTrackster.raw_energy() << " Position "
+                << bestTrackster.barycenter().x() << " " << bestTrackster.barycenter().y() << " "
+                << bestTrackster.barycenter().z() << std::endl;
+    }
+    seedId++;
+  }
+  //promote all the non used tracks to charged candidates
+  for (size_t mask_track_i = 0; mask_track_i < maskTracks.size(); mask_track_i++) {
+    if (maskTracks[mask_track_i]) {
+      TICLCandidate chargedCandidateFromTk;
+      chargedCandidateFromTk.setTrackPtr(edm::Ptr<reco::Track>(tkH, mask_track_i));
+      chargedCandidatesFromTracks.push_back(chargedCandidateFromTk);
+    }
+  }
+
+  for (size_t mask_trackster_i = 0; mask_trackster_i < maskMergeCollection.size(); mask_trackster_i++) {
+    if (maskMergeCollection[mask_trackster_i]) {
+      TICLCandidate neutralCandidate;
+      auto const &tracksterIndices = tracksterMergeCollectionIndices[mask_trackster_i];
+      for (auto const &tracksterIndex : tracksterIndices) {
+        neutralCandidate.addTrackster(edm::Ptr<Trackster>(tsH, tracksterIndex));
+      }
+      neutralCandidates.push_back(neutralCandidate);
+    }
   }
 }
-bool LinkingAlgoByDirectionGeometric::timeAndEnergyCompatible(float &total_raw_energy,
-                                                              const reco::Track &track,
+
+bool LinkingAlgoByDirectionGeometric::timeAndEnergyCompatible(const reco::Track &track,
                                                               const Trackster &trackster,
                                                               const float &tkT,
                                                               const float &tkTErr,
                                                               const float &tkTimeQual) {
-  return true;
+  float threshold = std::min(0.2 * trackster.regressed_energy(), 10.0);
+
+  bool energyCompatible = (trackster.regressed_energy() < track.p() + threshold);
+  // compatible if trackster time is within 3sigma of
+  // track time; compatible if either: no time assigned
+  // to trackster or track time quality is below threshold
+  float tsT = trackster.time();
+  float tsTErr = trackster.timeError();
+
+  bool timeCompatible = false;
+
+  if (tsT == -99. or tkTimeQual < timing_quality_threshold_)
+    timeCompatible = true;
+  else {
+    timeCompatible = (std::abs(tsT - tkT) < maxDeltaT_ * sqrt(tsTErr * tsTErr + tkTErr * tkTErr));
+  }
+
+  if (LinkingAlgoBase::algo_verbosity_ > VerbosityLevel::Advanced) {
+    if (!(energyCompatible))
+      LogDebug("LinkingAlgoByDirectionGeometric") << "energy incompatible : track p " << track.p()
+                                                  << " trackster energy " << trackster.regressed_energy() << "\n";
+    if (!(timeCompatible))
+      LogDebug("LinkingAlgoByDirectionGeometric") << "time incompatible : track time " << tkT << " +/- " << tkTErr
+                                                  << " trackster time " << tsT << " +/- " << tsTErr << "\n";
+  }
+  return energyCompatible && timeCompatible;
 }
 
 void LinkingAlgoByDirectionGeometric::recordTrackster(const unsigned ts,  //trackster index
@@ -311,12 +381,14 @@ void LinkingAlgoByDirectionGeometric::dumpLinksFound(std::vector<std::vector<uns
 void DFSVisits(std::vector<std::vector<unsigned>> &graph,
                std::vector<bool> &visits,
                Trackster &outTrackster,
+               std::vector<std::vector<unsigned>> &resultCollectionIndices,
                const std::vector<Trackster> &tracksters,
                const std::vector<reco::CaloCluster> &layerClusters,
                int u) {
   visits[u] = true;
   std::cout << "Visiting " << u << std::endl;
   auto updatedSize = outTrackster.vertices().size();
+  std::vector<unsigned> outTracksterIndices;
   for (auto j = graph[u].begin(); j != graph[u].end(); j++) {
     if (!visits[*j]) {
       std::cout << "\t Visiting " << *j << std::endl;
@@ -330,27 +402,28 @@ void DFSVisits(std::vector<std::vector<unsigned>> &graph,
       std::copy(std::begin(thisTrackster.vertex_multiplicity()),
                 std::end(thisTrackster.vertex_multiplicity()),
                 std::back_inserter(outTrackster.vertex_multiplicity()));
-
-      DFSVisits(graph, visits, outTrackster, tracksters, layerClusters, *j);
+      outTracksterIndices.push_back(*j);
+      DFSVisits(graph, visits, outTrackster, resultCollectionIndices, tracksters, layerClusters, *j);
     }
   }
+  resultCollectionIndices.push_back(outTracksterIndices);
 }
 // DFS to collect all the links
-std::vector<Trackster> DFS(std::vector<std::vector<unsigned>> &graph,
-                           const std::vector<Trackster> &tracksters,
-                           const std::vector<reco::CaloCluster> &layerClusters) {
+void DFS(std::vector<std::vector<unsigned>> &graph,
+         const std::vector<Trackster> &tracksters,
+         const std::vector<reco::CaloCluster> &layerClusters,
+         std::vector<Trackster> &resultCollection,
+         std::vector<std::vector<unsigned>> &resultCollectionIndices) {
   int graphSize = graph.size();
   std::vector<bool> visits(graphSize, false);
-  std::vector<Trackster> resultCollection;
   for (int i = 0; i < graphSize; i++) {
     if (!visits[i]) {
       Trackster outTrackster = tracksters[i];
-      DFSVisits(graph, visits, outTrackster, tracksters, layerClusters, i);
+      DFSVisits(graph, visits, outTrackster, resultCollectionIndices, tracksters, layerClusters, i);
       resultCollection.push_back(outTrackster);
     }
   }
   resultCollection.shrink_to_fit();
-  return resultCollection;
 }
 
 void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vector<reco::Track>> tkH,
@@ -370,14 +443,14 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
   auto bFieldProd = bfield_.product();
   const Propagator &prop = (*propagator_);
 
-  std::vector<Trackster> resultTrackstersMerged;
+  std::vector<Trackster> tracksterMergeCollection;
+  std::vector<std::vector<unsigned>>
+      tracksterMergeCollectionIndices;  //needed to keep track of trackster indices when building TICLCandidate
+  std::vector<Trackster> resultTrackstersMerged;  //after cleaning.
+  std::vector<std::vector<unsigned>>
+      resultTrackstersMergedIndices;  //after cleaning needed to keep track of trackster indices when building TICLCandidate
   std::array<TICLLayerTile, 2> tracksterPropTiles = {};  // all Tracksters
   std::array<TICLLayerTile, 2> tracksPropTiles = {};     // all Tracks
-
-  // auto isHadron = [&](const Trackster &t) -> bool {
-  //   auto boundary_z = rhtools_.getPositionLayer(rhtools_.lastLayerEE()).z();
-  //   return (std::abs(t.barycenter().Z()) > boundary_z);
-  // };
 
   if (LinkingAlgoBase::algo_verbosity_ > VerbosityLevel::Advanced)
     LogDebug("LinkingAlgoByDirectionGeometric") << "------- Geometric Linking ------- \n";
@@ -440,13 +513,15 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
   //Apply DFS here!
   //
   std::cout << " STARTING DFS " << std::endl;
-  auto resultCollectionMerged = DFS(trackstersResults, tracksters, layerClusters);
+  DFS(trackstersResults, tracksters, layerClusters, tracksterMergeCollection, tracksterMergeCollectionIndices);
   std::cout << " END DFS " << std::endl;
-  std::cout << "Input Tracksters " << trackstersResults.size() << " Output Tracksters " << resultCollectionMerged.size()
-            << std::endl;
+  std::cout << "Input Tracksters " << trackstersResults.size() << " Output Tracksters "
+            << tracksterMergeCollection.size() << std::endl;
   // Find duplicate LCs
   int countTracksters = 0;
-  for (auto &outTrackster : resultCollectionMerged) {
+  for (size_t i = 0; i < tracksterMergeCollection.size(); i++) {
+    auto &outTrackster = tracksterMergeCollection[i];
+    auto &outTracksterIndices = tracksterMergeCollectionIndices[i];
     auto &orig_vtx = outTrackster.vertices();
     auto vtx_sorted{orig_vtx};
     std::sort(std::begin(vtx_sorted), std::end(vtx_sorted));
@@ -470,6 +545,7 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
     outTrackster.zeroProbabilities();
     if (!outTrackster.vertices().empty()) {
       resultTrackstersMerged.push_back(outTrackster);
+      resultTrackstersMergedIndices.push_back(outTracksterIndices);
     }
     std::vector<Trackster> vecOut = {outTrackster};
     assignPCAtoTracksters(
@@ -494,7 +570,26 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
   std::array<TICLLayerTile, 2> tracksterMergePropTiles = {};  // all TrackstersMerge
   fillTrackstersTile(resultTrackstersMerged, tracksterMergePropTiles);
   fillTracksTile(trackPColl, tracksPropTiles);
-
+  std::vector<TICLCandidate> chargedCandidates;
+  std::vector<TICLCandidate> chargedCandidatesFromTracks;
+  std::vector<TICLCandidate> neutralCandidates;
+  const float delta_tmp = 0.03;
+  tracksterToTrackLinking(resultTrackstersMerged,
+                          resultTrackstersMergedIndices,
+                          tracksters,
+                          tsH,
+                          tracks,
+                          tkH,
+                          tkTime,
+                          tkTimeErr,
+                          tkTimeQual,
+                          trackPColl,
+                          tracksterMergePropTiles,
+                          delta_tmp,
+                          separation_threshold_,
+                          chargedCandidates,
+                          chargedCandidatesFromTracks,
+                          neutralCandidates);
 }  // linkTracksters
 void LinkingAlgoByDirectionGeometric::fillPSetDescription(edm::ParameterSetDescription &desc) {
   desc.add<std::string>("cutTk",

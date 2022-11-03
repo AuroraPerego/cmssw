@@ -67,14 +67,24 @@ namespace ticl {
                                 std::vector<std::vector<unsigned>> &resultCollection,
                                 bool useMask);
 
-    void tracksterToTrackLinking(std::vector<Trackster> &tracksterMergeColletion,
+    void tracksterToTrackLinking(std::vector<Trackster> &tracksterMergeCollection,
+                                 std::vector<std::vector<unsigned>> &tracksterMergeCollectionIndices,
+                                 const std::vector<Trackster> &trackster,
+                                 const edm::Handle<std::vector<Trackster>> tsH,
+                                 const std::vector<reco::Track> &tracks,
+                                 const edm::Handle<std::vector<reco::Track>> tkH,
+                                 const edm::ValueMap<float> &tkTime,
+                                 const edm::ValueMap<float> &tkTimeErr,
+                                 const edm::ValueMap<float> &tkTimeQual,
                                  std::vector<std::pair<Vector, unsigned>> &propTracks,
                                  std::array<TICLLayerTile, 2> &tracksterMergeTiles,
-                                 std::array<TICLLayerTile, 2> &propTracksTiles,
                                  const float delta,
-                                 const float separation_threshold);
-    bool timeAndEnergyCompatible(float &total_raw_energy,
-                                 const reco::Track &track,
+                                 const float separation,
+                                 std::vector<TICLCandidate> &chargedCandidates,
+                                 std::vector<TICLCandidate> &chargedCandidatesFromTracks,
+                                 std::vector<TICLCandidate> &neutralCandidates);
+
+    bool timeAndEnergyCompatible(const reco::Track &track,
                                  const Trackster &trackster,
                                  const float &tkTime,
                                  const float &tkTimeErr,
