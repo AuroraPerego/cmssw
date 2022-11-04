@@ -249,9 +249,6 @@ void LinkingAlgoByDirectionGeometric::tracksterToTrackLinking(
     // sort tracksters found in ascending order of their distances from the seed
     if (bestMergeTracksterIndex != -1) {  //matched track with trackster --> build charged candidate
 
-      maskMergeCollection[bestMergeTracksterIndex] = 0;
-
-      maskTracks[track_i] = 0;
 
       if (maskTracks[track_i] && maskMergeCollection[bestMergeTracksterIndex]) {
         TICLCandidate chargedCandidate;
@@ -263,6 +260,9 @@ void LinkingAlgoByDirectionGeometric::tracksterToTrackLinking(
         chargedCandidates.push_back(chargedCandidate);
       }
 
+      maskMergeCollection[bestMergeTracksterIndex] = 0;
+
+      maskTracks[track_i] = 0;
       auto bestTrackster = tracksterMergeCollection[bestMergeTracksterIndex];
 
       std::cout << "Track Ref Energy " << tracks[track_i].p() << " Position " << propTrack.first.x() << " "
@@ -384,15 +384,17 @@ void DFSVisits(std::vector<std::vector<unsigned>> &graph,
                std::vector<std::vector<unsigned>> &resultCollectionIndices,
                const std::vector<Trackster> &tracksters,
                const std::vector<reco::CaloCluster> &layerClusters,
-               int u) {
+               int u,
+               std::string& tabs) {
   visits[u] = true;
-  std::cout << "Visiting " << u << std::endl;
+//  std::cout << "Visiting " << u << std::endl;
   auto updatedSize = outTrackster.vertices().size();
   std::vector<unsigned> outTracksterIndices;
   for (auto j = graph[u].begin(); j != graph[u].end(); j++) {
     if (!visits[*j]) {
-      std::cout << "\t Visiting " << *j << std::endl;
       auto const &thisTrackster = tracksters[*j];
+      std::cout << tabs <<  "Visiting " << *j << " Energy " << thisTrackster.raw_energy() << " Position " << thisTrackster.barycenter() <<  std::endl;
+      tabs.push_back('\t');
       updatedSize += thisTrackster.vertices().size();
       outTrackster.vertices().reserve(updatedSize);
       outTrackster.vertex_multiplicity().reserve(updatedSize);
@@ -403,7 +405,7 @@ void DFSVisits(std::vector<std::vector<unsigned>> &graph,
                 std::end(thisTrackster.vertex_multiplicity()),
                 std::back_inserter(outTrackster.vertex_multiplicity()));
       outTracksterIndices.push_back(*j);
-      DFSVisits(graph, visits, outTrackster, resultCollectionIndices, tracksters, layerClusters, *j);
+      DFSVisits(graph, visits, outTrackster, resultCollectionIndices, tracksters, layerClusters, *j, tabs);
     }
   }
   resultCollectionIndices.push_back(outTracksterIndices);
@@ -417,9 +419,12 @@ void DFS(std::vector<std::vector<unsigned>> &graph,
   int graphSize = graph.size();
   std::vector<bool> visits(graphSize, false);
   for (int i = 0; i < graphSize; i++) {
+    std::string tabs;
     if (!visits[i]) {
+      tabs.push_back('\t');
       Trackster outTrackster = tracksters[i];
-      DFSVisits(graph, visits, outTrackster, resultCollectionIndices, tracksters, layerClusters, i);
+      std::cout << " -- Trackster " << i << " Energy " << outTrackster.raw_energy() << " Position " << outTrackster.barycenter() << std::endl;
+      DFSVisits(graph, visits, outTrackster, resultCollectionIndices, tracksters, layerClusters, i, tabs);
       resultCollection.push_back(outTrackster);
     }
   }
@@ -585,11 +590,14 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
                           tkTimeQual,
                           trackPColl,
                           tracksterMergePropTiles,
-                          delta_tmp,
+                          del_tk_ts_int_,
                           separation_threshold_,
                           chargedCandidates,
                           chargedCandidatesFromTracks,
                           neutralCandidates);
+ std::cout << "Charged Candidates " << chargedCandidates.size() << std::endl;
+ std::cout << "Charged Candidates From Tracks " << chargedCandidatesFromTracks.size() << std::endl;
+ std::cout << "Neutral Candidates " << neutralCandidates.size() << std::endl;
 }  // linkTracksters
 void LinkingAlgoByDirectionGeometric::fillPSetDescription(edm::ParameterSetDescription &desc) {
   desc.add<std::string>("cutTk",
