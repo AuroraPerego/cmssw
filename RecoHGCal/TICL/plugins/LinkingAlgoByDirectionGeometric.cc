@@ -406,6 +406,9 @@ void DFSVisits(std::vector<std::vector<unsigned>> &graph,
                 std::back_inserter(outTrackster.vertex_multiplicity()));
       outTracksterIndices.push_back(*j);
       DFSVisits(graph, visits, outTrackster, resultCollectionIndices, tracksters, layerClusters, *j, tabs);
+      if(j == graph[u].end()-1){
+        tabs.pop_back();
+      }
     }
   }
   resultCollectionIndices.push_back(outTracksterIndices);
