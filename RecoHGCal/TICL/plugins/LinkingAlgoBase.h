@@ -25,28 +25,29 @@ namespace edm {
 namespace ticl {
   class LinkingAlgoBase {
   public:
-    LinkingAlgoBase(const edm::ParameterSet& conf) : algo_verbosity_(conf.getParameter<int>("algo_verbosity")) {}
+    LinkingAlgoBase(const edm::ParameterSet &conf) : algo_verbosity_(conf.getParameter<int>("algo_verbosity")) {}
 
     virtual ~LinkingAlgoBase(){};
 
-    virtual void initialize(const HGCalDDDConstants* hgcons,
+    virtual void initialize(const HGCalDDDConstants *hgcons,
                             const hgcal::RecHitTools rhtools,
                             const edm::ESHandle<MagneticField> bfieldH,
                             const edm::ESHandle<Propagator> propH) = 0;
 
-    virtual void linkTracksters(const edm::Handle<std::vector<reco::Track>> tkH,
-                                const edm::ValueMap<float>& tkTime,
-                                const edm::ValueMap<float>& tkTimeErr,
-                                const edm::ValueMap<float>& tkTimeQual,
-                                const std::vector<reco::Muon>& muons,
-                                const edm::Handle<std::vector<Trackster>> tsH,
-                                const std::vector<reco::CaloCluster>& layerClusters,
-                                const edm::ValueMap<std::pair<float, float>> layerClustersTime,
-                                std::vector<TICLCandidate>& resultTracksters,
-                                std::vector<TICLCandidate>& resultFromTracks,
-                                const EnergyRegressionAndIDModel& model) = 0;
+    virtual void linkTracksters(const edm::Handle<std::vector<reco::Track>>,
+                                const edm::ValueMap<float> &,
+                                const edm::ValueMap<float> &,
+                                const edm::ValueMap<float> &,
+                                const std::vector<reco::Muon> &,
+                                const edm::Handle<std::vector<Trackster>>,
+                                const std::vector<reco::CaloCluster> &layerClusters,
+                                const edm::ValueMap<std::pair<float, float>> &layerClustersTime,
+                                std::vector<Trackster> &tracksterMergeCollectionResult,
+                                std::vector<TICLCandidate> &,
+                                std::vector<TICLCandidate> &,
+                                const EnergyRegressionAndIDModel &) = 0;
 
-    static void fillPSetDescription(edm::ParameterSetDescription& desc) { desc.add<int>("algo_verbosity", 0); };
+    static void fillPSetDescription(edm::ParameterSetDescription &desc) { desc.add<int>("algo_verbosity", 0); };
 
   protected:
     int algo_verbosity_;

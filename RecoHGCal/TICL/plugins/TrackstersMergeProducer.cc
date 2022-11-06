@@ -284,6 +284,7 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
                                trackstersclue3d_h,
                                layerClusters,
                                layerClustersTimes,
+                               *resultTrackstersMerged,
                                *resultCandidates,
                                *resultFromTracks,
                                *model);
@@ -310,64 +311,17 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
 #endif
 
     // Merge included tracksters
+#ifdef EDM_ML_DEBUG
     ticl::Trackster outTrackster;
     auto updated_size = 0;
     for (const auto &ts_ptr : trackster_ptrs) {
-#ifdef EDM_ML_DEBUG
       auto ts_idx = ts_ptr.get() - (edm::Ptr<ticl::Trackster>(trackstersclue3d_h, 0)).get();
       LogDebug("TrackstersMergeProducer") << ts_idx << " (" << ts_ptr->raw_energy() << ") ";
+    }
 #endif
-
-      auto &thisTrackster = *ts_ptr;
-      updated_size += thisTrackster.vertices().size();
-      outTrackster.vertices().reserve(updated_size);
-      outTrackster.vertex_multiplicity().reserve(updated_size);
-      std::copy(std::begin(thisTrackster.vertices()),
-                std::end(thisTrackster.vertices()),
-                std::back_inserter(outTrackster.vertices()));
-      std::copy(std::begin(thisTrackster.vertex_multiplicity()),
-                std::end(thisTrackster.vertex_multiplicity()),
-                std::back_inserter(outTrackster.vertex_multiplicity()));
-    }
-
-    LogDebug("TrackstersMergeProducer") << std::endl;
-
-    // Find duplicate LCs
-    auto &orig_vtx = outTrackster.vertices();
-    auto vtx_sorted{orig_vtx};
-    std::sort(std::begin(vtx_sorted), std::end(vtx_sorted));
-    for (unsigned int iLC = 1; iLC < vtx_sorted.size(); ++iLC) {
-      if (vtx_sorted[iLC] == vtx_sorted[iLC - 1]) {
-        // Clean up duplicate LCs
-        const auto lcIdx = vtx_sorted[iLC];
-        const auto firstEl = std::find(orig_vtx.begin(), orig_vtx.end(), lcIdx);
-        const auto firstPos = std::distance(std::begin(orig_vtx), firstEl);
-        auto iDup = std::find(std::next(firstEl), orig_vtx.end(), lcIdx);
-        while (iDup != orig_vtx.end()) {
-          orig_vtx.erase(iDup);
-          outTrackster.vertex_multiplicity().erase(outTrackster.vertex_multiplicity().begin() +
-                                                   std::distance(std::begin(orig_vtx), iDup));
-          outTrackster.vertex_multiplicity()[firstPos] -= 1;
-          iDup = std::find(std::next(firstEl), orig_vtx.end(), lcIdx);
-        };
-      }
-    }
-
-    outTrackster.zeroProbabilities();
-    if (!track_ptr.isNull())
-      outTrackster.setSeed(track_h.id(), track_ptr.get() - (edm::Ptr<reco::Track>(track_h, 0)).get());
-    if (!outTrackster.vertices().empty()) {
-      resultTrackstersMerged->push_back(outTrackster);
-    }
   }
-
-  assignPCAtoTracksters(*resultTrackstersMerged,
-                        layerClusters,
-                        layerClustersTimes,
-                        rhtools_.getPositionLayer(rhtools_.lastLayerEE()).z());
-  energyRegressionAndID(layerClusters, tfSession_, *resultTrackstersMerged);
-
   //filling the TICLCandidates information
+//  ////std::cout << "MergedTracksters " << resultTrackstersMerged->size() << " Candidate number " << resultCandidates->size() << std::endl;
   assert(resultTrackstersMerged->size() == resultCandidates->size());
 
   auto isHad = [](const Trackster &tracksterMerge) {

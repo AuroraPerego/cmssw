@@ -43,7 +43,8 @@ namespace ticl {
                         const std::vector<reco::Muon> &,
                         const edm::Handle<std::vector<Trackster>>,
                         const std::vector<reco::CaloCluster> &layerClusters,
-                        const edm::ValueMap<std::pair<float, float>> layerClustersTime,
+                        const edm::ValueMap<std::pair<float, float>> &layerClustersTime,
+                        std::vector<Trackster> &tracksterMergeCollectionResult,
                         std::vector<TICLCandidate> &,
                         std::vector<TICLCandidate> &,
                         const EnergyRegressionAndIDModel &) override;
@@ -80,9 +81,8 @@ namespace ticl {
                                  std::array<TICLLayerTile, 2> &tracksterMergeTiles,
                                  const float delta,
                                  const float separation,
-                                 std::vector<TICLCandidate> &chargedCandidates,
-                                 std::vector<TICLCandidate> &chargedCandidatesFromTracks,
-                                 std::vector<TICLCandidate> &neutralCandidates);
+                                 std::vector<TICLCandidate> &candidate,
+                                 std::vector<TICLCandidate> &chargedCandidatesFromTracks);
 
     bool timeAndEnergyCompatible(const reco::Track &track,
                                  const Trackster &trackster,
