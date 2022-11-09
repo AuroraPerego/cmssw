@@ -53,6 +53,7 @@ namespace ticl {
 
   private:
     typedef math::XYZVector Vector;
+    typedef std::vector<double> Vec;
 
     void buildLayers();
 

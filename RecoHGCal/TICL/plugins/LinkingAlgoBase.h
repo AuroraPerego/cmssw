@@ -16,6 +16,7 @@
 #include "TrackingTools/GeomPropagators/interface/Propagator.h"
 #include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"
 #include "Geometry/HGCalCommonData/interface/HGCalDDDConstants.h"
+#include "DataFormats/Math/interface/Vector3D.h"
 
 namespace edm {
   class Event;
@@ -49,6 +50,7 @@ namespace ticl {
 
     static void fillPSetDescription(edm::ParameterSetDescription &desc) { desc.add<int>("algo_verbosity", 0); };
 
+    enum VerbosityLevel { None = 0, Basic, Advanced, Expert, Guru };
   protected:
     int algo_verbosity_;
   };
