@@ -1427,7 +1427,7 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
     uint32_t tk_idx = track_ptr.get() - (edm::Ptr<reco::Track>(tracks_h, 0)).get();
     track_in_candidate[i] = tk_idx;
     if(mask_tracks[tk_idx] == false){
-      std::cout << "SOMETHING WRONG "<< std::endl;
+			//std::cout << "SOMETHING WRONG "<< std::endl;
     }
   }
 

@@ -508,7 +508,6 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
           << " time qual " << tkTimeQual[reco::TrackRef(tkH, i)] << "  muid " << muId << "\n";
 
     if (!cutTk_((tk)) or muId != -1){
-      masked_tracks[i] = false;
       continue;
     }
     // record tracks that can be used to make a ticlcandidate
@@ -516,7 +515,6 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
 
     // don't consider tracks below 2 GeV for linking
     if (std::sqrt(tk.p() * tk.p() + ticl::mpion2) < tkEnergyCut_){
-      masked_tracks[i] = false;
       continue;
 		}
     int iSide = int(tk.eta() > 0);
@@ -526,12 +524,10 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
     if (tsos.isValid()) {
       Vector trackP(tsos.globalPosition().x(), tsos.globalPosition().y(), tsos.globalPosition().z());
       trackPColl.emplace_back(trackP, i);
-      masked_tracks[i] = true;
       trackPColl.emplace_back(trackP, i);
     }
     else{
       std::cout << "PROPAGATION NOT VALID! " << std::endl;
-      masked_tracks[i] = false;
     }
     // to lastLayerEE
     const auto &tsos_int = prop.propagate(fts, interfaceDisk_[iSide]->surface());
