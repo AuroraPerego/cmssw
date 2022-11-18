@@ -34,6 +34,7 @@ TICL_FEVT = cms.PSet(
     outputCommands = cms.untracked.vstring(
       'keep *_ticlSimTracksters_*_*',
       'keep *_ticlSimTrackstersFromCP_*_*',
+			'keep recoMuons_muons1stStep_*_*',
       )
     )
 TICL_FEVT.outputCommands.extend(TICL_RECO.outputCommands)
@@ -53,6 +54,7 @@ def customiseHGCalOnlyEventContent(process):
                                             'keep SimVertexs_g4SimHits_*_*',
                                             'keep *_tofPID_*_*',
                                             'keep *_mtdTrackQualityMVA_*_*',
+																						'keep recoMuons_muons1stStep_*_*',
                                             'keep *_layerClusterSimClusterAssociationProducer_*_*',
                                             'keep *_layerClusterCaloParticleAssociationProducer_*_*',
                                             'keep *_randomEngineStateProducer_*_*',
