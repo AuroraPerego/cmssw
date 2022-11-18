@@ -47,7 +47,9 @@ namespace ticl {
                         std::vector<Trackster> &tracksterMergeCollectionResult,
                         std::vector<TICLCandidate> &,
                         std::vector<TICLCandidate> &,
-                        const EnergyRegressionAndIDModel &) override;
+                        const EnergyRegressionAndIDModel &,
+                        std::vector<float>&,
+                        std::vector<float>&) override;
 
     static void fillPSetDescription(edm::ParameterSetDescription &desc);
 
@@ -83,7 +85,10 @@ namespace ticl {
                                  const float delta,
                                  const float separation,
                                  std::vector<TICLCandidate> &candidate,
-                                 std::vector<TICLCandidate> &chargedCandidatesFromTracks);
+                                 std::vector<TICLCandidate> &chargedCandidatesFromTracks,
+                                 std::vector<float>&,
+                                 std::vector<float>&);
+
 
     bool timeAndEnergyCompatible(const reco::Track &track,
                                  const Trackster &trackster,

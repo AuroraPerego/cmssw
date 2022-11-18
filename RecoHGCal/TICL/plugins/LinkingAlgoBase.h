@@ -46,7 +46,9 @@ namespace ticl {
                                 std::vector<Trackster> &tracksterMergeCollectionResult,
                                 std::vector<TICLCandidate> &,
                                 std::vector<TICLCandidate> &,
-                                const EnergyRegressionAndIDModel &) = 0;
+                                const EnergyRegressionAndIDModel &,
+                                std::vector<float>&,
+                                std::vector<float>&) = 0;
 
     static void fillPSetDescription(edm::ParameterSetDescription &desc) { desc.add<int>("algo_verbosity", 0); };
 

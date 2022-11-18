@@ -84,6 +84,8 @@ private:
   const edm::EDGetTokenT<std::vector<double>> hgcaltracks_phi_token_;
   const edm::EDGetTokenT<std::vector<double>> hgcaltracks_px_token_;
   const edm::EDGetTokenT<std::vector<double>> hgcaltracks_py_token_;
+  const edm::EDGetTokenT<std::vector<float>> separations2_token_;
+  const edm::EDGetTokenT<std::vector<float>> separations2_ET_token_;
   const edm::EDGetTokenT<std::vector<double>> hgcaltracks_pz_token_;
   const edm::EDGetTokenT<std::vector<ticl::Trackster>> tracksters_merged_token_;
   const edm::EDGetTokenT<std::vector<float>> layerClustersLocalDensity_token_;
@@ -348,6 +350,8 @@ private:
   std::vector<float>track_hgcal_z;
   std::vector<float>track_hgcal_px;
   std::vector<float>track_hgcal_py;
+  std::vector<float>separations2;
+  std::vector<float>separations2ETCompat;
   std::vector<float>track_hgcal_pz;
   std::vector<float>track_hgcal_eta;
   std::vector<float>track_hgcal_phi;
@@ -605,7 +609,10 @@ void NtuplerLight::clearVariables() {
   track_hgcal_phi.clear();
   track_hgcal_px.clear();
   track_hgcal_py.clear();
+  track_hgcal_py.clear();
   track_hgcal_pz.clear();
+  separations2.clear();
+  separations2ETCompat.clear();
   track_pt.clear();
   track_charge.clear();
   track_time.clear();
@@ -633,6 +640,8 @@ NtuplerLight::NtuplerLight(const edm::ParameterSet& ps)
       hgcaltracks_phi_token_(consumes<std::vector<double>>(ps.getParameter<edm::InputTag>("hgcaltracks_phi"))),
       hgcaltracks_px_token_(consumes<std::vector<double>>(ps.getParameter<edm::InputTag>("hgcaltracks_px"))),
       hgcaltracks_py_token_(consumes<std::vector<double>>(ps.getParameter<edm::InputTag>("hgcaltracks_py"))),
+      separations2_token_(consumes<std::vector<float>>(ps.getParameter<edm::InputTag>("separations2"))),
+      separations2_ET_token_(consumes<std::vector<float>>(ps.getParameter<edm::InputTag>("separations2_ETCompatible"))),
       hgcaltracks_pz_token_(consumes<std::vector<double>>(ps.getParameter<edm::InputTag>("hgcaltracks_pz"))),
       tracksters_merged_token_(consumes<std::vector<ticl::Trackster>>(ps.getParameter<edm::InputTag>("trackstersmerged"))),
       layerClustersLocalDensity_token_(consumes<std::vector<float>>(ps.getParameter<edm::InputTag>("layerClustersLocalDensity"))),
@@ -856,6 +865,8 @@ void NtuplerLight::beginJob() {
   tracksters_merged_tree_->Branch("vertices_correctedEnergy", &tracksters_merged_vertices_correctedEnergy);
   tracksters_merged_tree_->Branch("vertices_correctedEnergyUncertainty", &tracksters_merged_vertices_correctedEnergyUncertainty);
   tracksters_merged_tree_->Branch("vertices_multiplicity", &tracksters_merged_vertices_multiplicity); //NEW
+  tracksters_merged_tree_->Branch("separations2",&separations2);
+  tracksters_merged_tree_->Branch("separations2ETCompat",&separations2ETCompat);
 
   associations_tree_->Branch("tsCLUE3D_recoToSim_SC", &trackstersCLUE3D_recoToSim_SC);
   associations_tree_->Branch("tsCLUE3D_recoToSim_SC_score", &trackstersCLUE3D_recoToSim_SC_score);
@@ -1709,6 +1720,8 @@ void NtuplerLight::fillDescriptions(edm::ConfigurationDescriptions& descriptions
   desc.add<edm::InputTag>("hgcaltracks_px", edm::InputTag("ticlTrackstersMerge", "hgcaltracksPx"));
   desc.add<edm::InputTag>("hgcaltracks_py", edm::InputTag("ticlTrackstersMerge", "hgcaltracksPx"));
   desc.add<edm::InputTag>("hgcaltracks_pz", edm::InputTag("ticlTrackstersMerge", "hgcaltracksPx"));
+  desc.add<edm::InputTag>("separations2", edm::InputTag("ticlTrackstersMerge", "separations2"));
+  desc.add<edm::InputTag>("separations2_ETCompatible", edm::InputTag("ticlTrackstersMerge", "separations2ETCompatible"));
   desc.add<edm::InputTag>("tracksTime", edm::InputTag("tofPID:t0"));
   desc.add<edm::InputTag>("tracksTimeQual", edm::InputTag("mtdTrackQualityMVA:mtdQualMVA"));
   desc.add<edm::InputTag>("tracksTimeErr", edm::InputTag("tofPID:sigmat0"));

@@ -175,7 +175,9 @@ void LinkingAlgoByDirectionGeometric::tracksterToTrackLinking(
     const float delta,
     const float separation,
     std::vector<TICLCandidate> &candidates,
-    std::vector<TICLCandidate> &chargedCandidatesFromTracks) {
+    std::vector<TICLCandidate> &chargedCandidatesFromTracks,
+    std::vector<float>& separations2_for_ntuples,
+    std::vector<float>& separations2_ETCompatible_for_ntuples) {
   std::vector<int> mask(tracksterMergeTiles.size(), 1);
   std::vector<int> maskMergeCollection(tracksterMergeCollection.size(), 1);
   std::vector<int> maskTracks(propTracks.size(), 1);
@@ -250,6 +252,12 @@ void LinkingAlgoByDirectionGeometric::tracksterToTrackLinking(
           auto track_timeQual = tkTimeQual[tkRef];
           auto energyTimeCompatible = timeAndEnergyCompatible(
               tracks[propTrack.second], tracksterMergeCollection[t_i], track_time, track_timeErr, track_timeQual);
+          if(!energyTimeCompatible){
+            separations2_for_ntuples.push_back(sep2);
+          }
+          else{
+            separations2_ETCompatible_for_ntuples.push_back(sep2);
+          }
           if (sep2 < separation2 && sep2 < bestSep2 && energyTimeCompatible) {
             bestSep2 = sep2;
             bestMergeTracksterIndex = t_i;
@@ -468,7 +476,9 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
                                                      std::vector<Trackster> &resultTrackstersMerged,
                                                      std::vector<TICLCandidate> &candidates,
                                                      std::vector<TICLCandidate> &chargedCandidatesFromTracks,
-                                                     const EnergyRegressionAndIDModel &model) {
+                                                     const EnergyRegressionAndIDModel &model,
+                                                     std::vector<float>& separations2_for_ntuples,
+                                                     std::vector<float>& separations2_ETCompatible_for_ntuples) {
   const auto &tracks = *tkH;
   const auto &tracksters = *tsH;
 
@@ -623,7 +633,9 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
                           del_tk_ts_int_,
                           separation_threshold_,
                           candidates,
-                          chargedCandidatesFromTracks);
+                          chargedCandidatesFromTracks,
+                          separations2_for_ntuples,
+                          separations2_ETCompatible_for_ntuples);
   //std::cout << "All Candidates " << candidates.size() << std::endl;
   //std::cout << "Charged Candidates From Tracks " << chargedCandidatesFromTracks.size() << std::endl;
 }  // linkTracksters

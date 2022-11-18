@@ -195,7 +195,9 @@ TrackstersMergeProducer::TrackstersMergeProducer(const edm::ParameterSet &ps)
   produces<std::vector<double>>("hgcaltracksPhi"); 
   produces<std::vector<double>>("hgcaltracksPx");  
   produces<std::vector<double>>("hgcaltracksPy");  
-  produces<std::vector<double>>("hgcaltracksPz");  
+  produces<std::vector<double>>("hgcaltracksPz");
+  produces<std::vector<float>>("separations2");
+  produces<std::vector<float>>("separations2ETCompatible");
 
   std::string detectorName_ = (detector_ == "HFNose") ? "HGCalHFNoseSensitive" : "HGCalEESensitive";
   hdc_token_ =
@@ -303,6 +305,9 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
   evt.getByToken(ticlGraph_token_, ticlGraph_h);
   const auto &ticlGraph = *ticlGraph_h;
   // Linking
+  auto separations2 = std::make_unique<std::vector<float>>();
+  auto separations2_ET = std::make_unique<std::vector<float>>();
+
   linkingAlgo_->linkTracksters(track_h,
                                trackTime,
                                trackTimeErr,
@@ -314,7 +319,9 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
                                *resultTrackstersMerged,
                                *resultCandidates,
                                *resultFromTracks,
-                               *model);
+                               *model,
+                               *separations2,
+                               *separations2_ET);
 
   masked_tracks->resize(tracks.size(), false);
   // Print debug info
@@ -412,6 +419,8 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
   evt.put(std::move(hgcaltracks_py), "hgcaltracksPy");
   evt.put(std::move(hgcaltracks_pz), "hgcaltracksPz");
   evt.put(std::move(masked_tracks), "maskTracks");
+  evt.put(std::move(separations2), "separations2");
+  evt.put(std::move(separations2_ET), "separations2ETCompatible");
 }
 
 void TrackstersMergeProducer::energyRegressionAndID(const std::vector<reco::CaloCluster> &layerClusters,
