@@ -1104,11 +1104,9 @@ void NtuplerLight::analyze(const edm::Event& event, const edm::EventSetup& setup
   nclusters_ = clusters.size();
 
   int t_id = 0;
-  int distIdx = 0;
-  for(auto const& dist : distancesVec){
-    trackster_distancesVec.push_back(dist);
-    trackster_distancesVecIdx.push_back(distIdx);
-    distIdx++;
+  for(size_t i = 0; i < distancesVec.size(); i++){
+    trackster_distancesVec.push_back(distancesVec[i]);
+    trackster_distancesVecIdx.push_back(distancesVecIdx[i]);
   }
   for (auto trackster_iterator = tracksters.begin(); trackster_iterator != tracksters.end(); ++trackster_iterator) {
       //per-trackster analysis

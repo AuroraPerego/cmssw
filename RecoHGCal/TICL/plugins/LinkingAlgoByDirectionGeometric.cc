@@ -655,7 +655,7 @@ void LinkingAlgoByDirectionGeometric::fillPSetDescription(edm::ParameterSetDescr
   desc.add<double>("delta_tk_ts_interface", 0.03);
   desc.add<double>("delta_ts_em_had", 0.03);
   desc.add<double>("delta_ts_had_had", 0.03);
-  desc.add<double>("separation", 8);  //cm
+  desc.add<double>("separation", 15);  //cm
   desc.add<double>("track_time_quality_threshold", 0.5);
   LinkingAlgoBase::fillPSetDescription(desc);
 }
