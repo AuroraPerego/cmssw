@@ -92,6 +92,8 @@ private:
   const edm::EDGetTokenT<std::vector<float>> layerClustersRadius_token_;
   const edm::EDGetTokenT<edm::ValueMap<std::pair<float, float>>> clustersTime_token_;
   const edm::EDGetTokenT<std::vector<int>> tracksterSeeds_token_;
+  const edm::EDGetTokenT<std::vector<float>> distancesVec_token_;
+  const edm::EDGetTokenT<std::vector<int>> distancesVecIdx_token_;
   edm::ESGetToken<CaloGeometry, CaloGeometryRecord> caloGeometry_token_;
   const edm::EDGetTokenT<std::vector<ticl::Trackster>> simTracksters_SC_token_;
   const edm::EDGetTokenT<std::vector<ticl::Trackster>> simTracksters_CP_token_;
@@ -146,6 +148,8 @@ private:
   std::vector<float_t> trackster_sigmaPCA3;
   std::vector<float_t> trackster_barycenter_eta;
   std::vector<float_t> trackster_barycenter_phi;
+  std::vector<float_t> trackster_distancesVec;
+  std::vector<int> trackster_distancesVecIdx;
   std::vector<std::vector<float_t>> trackster_id_probabilities;
   std::vector<std::vector<uint32_t> > trackster_vertices_indexes;
   std::vector<std::vector<float_t> > trackster_vertices_x;
@@ -400,6 +404,8 @@ void NtuplerLight::clearVariables() {
   trackster_sigmaPCA3.clear();
   trackster_barycenter_eta.clear();
   trackster_barycenter_phi.clear();
+  trackster_distancesVec.clear();
+  trackster_distancesVecIdx.clear();
   trackster_id_probabilities.clear();
   trackster_vertices_indexes.clear();
   trackster_vertices_x.clear();
@@ -649,6 +655,8 @@ NtuplerLight::NtuplerLight(const edm::ParameterSet& ps)
       clustersTime_token_(
           consumes<edm::ValueMap<std::pair<float, float>>>(ps.getParameter<edm::InputTag>("layer_clustersTime"))),
       tracksterSeeds_token_(consumes<std::vector<int>>(ps.getParameter<edm::InputTag>("tracksterSeeds"))),
+      distancesVec_token_(consumes<std::vector<float>>(ps.getParameter<edm::InputTag>("distancesVec"))),
+      distancesVecIdx_token_(consumes<std::vector<int>>(ps.getParameter<edm::InputTag>("distancesVecIdx"))),
       caloGeometry_token_(esConsumes<CaloGeometry, CaloGeometryRecord, edm::Transition::BeginRun>()),
       simTracksters_SC_token_(consumes<std::vector<ticl::Trackster>>(ps.getParameter<edm::InputTag>("simtrackstersSC"))),
       simTracksters_CP_token_(consumes<std::vector<ticl::Trackster>>(ps.getParameter<edm::InputTag>("simtrackstersCP"))),
@@ -700,6 +708,8 @@ void NtuplerLight::beginJob() {
   trackster_tree_->Branch("barycenter_z", &trackster_barycenter_z);
   trackster_tree_->Branch("trackster_barycenter_eta", &trackster_barycenter_eta);
   trackster_tree_->Branch("trackster_barycenter_phi", &trackster_barycenter_phi);
+  trackster_tree_->Branch("trackster_distancesVec", &trackster_distancesVec);
+  trackster_tree_->Branch("trackster_distancesVecIdx", &trackster_distancesVecIdx);
   trackster_tree_->Branch("EV1", &trackster_EV1);
   trackster_tree_->Branch("EV2", &trackster_EV2);
   trackster_tree_->Branch("EV3", &trackster_EV3);
@@ -1079,6 +1089,13 @@ void NtuplerLight::analyze(const edm::Event& event, const edm::EventSetup& setup
   const auto& tracksterSeeds = *trackster_cluster_seed_h;
 
 
+  edm::Handle<std::vector<float>> distancesVec_h;
+  event.getByToken(distancesVec_token_, distancesVec_h);
+  const auto& distancesVec = *distancesVec_h;
+  edm::Handle<std::vector<int>> distancesVecIdx_h;
+  event.getByToken(distancesVecIdx_token_, distancesVecIdx_h);
+  const auto& distancesVecIdx = *distancesVecIdx_h;
+
   const auto& simclusters = event.get(simclusters_token_);
   const auto& caloparticles = event.get(caloparticles_token_);
 
@@ -1087,6 +1104,12 @@ void NtuplerLight::analyze(const edm::Event& event, const edm::EventSetup& setup
   nclusters_ = clusters.size();
 
   int t_id = 0;
+  int distIdx = 0;
+  for(auto const& dist : distancesVec){
+    trackster_distancesVec.push_back(dist);
+    trackster_distancesVecIdx.push_back(distIdx);
+    distIdx++;
+  }
   for (auto trackster_iterator = tracksters.begin(); trackster_iterator != tracksters.end(); ++trackster_iterator) {
       //per-trackster analysis
  //   trackster_time.push_back(trackster_iterator->time());
@@ -1101,6 +1124,7 @@ void NtuplerLight::analyze(const edm::Event& event, const edm::EventSetup& setup
 //    trackster_barycenter_z.push_back(trackster_iterator->barycenter().z());
     trackster_barycenter_eta.push_back(trackster_iterator->barycenter().eta());
     trackster_barycenter_phi.push_back(trackster_iterator->barycenter().phi());
+
  //   trackster_EV1.push_back(trackster_iterator->eigenvalues()[0]);
  //   trackster_EV2.push_back(trackster_iterator->eigenvalues()[1]);
  //   trackster_EV3.push_back(trackster_iterator->eigenvalues()[2]);
@@ -1721,6 +1745,8 @@ void NtuplerLight::fillDescriptions(edm::ConfigurationDescriptions& descriptions
   desc.add<edm::InputTag>("hgcaltracks_py", edm::InputTag("ticlTrackstersMerge", "hgcaltracksPx"));
   desc.add<edm::InputTag>("hgcaltracks_pz", edm::InputTag("ticlTrackstersMerge", "hgcaltracksPx"));
   desc.add<edm::InputTag>("separations2", edm::InputTag("ticlTrackstersMerge", "separations2"));
+  desc.add<edm::InputTag>("distancesVec", edm::InputTag("ticlTrackstersMerge", "distancesVec"));
+  desc.add<edm::InputTag>("distancesVecIdx", edm::InputTag("ticlTrackstersMerge", "distancesVecIdx"));
   desc.add<edm::InputTag>("separations2_ETCompatible", edm::InputTag("ticlTrackstersMerge", "separations2ETCompatible"));
   desc.add<edm::InputTag>("tracksTime", edm::InputTag("tofPID:t0"));
   desc.add<edm::InputTag>("tracksTimeQual", edm::InputTag("mtdTrackQualityMVA:mtdQualMVA"));

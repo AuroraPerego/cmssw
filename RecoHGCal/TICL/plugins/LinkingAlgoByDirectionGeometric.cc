@@ -77,6 +77,8 @@ void LinkingAlgoByDirectionGeometric::findTrackstersInWindow(const std::vector<T
                                                              const float delta,
                                                              const float separation,
                                                              std::vector<std::vector<unsigned>> &resultCollection,
+                                                             std::vector<float>& distancesVec,
+                                                             std::vector<int>& distancesVecIdx,
                                                              bool useMask = false) {
   std::vector<int> mask(tracksters.size(), 0);
   float delta2 = delta * delta;
@@ -86,6 +88,7 @@ void LinkingAlgoByDirectionGeometric::findTrackstersInWindow(const std::vector<T
     return (r0 - r1) * (r0 - r1) + r1 * r1 * delta_phi * delta_phi;
   };
   unsigned int seedId = 0;
+  int tracksterIndex = 0;
   for (auto const &t : tracksters) {
     auto const &barycenter = t.barycenter();
     float trackster_eta = barycenter.eta();
@@ -132,7 +135,8 @@ void LinkingAlgoByDirectionGeometric::findTrackstersInWindow(const std::vector<T
                                  tracksterInTile_phi);
 
             trackster_n++;
-
+            distancesVec.push_back(sep2);
+            distancesVecIdx.push_back(tracksterIndex);
             if (sep2 < separation2) {
               in_delta.push_back(t_i);
               distances2.push_back(sep2);
@@ -156,6 +160,7 @@ void LinkingAlgoByDirectionGeometric::findTrackstersInWindow(const std::vector<T
       }
     }
     seedId++;
+    tracksterIndex++;
   }
   //std::cout << "Result Collection size " << resultCollection.size() << std::endl;
 }
@@ -478,7 +483,9 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
                                                      std::vector<TICLCandidate> &chargedCandidatesFromTracks,
                                                      const EnergyRegressionAndIDModel &model,
                                                      std::vector<float>& separations2_for_ntuples,
-                                                     std::vector<float>& separations2_ETCompatible_for_ntuples) {
+                                                     std::vector<float>& separations2_ETCompatible_for_ntuples,
+                                                     std::vector<float>& distancesVec,
+                                                     std::vector<int>& distancesVecIdx) {
   const auto &tracks = *tkH;
   const auto &tracksters = *tsH;
 
@@ -552,7 +559,8 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
 
   fillTrackstersTile(tracksters, tracksterPropTiles);
   std::vector<std::vector<unsigned>> trackstersResults(tracksters.size());
-  findTrackstersInWindow(tracksters, tracksterPropTiles, 0.03, separation_threshold_, trackstersResults);
+  findTrackstersInWindow(tracksters, tracksterPropTiles, 0.03, separation_threshold_, trackstersResults, distancesVec, distancesVecIdx);
+
   dumpLinksFound(trackstersResults, "Tracksters Links");
 
   std::vector<int> maskTracksters(tracksters.size(), 1);

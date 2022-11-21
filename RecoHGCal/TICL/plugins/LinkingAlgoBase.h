@@ -48,7 +48,9 @@ namespace ticl {
                                 std::vector<TICLCandidate> &,
                                 const EnergyRegressionAndIDModel &,
                                 std::vector<float>&,
-                                std::vector<float>&) = 0;
+                                std::vector<float>&,
+                                std::vector<float>&,
+                                std::vector<int>&) = 0;
 
     static void fillPSetDescription(edm::ParameterSetDescription &desc) { desc.add<int>("algo_verbosity", 0); };
 

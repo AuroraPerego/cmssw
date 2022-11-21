@@ -198,6 +198,8 @@ TrackstersMergeProducer::TrackstersMergeProducer(const edm::ParameterSet &ps)
   produces<std::vector<double>>("hgcaltracksPz");
   produces<std::vector<float>>("separations2");
   produces<std::vector<float>>("separations2ETCompatible");
+  produces<std::vector<float>>("distancesVec");
+  produces<std::vector<int>>("distancesVecIdx");
 
   std::string detectorName_ = (detector_ == "HFNose") ? "HGCalHFNoseSensitive" : "HGCalEESensitive";
   hdc_token_ =
@@ -289,6 +291,8 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
   auto hgcaltracks_px = std::make_unique<std::vector<double>>();
   auto hgcaltracks_py = std::make_unique<std::vector<double>>();
   auto hgcaltracks_pz = std::make_unique<std::vector<double>>();
+  auto distancesVec = std::make_unique<std::vector<float>>();
+  auto distancesVecIdx = std::make_unique<std::vector<int>>();
 
   edm::Handle<std::vector<reco::Track>> track_h;
   evt.getByToken(tracks_token_, track_h);
@@ -321,7 +325,9 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
                                *resultFromTracks,
                                *model,
                                *separations2,
-                               *separations2_ET);
+                               *separations2_ET,
+                               *distancesVec,
+                               *distancesVecIdx);
 
   masked_tracks->resize(tracks.size(), false);
   // Print debug info
@@ -421,6 +427,8 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
   evt.put(std::move(masked_tracks), "maskTracks");
   evt.put(std::move(separations2), "separations2");
   evt.put(std::move(separations2_ET), "separations2ETCompatible");
+  evt.put(std::move(distancesVec), "distancesVec");
+  evt.put(std::move(distancesVecIdx), "distancesVecIdx");
 }
 
 void TrackstersMergeProducer::energyRegressionAndID(const std::vector<reco::CaloCluster> &layerClusters,
