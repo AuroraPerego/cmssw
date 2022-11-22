@@ -559,7 +559,7 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
 
   fillTrackstersTile(tracksters, tracksterPropTiles);
   std::vector<std::vector<unsigned>> trackstersResults(tracksters.size());
-  findTrackstersInWindow(tracksters, tracksterPropTiles, 0.03, separation_threshold_, trackstersResults, distancesVec, distancesVecIdx);
+  indTrackstersInWindow(tracksters, tracksterPropTiles, 0.1, separation_threshold_, trackstersResults, distancesVec, distancesVecIdx);
 
   dumpLinksFound(trackstersResults, "Tracksters Links");
 
@@ -655,7 +655,7 @@ void LinkingAlgoByDirectionGeometric::fillPSetDescription(edm::ParameterSetDescr
   desc.add<double>("delta_tk_ts_interface", 0.03);
   desc.add<double>("delta_ts_em_had", 0.03);
   desc.add<double>("delta_ts_had_had", 0.03);
-  desc.add<double>("separation", 15);  //cm
+  desc.add<double>("separation", 20);  //cm
   desc.add<double>("track_time_quality_threshold", 0.5);
   LinkingAlgoBase::fillPSetDescription(desc);
 }
