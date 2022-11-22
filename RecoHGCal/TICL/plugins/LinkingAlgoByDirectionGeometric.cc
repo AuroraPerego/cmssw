@@ -559,7 +559,7 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
 
   fillTrackstersTile(tracksters, tracksterPropTiles);
   std::vector<std::vector<unsigned>> trackstersResults(tracksters.size());
-  indTrackstersInWindow(tracksters, tracksterPropTiles, 0.1, separation_threshold_, trackstersResults, distancesVec, distancesVecIdx);
+  findTrackstersInWindow(tracksters, tracksterPropTiles, 0.1, separation_threshold_, trackstersResults, distancesVec, distancesVecIdx);
 
   dumpLinksFound(trackstersResults, "Tracksters Links");
 
