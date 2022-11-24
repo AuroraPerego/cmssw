@@ -47,14 +47,15 @@ namespace ticl {
                                 std::vector<TICLCandidate> &,
                                 std::vector<TICLCandidate> &,
                                 const EnergyRegressionAndIDModel &,
-                                std::vector<float>&,
-                                std::vector<float>&,
-                                std::vector<float>&,
-                                std::vector<int>&) = 0;
+                                std::vector<float> &,
+                                std::vector<float> &,
+                                std::vector<float> &,
+                                std::vector<int> &) = 0;
 
     static void fillPSetDescription(edm::ParameterSetDescription &desc) { desc.add<int>("algo_verbosity", 0); };
 
     enum VerbosityLevel { None = 0, Basic, Advanced, Expert, Guru };
+
   protected:
     int algo_verbosity_;
   };
