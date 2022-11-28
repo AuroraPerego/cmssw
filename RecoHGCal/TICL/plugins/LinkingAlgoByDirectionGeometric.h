@@ -48,10 +48,10 @@ namespace ticl {
                         std::vector<TICLCandidate> &,
                         std::vector<TICLCandidate> &,
                         const EnergyRegressionAndIDModel &,
-                        std::vector<float> &,
-                        std::vector<float> &,
-                        std::vector<float> &,
-                        std::vector<int> &) override;
+                        std::vector<float>&,
+                        std::vector<float>&,
+                        std::vector<float>&,
+                        std::vector<int>&) override;
 
     static void fillPSetDescription(edm::ParameterSetDescription &desc);
 
@@ -67,14 +67,12 @@ namespace ticl {
                         std::array<TICLLayerTile, 2> &tracksTiles);
 
     void findTrackstersInWindow(const std::vector<Trackster> &tracksters,
-                                const std::vector<reco::CaloCluster> &lcs,
                                 const std::array<TICLLayerTile, 2> &tracksterTiles,
                                 const float delta,
                                 const float separation,
                                 std::vector<std::vector<unsigned>> &resultCollection,
-                                std::vector<std::vector<float>> &resultCollectionSep,
-                                std::vector<float> &distancesVec,
-                                std::vector<int> &distancesVecIdx,
+                                std::vector<float>& distancesVec,
+                                std::vector<int>& distancesVecIdx,
                                 bool useMask);
 
     void tracksterToTrackLinking(std::vector<Trackster> &tracksterMergeCollection,
@@ -92,8 +90,9 @@ namespace ticl {
                                  const float separation,
                                  std::vector<TICLCandidate> &candidate,
                                  std::vector<TICLCandidate> &chargedCandidatesFromTracks,
-                                 std::vector<float> &,
-                                 std::vector<float> &);
+                                 std::vector<float>&,
+                                 std::vector<float>&);
+
 
     bool timeAndEnergyCompatible(const reco::Track &track,
                                  const Trackster &trackster,
