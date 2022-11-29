@@ -191,10 +191,10 @@ TrackstersMergeProducer::TrackstersMergeProducer(const edm::ParameterSet &ps)
   produces<std::vector<double>>("hgcaltracksX");
   produces<std::vector<double>>("hgcaltracksY");
   produces<std::vector<double>>("hgcaltracksZ");
-  produces<std::vector<double>>("hgcaltracksEta"); 
-  produces<std::vector<double>>("hgcaltracksPhi"); 
-  produces<std::vector<double>>("hgcaltracksPx");  
-  produces<std::vector<double>>("hgcaltracksPy");  
+  produces<std::vector<double>>("hgcaltracksEta");
+  produces<std::vector<double>>("hgcaltracksPhi");
+  produces<std::vector<double>>("hgcaltracksPx");
+  produces<std::vector<double>>("hgcaltracksPy");
   produces<std::vector<double>>("hgcaltracksPz");
   produces<std::vector<float>>("separations2");
   produces<std::vector<float>>("separations2ETCompatible");
@@ -362,7 +362,7 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
 #endif
   }
   //filling the TICLCandidates information
-//  ////std::cout << "MergedTracksters " << resultTrackstersMerged->size() << " Candidate number " << resultCandidates->size() << std::endl;
+  //  ////std::cout << "MergedTracksters " << resultTrackstersMerged->size() << " Candidate number " << resultCandidates->size() << std::endl;
   assert(resultTrackstersMerged->size() == resultCandidates->size());
 
   auto isHad = [](const Trackster &tracksterMerge) {
@@ -416,11 +416,11 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
 
   evt.put(std::move(resultTrackstersMerged));
   evt.put(std::move(resultCandidates));
-  evt.put(std::move(hgcaltracks_x),"hgcaltracksX");
-  evt.put(std::move(hgcaltracks_y),"hgcaltracksY");
-  evt.put(std::move(hgcaltracks_z),"hgcaltracksZ");
-  evt.put(std::move(hgcaltracks_eta),"hgcaltracksEta");
-  evt.put(std::move(hgcaltracks_phi),"hgcaltracksPhi");
+  evt.put(std::move(hgcaltracks_x), "hgcaltracksX");
+  evt.put(std::move(hgcaltracks_y), "hgcaltracksY");
+  evt.put(std::move(hgcaltracks_z), "hgcaltracksZ");
+  evt.put(std::move(hgcaltracks_eta), "hgcaltracksEta");
+  evt.put(std::move(hgcaltracks_phi), "hgcaltracksPhi");
   evt.put(std::move(hgcaltracks_px), "hgcaltracksPx");
   evt.put(std::move(hgcaltracks_py), "hgcaltracksPy");
   evt.put(std::move(hgcaltracks_pz), "hgcaltracksPz");

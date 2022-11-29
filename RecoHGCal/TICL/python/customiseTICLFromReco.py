@@ -47,6 +47,7 @@ def customiseTICLFromReco(process):
                                       )
 # Path and EndPath definitions
     process.FEVTDEBUGHLToutput_step = cms.EndPath(process.FEVTDEBUGHLToutput + process.ntuplizer)
+    #process.FEVTDEBUGHLToutput_step = cms.EndPath(process.FEVTDEBUGHLToutput)
     process.DQMoutput_step = cms.EndPath(process.DQMoutput)
 
 # Schedule definition
