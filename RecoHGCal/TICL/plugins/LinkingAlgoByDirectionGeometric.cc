@@ -589,7 +589,7 @@ void DFS(std::vector<std::vector<unsigned>> &graph,
       std::vector<unsigned> outTracksterIndices = {static_cast<unsigned>(i)};
 
     //  std::cout << " -- Trackster " << i << " Energy " << outTrackster.raw_energy() << " Position "
-                << outTrackster.barycenter() << std::endl;
+                //<< outTrackster.barycenter() << std::endl;
       DFSVisits(graph,
                 visits,
                 outTrackster,
@@ -626,7 +626,7 @@ void DFSFinal(std::vector<std::vector<unsigned>> &graph,
       Trackster outTrackster = tracksters[i];
       std::vector<unsigned> outTracksterIndices = previousCollectionIndices[i];
       //std::cout << " -- Trackster " << i << " Energy " << outTrackster.raw_energy() << " Position "
-                << outTrackster.barycenter() << std::endl;
+ //               << outTrackster.barycenter() << std::endl;
       DFSVisits(graph,
                 visits,
                 outTrackster,
@@ -837,8 +837,8 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
                          distancesVec,
                          distancesVecIdx);
 //  std::cout << "Trackster size " << tracksters.size() << " Result Tracksters Small Merged "
-            << resultTrackstersSmallMerged.size() << " Corresponding indices " << trackstersFinalResults.size()
-            << std::endl;
+       //     << resultTrackstersSmallMerged.size() << " Corresponding indices " << trackstersFinalResults.size()
+       //     << std::endl;
   //  dumpLinksFound(trackstersFinalResults, "Tracksters Links");
   //  tracksterMergeCollectionIndices.resize(resultTrackstersSmallMerged.size());
   DFSFinal(trackstersFinalResults,
