@@ -533,8 +533,8 @@ void DFSVisits(std::vector<std::vector<unsigned>> &graph,
     if (!visits.at(*j)) {
       visits[*j] = true;
       auto const &thisTrackster = tracksters[*j];
-      std::cout << tabs << "Visiting " << *j << " Energy " << thisTrackster.raw_energy() << " Position "
-                << thisTrackster.barycenter() << std::endl;
+      //std::cout << tabs << "Visiting " << *j << " Energy " << thisTrackster.raw_energy() << " Position "
+        //        << thisTrackster.barycenter() << std::endl;
 
       tabs.push_back('\t');
       updatedSize += thisTrackster.vertices().size();
@@ -578,7 +578,7 @@ void DFS(std::vector<std::vector<unsigned>> &graph,
          bool secondStep) {
   int graphSize = graph.size();
   std::vector<bool> visits(graphSize, false);
-  std::cout << "Initial Graph size " << graphSize << " Visits size " << visits.size() << std::endl;
+  //std::cout << "Initial Graph size " << graphSize << " Visits size " << visits.size() << std::endl;
   for (int i = 0; i < graphSize; i++) {
     std::string tabs;
     if (!visits[i]) {
@@ -588,7 +588,7 @@ void DFS(std::vector<std::vector<unsigned>> &graph,
       Trackster outTrackster = tracksters[i];
       std::vector<unsigned> outTracksterIndices = {static_cast<unsigned>(i)};
 
-      std::cout << " -- Trackster " << i << " Energy " << outTrackster.raw_energy() << " Position "
+    //  std::cout << " -- Trackster " << i << " Energy " << outTrackster.raw_energy() << " Position "
                 << outTrackster.barycenter() << std::endl;
       DFSVisits(graph,
                 visits,
@@ -625,7 +625,7 @@ void DFSFinal(std::vector<std::vector<unsigned>> &graph,
       tabs.push_back('\t');
       Trackster outTrackster = tracksters[i];
       std::vector<unsigned> outTracksterIndices = previousCollectionIndices[i];
-      std::cout << " -- Trackster " << i << " Energy " << outTrackster.raw_energy() << " Position "
+      //std::cout << " -- Trackster " << i << " Energy " << outTrackster.raw_energy() << " Position "
                 << outTrackster.barycenter() << std::endl;
       DFSVisits(graph,
                 visits,
@@ -643,7 +643,7 @@ void DFSFinal(std::vector<std::vector<unsigned>> &graph,
     }
   }
   resultCollection.shrink_to_fit();
-  std::cout << "RESULT COLLECTION SIZE " << resultCollection.size() << " RESULT COLLECTION INDICES SIZE " << resultCollectionIndices.size() << std::endl;
+  //std::cout << "RESULT COLLECTION SIZE " << resultCollection.size() << " RESULT COLLECTION INDICES SIZE " << resultCollectionIndices.size() << std::endl;
 }
 
 void findSmallTracksters(const std::vector<Trackster> &tracksters,
@@ -743,7 +743,7 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
       trackPColl.emplace_back(trackP, i);
       trackPColl.emplace_back(trackP, i);
     } else {
-      std::cout << "PROPAGATION NOT VALID! " << std::endl;
+     // std::cout << "PROPAGATION NOT VALID! " << std::endl;
     }
     // to lastLayerEE
     const auto &tsos_int = prop.propagate(fts, interfaceDisk_[iSide]->surface());
@@ -755,7 +755,7 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
   tkPropIntColl.shrink_to_fit();
   trackPColl.shrink_to_fit();
   candidateTrackIds.shrink_to_fit();
-  std::cout << "++++++++++++++++++++ SMALL MERGING +++++++++++++++++++++++++++++++++++++++++ " << std::endl;
+ // std::cout << "++++++++++++++++++++ SMALL MERGING +++++++++++++++++++++++++++++++++++++++++ " << std::endl;
   std::vector<int> maskSmall;
   maskSmall.resize(tracksters.size());
   findSmallTracksters(tracksters, maskSmall, layerClusters, rhtools_, 5);
@@ -786,11 +786,11 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
   //              return a.size() > b.size();
   //            });
   for (size_t k = 0; k < tracksterMergeSmallCollectionIndices.size(); k++) {
-    std::cout << "T " << k << " Indices ";
+    //std::cout << "T " << k << " Indices ";
     for (auto const &v : tracksterMergeSmallCollectionIndices[k]) {
-      std::cout << v << " ";
+     // std::cout << v << " ";
     }
-    std::cout << "\n";
+    //std::cout << "\n";
   }
 
   for (size_t i = 0; i < tracksterMergeSmallCollection.size(); i++) {
@@ -825,8 +825,8 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
   // Create vector of Linked Tracksters
   // Pass this vector to assignPCA to have the final TrackstersMerged?
   resultTrackstersSmallMerged.shrink_to_fit();
-  std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-  std::cout << "+++++++++++++++++++++++++ FINAL MERGING +++++++++++++++++++++++++++" << std::endl;
+  //std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+  //std::cout << "+++++++++++++++++++++++++ FINAL MERGING +++++++++++++++++++++++++++" << std::endl;
   fillTrackstersTile(resultTrackstersSmallMerged, tracksterPropTiles);
   std::vector<std::vector<unsigned>> trackstersFinalResults(resultTrackstersSmallMerged.size());
   findTrackstersInWindow(resultTrackstersSmallMerged,
@@ -836,7 +836,7 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
                          trackstersFinalResults,
                          distancesVec,
                          distancesVecIdx);
-  std::cout << "Trackster size " << tracksters.size() << " Result Tracksters Small Merged "
+//  std::cout << "Trackster size " << tracksters.size() << " Result Tracksters Small Merged "
             << resultTrackstersSmallMerged.size() << " Corresponding indices " << trackstersFinalResults.size()
             << std::endl;
   //  dumpLinksFound(trackstersFinalResults, "Tracksters Links");
@@ -852,11 +852,11 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
   assert(tracksterMergeCollection.size() == tracksterMergeCollectionIndices.size());
 
   for (size_t k = 0; k < tracksterMergeCollectionIndices.size(); k++) {
-    std::cout << "T " << k << " Indices ";
+    //std::cout << "T " << k << " Indices ";
     for (auto const &v : tracksterMergeCollectionIndices[k]) {
-        std::cout << v << " ";
+      //  std::cout << v << " ";
     }
-    std::cout << "\n";
+   // std::cout << "\n";
   }
   //
     for (size_t i = 0; i < tracksterMergeCollection.size(); i++) {
@@ -891,7 +891,7 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
     assignPCAtoTracksters(
         resultTrackstersMerged, layerClusters, layerClustersTimes, rhtools_.getPositionLayer(rhtools_.lastLayerEE()).z());
     model.energyRegressionAndID(layerClusters, resultTrackstersMerged);
-  std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+  //std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
   //Link with tracks and final candidate building
   //Refill Tiles with trackstersMerge
   std::array<TICLLayerTile, 2> tracksterMergePropTiles = {};  // all TrackstersMerge
