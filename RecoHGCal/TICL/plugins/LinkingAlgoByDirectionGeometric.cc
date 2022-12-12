@@ -23,6 +23,7 @@ LinkingAlgoByDirectionGeometric::LinkingAlgoByDirectionGeometric(const edm::Para
       del_ts_had_had_(conf.getParameter<double>("delta_ts_had_had")),
       separationSmall_threshold_(conf.getParameter<double>("separationSmall")),
       separation_threshold_(conf.getParameter<double>("separation")),
+      maxDepth_(conf.getParameter<double>("maxDepth")),
       timing_quality_threshold_(conf.getParameter<double>("track_time_quality_threshold")),
       cutTk_(conf.getParameter<std::string>("cutTk")) {}
 
@@ -432,6 +433,22 @@ void LinkingAlgoByDirectionGeometric::tracksterToTrackLinking(
   tracksterMergeCollection = orderedTracksterMergeCollection;
 }
 
+bool LinkingAlgoByDirectionGeometric::timeCompatible(const Trackster& trackster1, const Trackster& trackster2){
+
+  float tsT1 = trackster1.time();
+  float tsTErr1 = trackster1.timeError();
+
+  float tsT2 = trackster2.time();
+  float tsTErr2 = trackster2.timeError();
+  auto timeCompatible = false;
+  if(tsT1 != -99 && tsT2 != -99){
+    timeCompatible = (std::abs(tsT1- tsT2) < maxDeltaT_ * sqrt(tsTErr1 * tsTErr1 + tsTErr2 * tsTErr2));
+  }
+	else{
+		timeCompatible = true;
+	}
+  return timeCompatible;
+}
 bool LinkingAlgoByDirectionGeometric::timeAndEnergyCompatible(const reco::Track &track,
                                                               const Trackster &trackster,
                                                               const float &tkT,
@@ -525,16 +542,17 @@ void DFSVisits(std::vector<std::vector<unsigned>> &graph,
                const std::vector<reco::CaloCluster> &layerClusters,
                int u,
                std::string &tabs,
+               int& currentDepth,
+               const int maxDepth,
                bool secondStep) {
   //  //std::cout << "Visiting " << u << std::endl;
   auto updatedSize = outTrackster.vertices().size();
   //  outTracksterIndices.push_back(u);
   for (auto j = graph[u].begin(); j != graph[u].end(); j++) {
-    if (!visits.at(*j)) {
+    if (!visits.at(*j) && currentDepth <= maxDepth) {
+      currentDepth += 1;
       visits[*j] = true;
       auto const &thisTrackster = tracksters[*j];
-      //std::cout << tabs << "Visiting " << *j << " Energy " << thisTrackster.raw_energy() << " Position "
-        //        << thisTrackster.barycenter() << std::endl;
 
       tabs.push_back('\t');
       updatedSize += thisTrackster.vertices().size();
@@ -562,6 +580,8 @@ void DFSVisits(std::vector<std::vector<unsigned>> &graph,
                 layerClusters,
                 *j,
                 tabs,
+                currentDepth,
+                maxDepth,
                 secondStep);
       if (j == graph[u].end() - 1) {
         tabs.pop_back();
@@ -575,6 +595,7 @@ void DFS(std::vector<std::vector<unsigned>> &graph,
          const std::vector<reco::CaloCluster> &layerClusters,
          std::vector<Trackster> &resultCollection,
          std::vector<std::vector<unsigned>> &resultCollectionIndices,
+         const int maxDepth,
          bool secondStep) {
   int graphSize = graph.size();
   std::vector<bool> visits(graphSize, false);
@@ -588,8 +609,7 @@ void DFS(std::vector<std::vector<unsigned>> &graph,
       Trackster outTrackster = tracksters[i];
       std::vector<unsigned> outTracksterIndices = {static_cast<unsigned>(i)};
 
-    //  std::cout << " -- Trackster " << i << " Energy " << outTrackster.raw_energy() << " Position "
-                //<< outTrackster.barycenter() << std::endl;
+      int currentDepth = 0;
       DFSVisits(graph,
                 visits,
                 outTrackster,
@@ -599,6 +619,8 @@ void DFS(std::vector<std::vector<unsigned>> &graph,
                 layerClusters,
                 i,
                 tabs,
+                currentDepth,
+                maxDepth,
                 secondStep);
 
       resultCollection.push_back(outTrackster);
@@ -614,6 +636,7 @@ void DFSFinal(std::vector<std::vector<unsigned>> &graph,
               std::vector<std::vector<unsigned>> &previousCollectionIndices,
               std::vector<Trackster> &resultCollection,
               std::vector<std::vector<unsigned>> &resultCollectionIndices,
+              const int maxDepth,
               bool secondStep) {
   int graphSize = graph.size();
   std::vector<bool> visits(graphSize, false);
@@ -625,8 +648,9 @@ void DFSFinal(std::vector<std::vector<unsigned>> &graph,
       tabs.push_back('\t');
       Trackster outTrackster = tracksters[i];
       std::vector<unsigned> outTracksterIndices = previousCollectionIndices[i];
-      //std::cout << " -- Trackster " << i << " Energy " << outTrackster.raw_energy() << " Position "
- //               << outTrackster.barycenter() << std::endl;
+      std::cout << " -- Trackster " << i << " Energy " << outTrackster.raw_energy() << " Position "
+                << outTrackster.barycenter() << std::endl;
+     auto currentDepth = 0;
       DFSVisits(graph,
                 visits,
                 outTrackster,
@@ -636,8 +660,10 @@ void DFSFinal(std::vector<std::vector<unsigned>> &graph,
                 layerClusters,
                 i,
                 tabs,
+                currentDepth,
+                maxDepth,
                 secondStep);
-
+      
       resultCollection.push_back(outTrackster);
       resultCollectionIndices.push_back(outTracksterIndices);
     }
@@ -779,6 +805,7 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
       layerClusters,
       tracksterMergeSmallCollection,
       tracksterMergeSmallCollectionIndices,
+      maxDepth_,
       false);
   assert(tracksterMergeSmallCollectionIndices.size() == tracksterMergeSmallCollection.size());
   //  std::sort(tracksterMergeSmallCollectionIndices.begin(), tracksterMergeSmallCollectionIndices.end(),
@@ -847,6 +874,7 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
            tracksterMergeSmallCollectionIndices,
            tracksterMergeCollection,
            tracksterMergeCollectionIndices,
+           maxDepth_,
            true);
 
   assert(tracksterMergeCollection.size() == tracksterMergeCollectionIndices.size());
@@ -930,6 +958,7 @@ void LinkingAlgoByDirectionGeometric::fillPSetDescription(edm::ParameterSetDescr
   desc.add<double>("delta_ts_had_had", 0.03);
   desc.add<double>("separationSmall", 2);  //cm
   desc.add<double>("separation", 6);  //cm
+  desc.add<double>("maxDepth", 3);
   desc.add<double>("track_time_quality_threshold", 0.5);
   LinkingAlgoBase::fillPSetDescription(desc);
 }

@@ -102,6 +102,9 @@ namespace ticl {
                                  std::vector<float> &,
                                  std::vector<float> &);
 
+
+    bool timeCompatible(const Trackster&, const Trackster&);
+
     bool timeAndEnergyCompatible(const reco::Track &track,
                                  const Trackster &trackster,
                                  const float &tkTime,
@@ -128,6 +131,7 @@ namespace ticl {
     const float del_ts_had_had_;
     const float separationSmall_threshold_;
     const float separation_threshold_;
+    const int maxDepth_;
     const float timing_quality_threshold_;
 
     const StringCutObjectSelector<reco::Track> cutTk_;
