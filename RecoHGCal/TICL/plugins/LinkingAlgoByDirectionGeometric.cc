@@ -23,7 +23,7 @@ LinkingAlgoByDirectionGeometric::LinkingAlgoByDirectionGeometric(const edm::Para
       del_ts_had_had_(conf.getParameter<double>("delta_ts_had_had")),
       separationSmall_threshold_(conf.getParameter<double>("separationSmall")),
       separation_threshold_(conf.getParameter<double>("separation")),
-      maxDepth_(conf.getParameter<double>("maxDepth")),
+      maxDepth_(conf.getParameter<int>("maxDepth")),
       timing_quality_threshold_(conf.getParameter<double>("track_time_quality_threshold")),
       cutTk_(conf.getParameter<std::string>("cutTk")) {}
 
@@ -958,7 +958,7 @@ void LinkingAlgoByDirectionGeometric::fillPSetDescription(edm::ParameterSetDescr
   desc.add<double>("delta_ts_had_had", 0.03);
   desc.add<double>("separationSmall", 2);  //cm
   desc.add<double>("separation", 6);  //cm
-  desc.add<double>("maxDepth", 10);
+  desc.add<int>("maxDepth", 10);
   desc.add<double>("track_time_quality_threshold", 0.5);
   LinkingAlgoBase::fillPSetDescription(desc);
 }
