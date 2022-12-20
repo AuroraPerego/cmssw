@@ -102,8 +102,7 @@ namespace ticl {
                                  std::vector<float> &,
                                  std::vector<float> &);
 
-
-    bool timeCompatible(const Trackster&, const Trackster&);
+    bool timeCompatible(const Trackster &, const Trackster &);
 
     bool timeAndEnergyCompatible(const reco::Track &track,
                                  const Trackster &trackster,

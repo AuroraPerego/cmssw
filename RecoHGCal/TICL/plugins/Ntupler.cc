@@ -94,6 +94,7 @@ private:
   edm::ESGetToken<CaloGeometry, CaloGeometryRecord> caloGeometry_token_;
   const edm::EDGetTokenT<std::vector<ticl::Trackster>> simTracksters_SC_token_;
   const edm::EDGetTokenT<std::vector<ticl::Trackster>> simTracksters_CP_token_;
+  const edm::EDGetTokenT<std::vector<ticl::Trackster>> fineSimTracksters_token_;
   const edm::EDGetTokenT<hgcal::RecoToSimCollectionSimTracksters> tsRecoToSimSC_token_;
   const edm::EDGetTokenT<hgcal::SimToRecoCollectionSimTracksters> tsSimToRecoSC_token_;
   const edm::EDGetTokenT<hgcal::RecoToSimCollectionSimTracksters> tsRecoToSimCP_token_;
@@ -237,10 +238,53 @@ private:
   std::vector<std::vector<float_t>> stsCP_trackster_vertices_correctedEnergy;
   std::vector<std::vector<float_t>> stsCP_trackster_vertices_correctedEnergyUncertainty;
   std::vector<std::vector<float_t>> stsCP_trackster_vertices_multiplicity;
+  std::vector<float_t> fineSTS_trackster_time;
+  std::vector<float_t> fineSTS_trackster_timeError;
+  std::vector<float_t> fineSTS_trackster_regressed_energy;
+  std::vector<float_t> fineSTS_trackster_raw_energy;
+  std::vector<float_t> fineSTS_trackster_raw_em_energy;
+  std::vector<float_t> fineSTS_trackster_raw_pt;
+  std::vector<float_t> fineSTS_trackster_raw_em_pt;
+  std::vector<float_t> fineSTS_trackster_barycenter_x;
+  std::vector<float_t> fineSTS_trackster_barycenter_y;
+  std::vector<float_t> fineSTS_trackster_barycenter_z;
+  std::vector<float_t> fineSTS_trackster_barycenter_eta;
+  std::vector<float_t> fineSTS_trackster_barycenter_phi;
+  std::vector<float_t> fineSTS_trackster_EV1;
+  std::vector<float_t> fineSTS_trackster_EV2;
+  std::vector<float_t> fineSTS_trackster_EV3;
+  std::vector<float_t> fineSTS_trackster_eVector0_x;
+  std::vector<float_t> fineSTS_trackster_eVector0_y;
+  std::vector<float_t> fineSTS_trackster_eVector0_z;
+  std::vector<float_t> fineSTS_trackster_sigmaPCA1;
+  std::vector<float_t> fineSTS_trackster_sigmaPCA2;
+  std::vector<float_t> fineSTS_trackster_sigmaPCA3;
+  std::vector<int> fineSTS_pdgID;
+  std::vector<int> fineSTS_seedIndex;
+  std::vector<float_t> fineSTS_boundaryX;
+  std::vector<float_t> fineSTS_boundaryY;
+  std::vector<float_t> fineSTS_boundaryZ;
+  std::vector<float_t> fineSTS_boundaryEta;
+  std::vector<float_t> fineSTS_boundaryPhi;
+  std::vector<float_t> fineSTS_boundaryPx;
+  std::vector<float_t> fineSTS_boundaryPy;
+  std::vector<float_t> fineSTS_boundaryPz;
+  std::vector<std::vector<float_t>> fineSTS_trackster_id_probabilities;
+  std::vector<std::vector<uint32_t>> fineSTS_trackster_vertices_indexes;
+  std::vector<std::vector<float_t>> fineSTS_trackster_vertices_x;
+  std::vector<std::vector<float_t>> fineSTS_trackster_vertices_y;
+  std::vector<std::vector<float_t>> fineSTS_trackster_vertices_z;
+  std::vector<std::vector<float_t>> fineSTS_trackster_vertices_time;
+  std::vector<std::vector<float_t>> fineSTS_trackster_vertices_timeErr;
+  std::vector<std::vector<float_t>> fineSTS_trackster_vertices_energy;
+  std::vector<std::vector<float_t>> fineSTS_trackster_vertices_correctedEnergy;
+  std::vector<std::vector<float_t>> fineSTS_trackster_vertices_correctedEnergyUncertainty;
+  std::vector<std::vector<float_t>> fineSTS_trackster_vertices_multiplicity;
 
   std::vector<int> layer_cluster_seed;
   std::vector<int> stsSC_layer_cluster_seed;
   std::vector<int> stsCP_layer_cluster_seed;
+  std::vector<int> fineSTS_layer_cluster_seed;
 
   // from TICLGraph
   std::vector<std::vector<uint32_t>> node_linked_inners;
@@ -367,8 +411,8 @@ private:
   TTree* associations_tree_;
   TTree* simtrackstersSC_tree_;
   TTree* simtrackstersCP_tree_;
+  TTree* finesimtracksters_tree_;
   TTree* tracks_tree_;
-  ;
 };
 
 void Ntupler::clearVariables() {
@@ -496,6 +540,50 @@ void Ntupler::clearVariables() {
   stsCP_trackster_vertices_correctedEnergyUncertainty.clear();
   stsCP_layer_cluster_seed.clear();
   stsCP_trackster_vertices_multiplicity.clear();
+  fineSTS_trackster_time.clear();
+  fineSTS_trackster_timeError.clear();
+  fineSTS_trackster_regressed_energy.clear();
+  fineSTS_trackster_raw_energy.clear();
+  fineSTS_trackster_raw_em_energy.clear();
+  fineSTS_trackster_raw_pt.clear();
+  fineSTS_trackster_raw_em_pt.clear();
+  fineSTS_trackster_barycenter_x.clear();
+  fineSTS_trackster_barycenter_y.clear();
+  fineSTS_trackster_barycenter_z.clear();
+  fineSTS_trackster_EV1.clear();
+  fineSTS_trackster_EV2.clear();
+  fineSTS_trackster_EV3.clear();
+  fineSTS_trackster_eVector0_x.clear();
+  fineSTS_trackster_eVector0_y.clear();
+  fineSTS_trackster_eVector0_z.clear();
+  fineSTS_trackster_sigmaPCA1.clear();
+  fineSTS_trackster_sigmaPCA2.clear();
+  fineSTS_trackster_sigmaPCA3.clear();
+  fineSTS_trackster_barycenter_eta.clear();
+  fineSTS_trackster_barycenter_phi.clear();
+  fineSTS_pdgID.clear();
+  fineSTS_seedIndex.clear();
+  fineSTS_boundaryX.clear();
+  fineSTS_boundaryY.clear();
+  fineSTS_boundaryZ.clear();
+  fineSTS_boundaryEta.clear();
+  fineSTS_boundaryPhi.clear();
+  fineSTS_boundaryPx.clear();
+  fineSTS_boundaryPy.clear();
+  fineSTS_boundaryPz.clear();
+  fineSTS_trackster_id_probabilities.clear();
+  fineSTS_trackster_vertices_indexes.clear();
+  fineSTS_trackster_vertices_x.clear();
+  fineSTS_trackster_vertices_y.clear();
+  fineSTS_trackster_vertices_z.clear();
+  fineSTS_trackster_vertices_time.clear();
+  fineSTS_trackster_vertices_timeErr.clear();
+  fineSTS_trackster_vertices_energy.clear();
+  fineSTS_trackster_vertices_correctedEnergy.clear();
+  fineSTS_trackster_vertices_correctedEnergyUncertainty.clear();
+  fineSTS_layer_cluster_seed.clear();
+  fineSTS_trackster_vertices_multiplicity.clear();
+
   node_linked_inners.clear();
   node_linked_outers.clear();
   isRootTrackster.clear();
@@ -651,6 +739,8 @@ Ntupler::Ntupler(const edm::ParameterSet& ps)
           consumes<std::vector<ticl::Trackster>>(ps.getParameter<edm::InputTag>("simtrackstersSC"))),
       simTracksters_CP_token_(
           consumes<std::vector<ticl::Trackster>>(ps.getParameter<edm::InputTag>("simtrackstersCP"))),
+      fineSimTracksters_token_(
+          consumes<std::vector<ticl::Trackster>>(ps.getParameter<edm::InputTag>("fineSimTracksters"))),
       tsRecoToSimSC_token_(
           consumes<hgcal::RecoToSimCollectionSimTracksters>(ps.getParameter<edm::InputTag>("recoToSimAssociatorSC"))),
       tsSimToRecoSC_token_(
@@ -679,6 +769,7 @@ void Ntupler::beginRun(edm::Run const&, edm::EventSetup const& es) {
 }
 
 void Ntupler::beginJob() {
+
   edm::Service<TFileService> fs;
   trackster_tree_ = fs->make<TTree>("tracksters", "TICL tracksters");
   cluster_tree_ = fs->make<TTree>("clusters", "TICL tracksters");
@@ -688,6 +779,7 @@ void Ntupler::beginJob() {
   associations_tree_ = fs->make<TTree>("associations", "Associations");
   simtrackstersSC_tree_ = fs->make<TTree>("simtrackstersSC", "TICL simTracksters SC");
   simtrackstersCP_tree_ = fs->make<TTree>("simtrackstersCP", "TICL simTracksters CP");
+  finesimtracksters_tree_ = fs->make<TTree>("fineSimTracksters", "TICL Fine SimTracksters");
   tracks_tree_ = fs->make<TTree>("tracks", "Tracks");
 
   trackster_tree_->Branch("event", &ev_event_);
@@ -817,7 +909,92 @@ void Ntupler::beginJob() {
   simtrackstersCP_tree_->Branch("stsCP_vertices_correctedEnergyUncertainty",
                                 &stsCP_trackster_vertices_correctedEnergyUncertainty);
   simtrackstersCP_tree_->Branch("stsCP_vertices_multiplicity", &stsCP_trackster_vertices_multiplicity);  //NEW
-  simtrackstersCP_tree_->Branch("NsimTrackstersCP", &nsimTrackstersCP);
+
+
+  finesimtracksters_tree_->Branch("fineSTS_time", &fineSTS_trackster_time);
+
+  finesimtracksters_tree_->Branch("fineSTS_timeError", &fineSTS_trackster_timeError);
+
+  finesimtracksters_tree_->Branch("fineSTS_regressed_energy", &fineSTS_trackster_regressed_energy);
+
+  finesimtracksters_tree_->Branch("fineSTS_raw_energy", &fineSTS_trackster_raw_energy);
+
+  finesimtracksters_tree_->Branch("fineSTS_raw_em_energy", &fineSTS_trackster_raw_em_energy);
+
+  finesimtracksters_tree_->Branch("fineSTS_raw_pt", &fineSTS_trackster_raw_pt);
+
+  finesimtracksters_tree_->Branch("fineSTS_raw_em_pt", &fineSTS_trackster_raw_em_pt);
+
+  finesimtracksters_tree_->Branch("fineSTS_barycenter_x", &fineSTS_trackster_barycenter_x);
+
+  finesimtracksters_tree_->Branch("fineSTS_barycenter_y", &fineSTS_trackster_barycenter_y);
+
+  finesimtracksters_tree_->Branch("fineSTS_barycenter_z", &fineSTS_trackster_barycenter_z);
+
+  finesimtracksters_tree_->Branch("fineSTS_trackster_barycenter_eta", &fineSTS_trackster_barycenter_eta);
+
+  finesimtracksters_tree_->Branch("fineSTS_trackster_barycenter_phi", &fineSTS_trackster_barycenter_phi);
+
+  finesimtracksters_tree_->Branch("fineSTS_pdgID", &fineSTS_pdgID);
+  finesimtracksters_tree_->Branch("fineSTS_seedIndex", &fineSTS_seedIndex);
+
+  finesimtracksters_tree_->Branch("fineSTS_boundaryX", &fineSTS_boundaryX);
+
+  finesimtracksters_tree_->Branch("fineSTS_boundaryY", &fineSTS_boundaryY);
+
+  finesimtracksters_tree_->Branch("fineSTS_boundaryZ", &fineSTS_boundaryZ);
+
+  finesimtracksters_tree_->Branch("fineSTS_boundaryEta", &fineSTS_boundaryEta);
+
+  finesimtracksters_tree_->Branch("fineSTS_boundaryPhi", &fineSTS_boundaryPhi);
+
+  finesimtracksters_tree_->Branch("fineSTS_boundaryPx", &fineSTS_boundaryPx);
+
+  finesimtracksters_tree_->Branch("fineSTS_boundaryPy", &fineSTS_boundaryPy);
+
+  finesimtracksters_tree_->Branch("fineSTS_boundaryPz", &fineSTS_boundaryPz);
+
+  finesimtracksters_tree_->Branch("fineSTS_EV1", &fineSTS_trackster_EV1);
+
+  finesimtracksters_tree_->Branch("fineSTS_EV2", &fineSTS_trackster_EV2);
+
+  finesimtracksters_tree_->Branch("fineSTS_EV3", &fineSTS_trackster_EV3);
+
+  finesimtracksters_tree_->Branch("fineSTS_eVector0_x", &fineSTS_trackster_eVector0_x);
+
+  finesimtracksters_tree_->Branch("fineSTS_eVector0_y", &fineSTS_trackster_eVector0_y);
+
+  finesimtracksters_tree_->Branch("fineSTS_eVector0_z", &fineSTS_trackster_eVector0_z);
+
+  finesimtracksters_tree_->Branch("fineSTS_sigmaPCA1", &fineSTS_trackster_sigmaPCA1);
+
+  finesimtracksters_tree_->Branch("fineSTS_sigmaPCA2", &fineSTS_trackster_sigmaPCA2);
+
+  finesimtracksters_tree_->Branch("fineSTS_sigmaPCA3", &fineSTS_trackster_sigmaPCA3);
+
+  finesimtracksters_tree_->Branch("fineSTS_id_probabilities", &fineSTS_trackster_id_probabilities);
+
+  finesimtracksters_tree_->Branch("fineSTS_vertices_indexes", &fineSTS_trackster_vertices_indexes);
+
+  finesimtracksters_tree_->Branch("fineSTS_vertices_x", &fineSTS_trackster_vertices_x);
+
+  finesimtracksters_tree_->Branch("fineSTS_vertices_y", &fineSTS_trackster_vertices_y);
+
+  finesimtracksters_tree_->Branch("fineSTS_vertices_z", &fineSTS_trackster_vertices_z);
+
+  finesimtracksters_tree_->Branch("fineSTS_vertices_time", &fineSTS_trackster_vertices_time);
+
+  finesimtracksters_tree_->Branch("fineSTS_vertices_timeErr", &fineSTS_trackster_vertices_timeErr);
+
+  finesimtracksters_tree_->Branch("fineSTS_vertices_energy", &fineSTS_trackster_vertices_energy);
+
+  finesimtracksters_tree_->Branch("fineSTS_vertices_correctedEnergy", &fineSTS_trackster_vertices_correctedEnergy);
+
+  finesimtracksters_tree_->Branch("fineSTS_vertices_correctedEnergyUncertainty",
+                                &fineSTS_trackster_vertices_correctedEnergyUncertainty);
+
+  finesimtracksters_tree_->Branch("fineSTS_vertices_multiplicity", &fineSTS_trackster_vertices_multiplicity);  //NEW
+
 
   graph_tree_->Branch("linked_inners", &node_linked_inners);
   graph_tree_->Branch("linked_outers", &node_linked_outers);
@@ -936,11 +1113,13 @@ void Ntupler::beginJob() {
   tracks_tree_->Branch("track_nhits", &track_nhits);
 
   event_index = 0;
+
 }
 
 void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
   event_index++;
   clearVariables();
+
 
   //get all the tracksters
   edm::Handle<std::vector<ticl::Trackster>> tracksters_handle;
@@ -1033,6 +1212,11 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
   edm::Handle<std::vector<ticl::Trackster>> simTrackstersCP_h;
   event.getByToken(simTracksters_CP_token_, simTrackstersCP_h);
   const auto& simTrackstersCP = *simTrackstersCP_h;
+
+
+  edm::Handle<std::vector<ticl::Trackster>> fineSimTracksters_h;
+  event.getByToken(fineSimTracksters_token_, fineSimTracksters_h);
+  const auto& fineSimTracksters = *fineSimTracksters_h;
 
   // trackster reco to sim SC
   edm::Handle<hgcal::RecoToSimCollectionSimTracksters> tsRecoToSimSC_h;
@@ -1350,6 +1534,111 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
     stsCP_trackster_vertices_multiplicity.push_back(vertices_multiplicity);
   }
 
+  nclusters_ = clusters.size();
+  std::cout << "FINE SIM TRACKSTERS " << fineSimTracksters.size() << std::endl;
+  std::cout << __LINE__ << std::endl;
+  for (auto trackster_iterator = fineSimTracksters.begin(); trackster_iterator != fineSimTracksters.end();
+       ++trackster_iterator) {
+    //per-trackster analysis
+    fineSTS_trackster_time.push_back(trackster_iterator->time());
+  std::cout << __LINE__ << std::endl;
+    fineSTS_trackster_timeError.push_back(trackster_iterator->timeError());
+    fineSTS_trackster_regressed_energy.push_back(trackster_iterator->regressed_energy());
+    fineSTS_trackster_raw_energy.push_back(trackster_iterator->raw_energy());
+    fineSTS_trackster_raw_em_energy.push_back(trackster_iterator->raw_em_energy());
+    fineSTS_trackster_raw_pt.push_back(trackster_iterator->raw_pt());
+    fineSTS_trackster_raw_em_pt.push_back(trackster_iterator->raw_em_pt());
+    fineSTS_trackster_barycenter_x.push_back(trackster_iterator->barycenter().x());
+    fineSTS_trackster_barycenter_y.push_back(trackster_iterator->barycenter().y());
+    fineSTS_trackster_barycenter_z.push_back(trackster_iterator->barycenter().z());
+    fineSTS_trackster_barycenter_eta.push_back(trackster_iterator->barycenter().eta());
+  std::cout << __LINE__ << std::endl;
+    fineSTS_trackster_barycenter_phi.push_back(trackster_iterator->barycenter().phi());
+    fineSTS_trackster_EV1.push_back(trackster_iterator->eigenvalues()[0]);
+    fineSTS_trackster_EV2.push_back(trackster_iterator->eigenvalues()[1]);
+    fineSTS_trackster_EV3.push_back(trackster_iterator->eigenvalues()[2]);
+    fineSTS_trackster_eVector0_x.push_back((trackster_iterator->eigenvectors()[0]).x());
+    fineSTS_trackster_eVector0_y.push_back((trackster_iterator->eigenvectors()[0]).y());
+    fineSTS_trackster_eVector0_z.push_back((trackster_iterator->eigenvectors()[0]).z());
+    fineSTS_trackster_sigmaPCA1.push_back(trackster_iterator->sigmasPCA()[0]);
+    fineSTS_trackster_sigmaPCA2.push_back(trackster_iterator->sigmasPCA()[1]);
+    fineSTS_trackster_sigmaPCA3.push_back(trackster_iterator->sigmasPCA()[2]);
+    fineSTS_seedIndex.push_back(trackster_iterator->seedIndex());
+    fineSTS_pdgID.push_back(caloparticles[trackster_iterator->seedIndex()].pdgId());
+    auto simTrack = caloparticles[trackster_iterator->seedIndex()].g4Tracks()[0];
+    if (simTrack.crossedBoundary()) {
+      fineSTS_boundaryX.push_back(simTrack.getPositionAtBoundary().x());
+      fineSTS_boundaryY.push_back(simTrack.getPositionAtBoundary().y());
+      fineSTS_boundaryZ.push_back(simTrack.getPositionAtBoundary().z());
+      fineSTS_boundaryEta.push_back(simTrack.getPositionAtBoundary().eta());
+      fineSTS_boundaryPhi.push_back(simTrack.getPositionAtBoundary().phi());
+      fineSTS_boundaryPx.push_back(simTrack.getMomentumAtBoundary().x());
+      fineSTS_boundaryPy.push_back(simTrack.getMomentumAtBoundary().y());
+      fineSTS_boundaryPz.push_back(simTrack.getMomentumAtBoundary().z());
+    } else {
+      fineSTS_boundaryX.push_back(-999);
+      fineSTS_boundaryY.push_back(-999);
+      fineSTS_boundaryZ.push_back(-999);
+      fineSTS_boundaryEta.push_back(-999);
+      fineSTS_boundaryPhi.push_back(-999);
+      fineSTS_boundaryPx.push_back(-999);
+      fineSTS_boundaryPy.push_back(-999);
+      fineSTS_boundaryPz.push_back(-999);
+    }
+  std::cout << __LINE__ << std::endl;
+    std::vector<float_t> id_probs;
+    for (size_t i = 0; i < 8; i++)
+      id_probs.push_back(trackster_iterator->id_probabilities(i));
+    fineSTS_trackster_id_probabilities.push_back(id_probs);
+
+  std::cout << __LINE__ << std::endl;
+    // Clusters
+    std::vector<uint32_t> vertices_indexes;
+    std::vector<float_t> vertices_x;
+    std::vector<float_t> vertices_y;
+    std::vector<float_t> vertices_z;
+    std::vector<float_t> vertices_time;
+    std::vector<float_t> vertices_timeErr;
+    std::vector<float_t> vertices_energy;
+    std::vector<float_t> vertices_correctedEnergy;
+    std::vector<float_t> vertices_correctedEnergyUncertainty;
+    for (auto idx : trackster_iterator->vertices()) {
+  std::cout << __LINE__ << std::endl;
+      vertices_indexes.push_back(idx);
+      auto associated_cluster = (*layer_clusters_h)[idx];
+      vertices_x.push_back(associated_cluster.x());
+      vertices_y.push_back(associated_cluster.y());
+      vertices_z.push_back(associated_cluster.z());
+      vertices_energy.push_back(associated_cluster.energy());
+      vertices_correctedEnergy.push_back(associated_cluster.correctedEnergy());
+      vertices_correctedEnergyUncertainty.push_back(associated_cluster.correctedEnergyUncertainty());
+      vertices_time.push_back(layerClustersTimes.get(idx).first);
+      vertices_timeErr.push_back(layerClustersTimes.get(idx).second);
+  std::cout << __LINE__ << std::endl;
+    }
+    fineSTS_trackster_vertices_indexes.push_back(vertices_indexes);
+  std::cout << __LINE__ << std::endl;
+    fineSTS_trackster_vertices_x.push_back(vertices_x);
+    fineSTS_trackster_vertices_y.push_back(vertices_y);
+    fineSTS_trackster_vertices_z.push_back(vertices_z);
+    fineSTS_trackster_vertices_time.push_back(vertices_time);
+  std::cout << __LINE__ << std::endl;
+    fineSTS_trackster_vertices_timeErr.push_back(vertices_timeErr);
+    fineSTS_trackster_vertices_energy.push_back(vertices_energy);
+    fineSTS_trackster_vertices_correctedEnergy.push_back(vertices_correctedEnergy);
+    fineSTS_trackster_vertices_correctedEnergyUncertainty.push_back(vertices_correctedEnergyUncertainty);
+
+  std::cout << __LINE__ << std::endl;
+    // Multiplicity
+    std::vector<float_t> vertices_multiplicity;
+    for (auto multiplicity : trackster_iterator->vertex_multiplicity()) {
+      vertices_multiplicity.push_back(multiplicity);
+  std::cout << __LINE__ << std::endl;
+    }
+    fineSTS_trackster_vertices_multiplicity.push_back(vertices_multiplicity);
+  std::cout << __LINE__ << std::endl;
+  }
+
   node_linked_inners.resize(tracksters.size());
   node_linked_outers.resize(tracksters.size());
   isRootTrackster.resize(tracksters.size(), false);
@@ -1466,15 +1755,15 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
       id_probs.push_back(trackster_iterator->id_probabilities(i));
     tracksters_merged_id_probabilities.push_back(id_probs);
 
-  	std::vector<uint32_t> vertices_indexes;
-  	std::vector<float_t> vertices_x;
-  	std::vector<float_t> vertices_y;
-  	std::vector<float_t> vertices_z;
-  	std::vector<float_t> vertices_time;
-  	std::vector<float_t> vertices_timeErr;
-  	std::vector<float_t> vertices_energy;
-  	std::vector<float_t> vertices_correctedEnergy;
-  	std::vector<float_t> vertices_correctedEnergyUncertainty;
+    std::vector<uint32_t> vertices_indexes;
+    std::vector<float_t> vertices_x;
+    std::vector<float_t> vertices_y;
+    std::vector<float_t> vertices_z;
+    std::vector<float_t> vertices_time;
+    std::vector<float_t> vertices_timeErr;
+    std::vector<float_t> vertices_energy;
+    std::vector<float_t> vertices_correctedEnergy;
+    std::vector<float_t> vertices_correctedEnergyUncertainty;
     for (auto idx : trackster_iterator->vertices()) {
       vertices_indexes.push_back(idx);
       auto associated_cluster = (*layer_clusters_h)[idx];
@@ -1587,6 +1876,7 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
   for (size_t i = 0; i < trackstersmerged.size(); ++i) {
     const edm::Ref<ticl::TracksterCollection> tsRef(tracksters_merged_h, i);
 
+  std::cout << __LINE__ << std::endl;
     // CLUE3D -> STS-SC
     const auto stsSC_iter = MergetsRecoSimSCMap.find(tsRef);
     if (stsSC_iter != MergetsRecoSimSCMap.end()) {
@@ -1704,6 +1994,9 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
   associations_tree_->Fill();
   simtrackstersSC_tree_->Fill();
   simtrackstersCP_tree_->Fill();
+
+  finesimtracksters_tree_->Fill();
+
   tracks_tree_->Fill();
 }
 
@@ -1736,6 +2029,7 @@ void Ntupler::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   desc.add<edm::InputTag>("tracksterSeeds", edm::InputTag("ticlTrackstersCLUE3DHigh", "tracksterSeeds"));
   desc.add<edm::InputTag>("simtrackstersSC", edm::InputTag("ticlSimTracksters"));
   desc.add<edm::InputTag>("simtrackstersCP", edm::InputTag("ticlSimTracksters", "fromCPs"));
+  desc.add<edm::InputTag>("fineSimTracksters", edm::InputTag("ticlFineSimTracksters", "fine"));
   desc.add<edm::InputTag>("recoToSimAssociatorSC",
                           edm::InputTag("tracksterSimTracksterAssociationPRbyCLUE3D", "recoToSim"));
   desc.add<edm::InputTag>("simToRecoAssociatorSC",

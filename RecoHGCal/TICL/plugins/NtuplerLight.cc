@@ -1165,7 +1165,7 @@ void NtuplerLight::analyze(const edm::Event& event, const edm::EventSetup& setup
       //     vertices_time.push_back(layerClustersTimes.get(idx).first);
       //     vertices_timeErr.push_back(layerClustersTimes.get(idx).second);
     }
-        trackster_vertices_indexes.push_back(vertices_indexes);
+    trackster_vertices_indexes.push_back(vertices_indexes);
     //    trackster_vertices_x.push_back(vertices_x);
     //   trackster_vertices_y.push_back(vertices_y);
     //  trackster_vertices_z.push_back(vertices_z);
@@ -1392,9 +1392,9 @@ void NtuplerLight::analyze(const edm::Event& event, const edm::EventSetup& setup
     cluster_energy.push_back(cluster_iterator->energy());
     //   cluster_correctedEnergy.push_back(cluster_iterator->correctedEnergy());
     //   cluster_correctedEnergyUncertainty.push_back(cluster_iterator->correctedEnergyUncertainty());
-        cluster_position_x.push_back(cluster_iterator->x());
-        cluster_position_y.push_back(cluster_iterator->y());
-        cluster_position_z.push_back(cluster_iterator->z());
+    cluster_position_x.push_back(cluster_iterator->x());
+    cluster_position_y.push_back(cluster_iterator->y());
+    cluster_position_z.push_back(cluster_iterator->z());
     //    cluster_position_eta.push_back(cluster_iterator->eta());
     //    cluster_position_phi.push_back(cluster_iterator->phi());
     auto haf = cluster_iterator->hitsAndFractions();
@@ -1480,15 +1480,15 @@ void NtuplerLight::analyze(const edm::Event& event, const edm::EventSetup& setup
     //    tracksters_merged_sigmaPCA2.push_back(trackster_iterator->sigmasPCA()[1]);
     //    tracksters_merged_sigmaPCA3.push_back(trackster_iterator->sigmasPCA()[2]);
 
-  	std::vector<uint32_t> vertices_indexes;
-  	std::vector<float_t> vertices_x;
-  	std::vector<float_t> vertices_y;
-  	std::vector<float_t> vertices_z;
-  	std::vector<float_t> vertices_time;
-  	std::vector<float_t> vertices_timeErr;
-  	std::vector<float_t> vertices_energy;
-  	std::vector<float_t> vertices_correctedEnergy;
-  	std::vector<float_t> vertices_correctedEnergyUncertainty;
+    std::vector<uint32_t> vertices_indexes;
+    std::vector<float_t> vertices_x;
+    std::vector<float_t> vertices_y;
+    std::vector<float_t> vertices_z;
+    std::vector<float_t> vertices_time;
+    std::vector<float_t> vertices_timeErr;
+    std::vector<float_t> vertices_energy;
+    std::vector<float_t> vertices_correctedEnergy;
+    std::vector<float_t> vertices_correctedEnergyUncertainty;
     std::vector<float_t> id_probs;
     for (size_t i = 0; i < 8; i++)
       id_probs.push_back(trackster_iterator->id_probabilities(i));
@@ -1506,7 +1506,7 @@ void NtuplerLight::analyze(const edm::Event& event, const edm::EventSetup& setup
       //        vertices_time.push_back(layerClustersTimes.get(idx).first);
       //        vertices_timeErr.push_back(layerClustersTimes.get(idx).second);
     }
-        tracksters_merged_vertices_indexes.push_back(vertices_indexes);
+    tracksters_merged_vertices_indexes.push_back(vertices_indexes);
     //    tracksters_merged_vertices_x.push_back(vertices_x);
     //    tracksters_merged_vertices_y.push_back(vertices_y);
     //    tracksters_merged_vertices_z.push_back(vertices_z);
