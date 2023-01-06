@@ -1100,8 +1100,8 @@ void Ntupler::beginJob() {
   tracks_tree_->Branch("track_hgcal_x", &track_hgcal_x);
   tracks_tree_->Branch("track_hgcal_y", &track_hgcal_y);
   tracks_tree_->Branch("track_hgcal_z", &track_hgcal_z);
-  tracks_tree_->Branch("track_hgcal_py", &track_hgcal_eta);
-  tracks_tree_->Branch("track_hgcal_pz", &track_hgcal_phi);
+  tracks_tree_->Branch("track_hgcal_eta", &track_hgcal_eta);
+  tracks_tree_->Branch("track_hgcal_phi", &track_hgcal_phi);
   tracks_tree_->Branch("track_hgcal_px", &track_hgcal_px);
   tracks_tree_->Branch("track_hgcal_py", &track_hgcal_py);
   tracks_tree_->Branch("track_hgcal_pz", &track_hgcal_pz);
@@ -1563,9 +1563,13 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
     fineSTS_trackster_sigmaPCA1.push_back(trackster_iterator->sigmasPCA()[0]);
     fineSTS_trackster_sigmaPCA2.push_back(trackster_iterator->sigmasPCA()[1]);
     fineSTS_trackster_sigmaPCA3.push_back(trackster_iterator->sigmasPCA()[2]);
+    std::cout << __LINE__ << std::endl;
     fineSTS_seedIndex.push_back(trackster_iterator->seedIndex());
-    fineSTS_pdgID.push_back(caloparticles[trackster_iterator->seedIndex()].pdgId());
-    auto simTrack = caloparticles[trackster_iterator->seedIndex()].g4Tracks()[0];
+    std::cout << __LINE__ << std::endl;
+    fineSTS_pdgID.push_back(simclusters[trackster_iterator->seedIndex()].pdgId());
+    std::cout << __LINE__ << std::endl;
+    auto simTrack = simclusters[trackster_iterator->seedIndex()].g4Tracks()[0];
+    std::cout << __LINE__ << std::endl;
     if (simTrack.crossedBoundary()) {
       fineSTS_boundaryX.push_back(simTrack.getPositionAtBoundary().x());
       fineSTS_boundaryY.push_back(simTrack.getPositionAtBoundary().y());
@@ -1575,7 +1579,9 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
       fineSTS_boundaryPx.push_back(simTrack.getMomentumAtBoundary().x());
       fineSTS_boundaryPy.push_back(simTrack.getMomentumAtBoundary().y());
       fineSTS_boundaryPz.push_back(simTrack.getMomentumAtBoundary().z());
+  std::cout << __LINE__ << std::endl;
     } else {
+  std::cout << __LINE__ << std::endl;
       fineSTS_boundaryX.push_back(-999);
       fineSTS_boundaryY.push_back(-999);
       fineSTS_boundaryZ.push_back(-999);
@@ -1584,7 +1590,9 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
       fineSTS_boundaryPx.push_back(-999);
       fineSTS_boundaryPy.push_back(-999);
       fineSTS_boundaryPz.push_back(-999);
+  std::cout << __LINE__ << std::endl;
     }
+  std::cout << __LINE__ << std::endl;
   std::cout << __LINE__ << std::endl;
     std::vector<float_t> id_probs;
     for (size_t i = 0; i < 8; i++)

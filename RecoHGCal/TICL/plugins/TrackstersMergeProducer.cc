@@ -283,9 +283,9 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
   evt.getByToken(tracksters_clue3d_token_, trackstersclue3d_h);
 
   auto masked_tracks = std::make_unique<std::vector<bool>>();
-  auto hgcaltracks_x = std::make_unique<std::vector<double>>();
-  auto hgcaltracks_y = std::make_unique<std::vector<double>>();
-  auto hgcaltracks_z = std::make_unique<std::vector<double>>();
+  auto hgcaltracks_x  = std::make_unique<std::vector<double>>();
+  auto hgcaltracks_y  = std::make_unique<std::vector<double>>();
+  auto hgcaltracks_z  = std::make_unique<std::vector<double>>();
   auto hgcaltracks_eta = std::make_unique<std::vector<double>>();
   auto hgcaltracks_phi = std::make_unique<std::vector<double>>();
   auto hgcaltracks_px = std::make_unique<std::vector<double>>();
@@ -312,6 +312,7 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
   auto separations2 = std::make_unique<std::vector<float>>();
   auto separations2_ET = std::make_unique<std::vector<float>>();
 
+  masked_tracks->resize(tracks.size(), false);
   linkingAlgo_->linkTracksters(track_h,
                                trackTime,
                                trackTimeErr,
@@ -327,9 +328,19 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
                                *separations2,
                                *separations2_ET,
                                *distancesVec,
-                               *distancesVecIdx);
+                               *distancesVecIdx,
+                               *hgcaltracks_x,
+                               *hgcaltracks_y,
+                               *hgcaltracks_z,
+                               *hgcaltracks_eta,
+                               *hgcaltracks_phi,
+                               *hgcaltracks_px,
+                               *hgcaltracks_py,
+                               *hgcaltracks_pz,
+                               *masked_tracks);
 
-  masked_tracks->resize(tracks.size(), false);
+
+
   // Print debug info
   LogDebug("TrackstersMergeProducer") << "Results from the linking step : " << std::endl
                                       << "No. of Tracks : " << tracks.size()

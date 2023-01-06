@@ -51,7 +51,18 @@ namespace ticl {
                         std::vector<float> &,
                         std::vector<float> &,
                         std::vector<float> &,
-                        std::vector<int> &) override;
+                        std::vector<int> &,
+                        std::vector<double>& prop_tracks_x,
+                        std::vector<double>& prop_tracks_y,
+                        std::vector<double>& prop_tracks_z,
+                        std::vector<double>& prop_tracks_eta,
+                        std::vector<double>& prop_tracks_phi,
+                        std::vector<double>& prop_tracks_px,
+                        std::vector<double>& prop_tracks_py,
+                        std::vector<double>& prop_tracks_pz,
+                        std::vector<bool>& masked_track) override;
+
+      
 
     static void fillPSetDescription(edm::ParameterSetDescription &desc);
 

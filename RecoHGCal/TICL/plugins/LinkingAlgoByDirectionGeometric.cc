@@ -710,7 +710,17 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
                                                      std::vector<float> &separations2_for_ntuples,
                                                      std::vector<float> &separations2_ETCompatible_for_ntuples,
                                                      std::vector<float> &distancesVec,
-                                                     std::vector<int> &distancesVecIdx) {
+                                                     std::vector<int> &distancesVecIdx,
+                                                     std::vector<double>& prop_tracks_x,
+                                                     std::vector<double>& prop_tracks_y,
+                                                     std::vector<double>& prop_tracks_z,
+                                                     std::vector<double>& prop_tracks_eta,
+                                                     std::vector<double>& prop_tracks_phi,
+                                                     std::vector<double>& prop_tracks_px,
+                                                     std::vector<double>& prop_tracks_py,
+                                                     std::vector<double>& prop_tracks_pz,
+                                                     std::vector<bool>& masked_tracks
+                                                     ) {
   const auto &tracks = *tkH;
   const auto &tracksters = *tsH;
 
@@ -754,6 +764,15 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
           << " time qual " << tkTimeQual[reco::TrackRef(tkH, i)] << "  muid " << muId << "\n";
 
     if (!cutTk_((tk)) or muId != -1) {
+      masked_tracks[i] = false;
+      prop_tracks_x.push_back(999);
+      prop_tracks_y.push_back(999);
+      prop_tracks_z.push_back(999);
+      prop_tracks_eta.push_back(999);
+      prop_tracks_phi.push_back(999);
+      prop_tracks_px.push_back(999);
+      prop_tracks_py.push_back(999);
+      prop_tracks_pz.push_back(999);
       continue;
     }
     // record tracks that can be used to make a ticlcandidate
@@ -761,6 +780,15 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
 
     // don't consider tracks below 2 GeV for linking
     if (std::sqrt(tk.p() * tk.p() + ticl::mpion2) < tkEnergyCut_) {
+      masked_tracks[i] = false;
+      prop_tracks_x.push_back(999);
+      prop_tracks_y.push_back(999);
+      prop_tracks_z.push_back(999);
+      prop_tracks_eta.push_back(999);
+      prop_tracks_phi.push_back(999);
+      prop_tracks_px.push_back(999);
+      prop_tracks_py.push_back(999);
+      prop_tracks_pz.push_back(999);
       continue;
     }
     int iSide = int(tk.eta() > 0);
@@ -769,9 +797,18 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
     const auto &tsos = prop.propagate(fts, firstDisk_[iSide]->surface());
     if (tsos.isValid()) {
       Vector trackP(tsos.globalPosition().x(), tsos.globalPosition().y(), tsos.globalPosition().z());
-      trackPColl.emplace_back(trackP, i);
+      prop_tracks_x.push_back(trackP.x());
+      prop_tracks_y.push_back(trackP.y());
+      prop_tracks_z.push_back(trackP.z());
+      prop_tracks_eta.push_back(trackP.eta());
+      prop_tracks_phi.push_back(trackP.phi());
+      prop_tracks_px.push_back(tsos.globalMomentum().x());
+      prop_tracks_py.push_back(tsos.globalMomentum().y());
+      prop_tracks_pz.push_back(tsos.globalMomentum().z());
+      masked_tracks[i] = true;
       trackPColl.emplace_back(trackP, i);
     } else {
+      masked_tracks[i] = false;
       // std::cout << "PROPAGATION NOT VALID! " << std::endl;
     }
     // to lastLayerEE
