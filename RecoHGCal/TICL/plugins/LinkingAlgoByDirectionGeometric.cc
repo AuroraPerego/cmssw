@@ -841,7 +841,7 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
       //masked_tracks[i] = false;
       // std::cout << "PROPAGATION NOT VALID! " << std::endl;
     }
-    Vector directionFromTwoPoints = trackPIntLayer - trackPFirstLayer;
+//    Vector directionFromTwoPoints = trackPIntLayer - trackPFirstLayer;
  //   std::cout << "Direction from two points " << directionFromTwoPoints.Unit() << std::endl;
   }  // Tracks
   tkPropIntColl.shrink_to_fit();
