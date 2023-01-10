@@ -1536,12 +1536,12 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
 
   nclusters_ = clusters.size();
   std::cout << "FINE SIM TRACKSTERS " << fineSimTracksters.size() << std::endl;
-  std::cout << __LINE__ << std::endl;
+
   for (auto trackster_iterator = fineSimTracksters.begin(); trackster_iterator != fineSimTracksters.end();
        ++trackster_iterator) {
     //per-trackster analysis
     fineSTS_trackster_time.push_back(trackster_iterator->time());
-  std::cout << __LINE__ << std::endl;
+
     fineSTS_trackster_timeError.push_back(trackster_iterator->timeError());
     fineSTS_trackster_regressed_energy.push_back(trackster_iterator->regressed_energy());
     fineSTS_trackster_raw_energy.push_back(trackster_iterator->raw_energy());
@@ -1552,7 +1552,7 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
     fineSTS_trackster_barycenter_y.push_back(trackster_iterator->barycenter().y());
     fineSTS_trackster_barycenter_z.push_back(trackster_iterator->barycenter().z());
     fineSTS_trackster_barycenter_eta.push_back(trackster_iterator->barycenter().eta());
-  std::cout << __LINE__ << std::endl;
+
     fineSTS_trackster_barycenter_phi.push_back(trackster_iterator->barycenter().phi());
     fineSTS_trackster_EV1.push_back(trackster_iterator->eigenvalues()[0]);
     fineSTS_trackster_EV2.push_back(trackster_iterator->eigenvalues()[1]);
@@ -1563,13 +1563,13 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
     fineSTS_trackster_sigmaPCA1.push_back(trackster_iterator->sigmasPCA()[0]);
     fineSTS_trackster_sigmaPCA2.push_back(trackster_iterator->sigmasPCA()[1]);
     fineSTS_trackster_sigmaPCA3.push_back(trackster_iterator->sigmasPCA()[2]);
-    std::cout << __LINE__ << std::endl;
+
     fineSTS_seedIndex.push_back(trackster_iterator->seedIndex());
-    std::cout << __LINE__ << std::endl;
+
     fineSTS_pdgID.push_back(simclusters[trackster_iterator->seedIndex()].pdgId());
-    std::cout << __LINE__ << std::endl;
+
     auto simTrack = simclusters[trackster_iterator->seedIndex()].g4Tracks()[0];
-    std::cout << __LINE__ << std::endl;
+
     if (simTrack.crossedBoundary()) {
       fineSTS_boundaryX.push_back(simTrack.getPositionAtBoundary().x());
       fineSTS_boundaryY.push_back(simTrack.getPositionAtBoundary().y());
@@ -1579,9 +1579,9 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
       fineSTS_boundaryPx.push_back(simTrack.getMomentumAtBoundary().x());
       fineSTS_boundaryPy.push_back(simTrack.getMomentumAtBoundary().y());
       fineSTS_boundaryPz.push_back(simTrack.getMomentumAtBoundary().z());
-  std::cout << __LINE__ << std::endl;
+
     } else {
-  std::cout << __LINE__ << std::endl;
+
       fineSTS_boundaryX.push_back(-999);
       fineSTS_boundaryY.push_back(-999);
       fineSTS_boundaryZ.push_back(-999);
@@ -1590,16 +1590,16 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
       fineSTS_boundaryPx.push_back(-999);
       fineSTS_boundaryPy.push_back(-999);
       fineSTS_boundaryPz.push_back(-999);
-  std::cout << __LINE__ << std::endl;
+
     }
-  std::cout << __LINE__ << std::endl;
-  std::cout << __LINE__ << std::endl;
+
+
     std::vector<float_t> id_probs;
     for (size_t i = 0; i < 8; i++)
       id_probs.push_back(trackster_iterator->id_probabilities(i));
     fineSTS_trackster_id_probabilities.push_back(id_probs);
 
-  std::cout << __LINE__ << std::endl;
+
     // Clusters
     std::vector<uint32_t> vertices_indexes;
     std::vector<float_t> vertices_x;
@@ -1611,7 +1611,7 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
     std::vector<float_t> vertices_correctedEnergy;
     std::vector<float_t> vertices_correctedEnergyUncertainty;
     for (auto idx : trackster_iterator->vertices()) {
-  std::cout << __LINE__ << std::endl;
+
       vertices_indexes.push_back(idx);
       auto associated_cluster = (*layer_clusters_h)[idx];
       vertices_x.push_back(associated_cluster.x());
@@ -1622,29 +1622,29 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
       vertices_correctedEnergyUncertainty.push_back(associated_cluster.correctedEnergyUncertainty());
       vertices_time.push_back(layerClustersTimes.get(idx).first);
       vertices_timeErr.push_back(layerClustersTimes.get(idx).second);
-  std::cout << __LINE__ << std::endl;
+
     }
     fineSTS_trackster_vertices_indexes.push_back(vertices_indexes);
-  std::cout << __LINE__ << std::endl;
+
     fineSTS_trackster_vertices_x.push_back(vertices_x);
     fineSTS_trackster_vertices_y.push_back(vertices_y);
     fineSTS_trackster_vertices_z.push_back(vertices_z);
     fineSTS_trackster_vertices_time.push_back(vertices_time);
-  std::cout << __LINE__ << std::endl;
+
     fineSTS_trackster_vertices_timeErr.push_back(vertices_timeErr);
     fineSTS_trackster_vertices_energy.push_back(vertices_energy);
     fineSTS_trackster_vertices_correctedEnergy.push_back(vertices_correctedEnergy);
     fineSTS_trackster_vertices_correctedEnergyUncertainty.push_back(vertices_correctedEnergyUncertainty);
 
-  std::cout << __LINE__ << std::endl;
+
     // Multiplicity
     std::vector<float_t> vertices_multiplicity;
     for (auto multiplicity : trackster_iterator->vertex_multiplicity()) {
       vertices_multiplicity.push_back(multiplicity);
-  std::cout << __LINE__ << std::endl;
+
     }
     fineSTS_trackster_vertices_multiplicity.push_back(vertices_multiplicity);
-  std::cout << __LINE__ << std::endl;
+
   }
 
   node_linked_inners.resize(tracksters.size());
@@ -1884,7 +1884,7 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
   for (size_t i = 0; i < trackstersmerged.size(); ++i) {
     const edm::Ref<ticl::TracksterCollection> tsRef(tracksters_merged_h, i);
 
-  std::cout << __LINE__ << std::endl;
+
     // CLUE3D -> STS-SC
     const auto stsSC_iter = MergetsRecoSimSCMap.find(tsRef);
     if (stsSC_iter != MergetsRecoSimSCMap.end()) {
@@ -1983,7 +1983,7 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
       track_hgcal_py.push_back(tracks_propagated_py[i]);
 
       track_hgcal_pz.push_back(tracks_propagated_pz[i]);
-
+      std::cout << "Ntupler GlobalMomentum " << tracks_propagated_px[i] << " " << tracks_propagated_py[i] << " " << tracks_propagated_pz[i] << std::endl;
       track_pt.push_back(tracks[i].pt());
       track_charge.push_back(tracks[i].charge());
 
@@ -2025,8 +2025,8 @@ void Ntupler::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   desc.add<edm::InputTag>("hgcaltracks_eta", edm::InputTag("ticlTrackstersMerge", "hgcaltracksEta"));
   desc.add<edm::InputTag>("hgcaltracks_phi", edm::InputTag("ticlTrackstersMerge", "hgcaltracksPhi"));
   desc.add<edm::InputTag>("hgcaltracks_px", edm::InputTag("ticlTrackstersMerge", "hgcaltracksPx"));
-  desc.add<edm::InputTag>("hgcaltracks_py", edm::InputTag("ticlTrackstersMerge", "hgcaltracksPx"));
-  desc.add<edm::InputTag>("hgcaltracks_pz", edm::InputTag("ticlTrackstersMerge", "hgcaltracksPx"));
+  desc.add<edm::InputTag>("hgcaltracks_py", edm::InputTag("ticlTrackstersMerge", "hgcaltracksPy"));
+  desc.add<edm::InputTag>("hgcaltracks_pz", edm::InputTag("ticlTrackstersMerge", "hgcaltracksPz"));
   desc.add<edm::InputTag>("tracksTime", edm::InputTag("tofPID:t0"));
   desc.add<edm::InputTag>("tracksTimeQual", edm::InputTag("mtdTrackQualityMVA:mtdQualMVA"));
   desc.add<edm::InputTag>("tracksTimeErr", edm::InputTag("tofPID:sigmat0"));

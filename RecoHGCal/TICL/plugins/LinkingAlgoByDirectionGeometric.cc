@@ -795,8 +795,11 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
     const auto &fts = trajectoryStateTransform::outerFreeState((tk), bFieldProd);
     // to the HGCal front
     const auto &tsos = prop.propagate(fts, firstDisk_[iSide]->surface());
+    Vector trackPFirstLayer;
+    float trackEnergy = sqrt(tracks[i].outerP() * tracks[i].outerP()  + mpion2);
     if (tsos.isValid()) {
       Vector trackP(tsos.globalPosition().x(), tsos.globalPosition().y(), tsos.globalPosition().z());
+      trackPFirstLayer = trackP;
       prop_tracks_x.push_back(trackP.x());
       prop_tracks_y.push_back(trackP.y());
       prop_tracks_z.push_back(trackP.z());
@@ -805,6 +808,9 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
       prop_tracks_px.push_back(tsos.globalMomentum().x());
       prop_tracks_py.push_back(tsos.globalMomentum().y());
       prop_tracks_pz.push_back(tsos.globalMomentum().z());
+//      std::cout << "First Layer " << std::endl;
+//      std::cout << "Track " << i << " Energy " << trackEnergy << " Global Momentum" << tsos.globalMomentum() << " Position " << tsos.globalPosition() << std::endl;
+//      std::cout << "Track " << i << " Energy " << trackEnergy << " Global Direction " << tsos.globalDirection() << " Position " << tsos.globalPosition() << std::endl;
       masked_tracks[i] = true;
       trackPColl.emplace_back(trackP, i);
     } else {
@@ -813,10 +819,30 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
     }
     // to lastLayerEE
     const auto &tsos_int = prop.propagate(fts, interfaceDisk_[iSide]->surface());
+    Vector trackPIntLayer;
     if (tsos_int.isValid()) {
       Vector trackP(tsos_int.globalPosition().x(), tsos_int.globalPosition().y(), tsos_int.globalPosition().z());
+      trackPIntLayer = trackP;
       tkPropIntColl.emplace_back(trackP, i);
+     // prop_tracks_xInt.push_back(trackP.x());
+     // prop_tracks_yInt.push_back(trackP.y());
+     // prop_tracks_zInt.push_back(trackP.z());
+     // prop_tracks_etaInt.push_back(trackP.eta());
+     // prop_tracks_phiInt.push_back(trackP.phi());
+     // prop_tracks_pxInt.push_back(tsos.globalMomentum().x());
+     // prop_tracks_pyInt.push_back(tsos.globalMomentum().y());
+     // prop_tracks_pzInt.push_back(tsos.globalMomentum().z());
+     // masked_tracks[i] = true;
+      trackPColl.emplace_back(trackP, i);
+//      std::cout << "Interface Layer " << std::endl;
+//      std::cout << "Track " << i << "Energy " << trackEnergy << " Global Momentum " << tsos_int.globalMomentum() << " Position " << tsos_int.globalPosition() << std::endl;
+//      std::cout << "Track " << i << "Energy " << trackEnergy << " Global Direction " << tsos_int.globalDirection() << " Position " << tsos_int.globalPosition() << std::endl;
+    } else {
+      //masked_tracks[i] = false;
+      // std::cout << "PROPAGATION NOT VALID! " << std::endl;
     }
+    Vector directionFromTwoPoints = trackPIntLayer - trackPFirstLayer;
+ //   std::cout << "Direction from two points " << directionFromTwoPoints.Unit() << std::endl;
   }  // Tracks
   tkPropIntColl.shrink_to_fit();
   trackPColl.shrink_to_fit();
