@@ -51,6 +51,7 @@ public:
 
   void produce(edm::Event&, const edm::EventSetup&) override;
   void addTrackster(const int& index,
+                    const std::vector<CaloParticle>& caloparticles,
                     const std::vector<std::pair<edm::Ref<reco::CaloClusterCollection>, std::pair<float, float>>>& lcVec,
                     const std::vector<float>& inputClusterMask,
                     const float& fractionCut_,
@@ -143,6 +144,7 @@ void SimTrackstersProducer::fillDescriptions(edm::ConfigurationDescriptions& des
 
 void SimTrackstersProducer::addTrackster(
     const int& index,
+    const std::vector<CaloParticle>& caloparticles,
     const std::vector<std::pair<edm::Ref<reco::CaloClusterCollection>, std::pair<float, float>>>& lcVec,
     const std::vector<float>& inputClusterMask,
     const float& fractionCut_,
@@ -174,6 +176,7 @@ void SimTrackstersProducer::addTrackster(
   tmpTrackster.setRegressedEnergy(energy);
   tmpTrackster.setIteration(iter);
   tmpTrackster.setSeed(seed, index);
+  tmpTrackster.setRegressedPt(caloparticles[index].pt());
   result.emplace_back(tmpTrackster);
 }
 
@@ -230,6 +233,7 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
       regr_energy = cp.g4Tracks()[0].getMomentumAtBoundary().energy();
 
       addTrackster(cpIndex,
+                   caloparticles,
                    lcVec,
                    inputClusterMask,
                    fractionCut_,
@@ -250,6 +254,7 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
         auto const scIndex = &sc - &simclusters[0];
 
         addTrackster(scIndex,
+                     caloparticles,
                      lcVec,
                      inputClusterMask,
                      fractionCut_,
@@ -273,6 +278,7 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
 
     // Create a Trackster from any CP
     addTrackster(cpIndex,
+                 caloparticles,
                  lcVec,
                  inputClusterMask,
                  fractionCut_,
