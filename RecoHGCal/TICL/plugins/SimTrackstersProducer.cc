@@ -181,7 +181,6 @@ void SimTrackstersProducer::addTrackster(
   }
 
   tmpTrackster.setIdProbability(tracksterParticleTypeFromPdgId(pdgId, charge), 1.f);
-  tmpTrackster.setRegressedEnergy(energy);
   tmpTrackster.setIteration(iter);
   tmpTrackster.setSeed(seed, index);
   tmpTrackster.setTimeAndError(time, 0.f);
@@ -243,7 +242,6 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
       regr_energy = cp.g4Tracks()[0].getMomentumAtBoundary().energy();
       float time = cp.g4Tracks()[0].getPositionAtBoundary().t();
       addTrackster(cpIndex,
-                   caloparticles,
                    lcVec,
                    inputClusterMask,
                    fractionCut_,
@@ -265,7 +263,6 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
         auto const scIndex = &sc - &simclusters[0];
 
         addTrackster(scIndex,
-                     caloparticles,
                      lcVec,
                      inputClusterMask,
                      fractionCut_,
@@ -290,7 +287,6 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
     float time = simVertices[cp.g4Tracks()[0].vertIndex()].position().t();
     // Create a Trackster from any CP
     addTrackster(cpIndex,
-                 caloparticles,
                  lcVec,
                  inputClusterMask,
                  fractionCut_,

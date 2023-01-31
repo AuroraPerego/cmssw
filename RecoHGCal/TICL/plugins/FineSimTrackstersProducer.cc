@@ -308,7 +308,7 @@ void FineSimFineSimTrackstersProducer::produce(edm::Event& evt, const edm::Event
         tot_still_av += 1;
       }
     }
-    std::cout << " LCs still available " << tot_still_av << std::endl;
+    //std::cout << " LCs still available " << tot_still_av << std::endl;
     if (doNose_) {
       const auto& layer_clusters_hfnose_tiles_mip = evt.get(layer_clusters_tiles_hfnose_token_);
       const typename PatternRecognitionAlgoBaseT<TICLLayerTilesHFNose>::Inputs inputHFNoseMIP(
@@ -383,7 +383,6 @@ evt.put(std::move(resultMIP), "fineMIP");
 evt.put(std::move(simTracksterToFineSimTracksters), "fine");
 //evt.put(std::move(tracksterSeeds), "fine");
 //evt.put(std::move(tracksterSeedsMIP), "fineMIP");
-std::cout << "END PRODUCER " << std::endl;
 evt.put(std::move(clustersLocalDensity), "layerClustersLocalDensity");
 evt.put(std::move(clustersRadius), "layerClustersRadius");
 evt.put(std::move(clustersSize), "layerClustersSize");
