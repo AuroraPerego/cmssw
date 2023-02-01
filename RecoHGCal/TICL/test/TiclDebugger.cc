@@ -115,7 +115,6 @@ void TiclDebugger::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
   std::vector<std::pair<int, float>> bestCPMatches;
 
-  std::cout << " in ticldebugger " << std::endl;
   edm::Handle<hgcal::RecoToSimCollection> recotosimCollectionH;
   iEvent.getByToken(associatorMapRtS, recotosimCollectionH);
   auto recSimColl = *recotosimCollectionH;
@@ -123,15 +122,12 @@ void TiclDebugger::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     const edm::Ref<reco::CaloClusterCollection> lcRef(layerClustersH, lcId);
     const auto& cpsIt = recSimColl.find(lcRef);
     if (cpsIt == recSimColl.end()) {
-      std::cout << "Not found " << std::endl;
       continue;
     }
     const auto& cps = cpsIt->val;
     for (const auto& cpPair : cps) {
-      std::cout << "LC ID " << lcId << " SCORE " << cpPair.second << std::endl;
     }
   }
-  std::cout << " end ticldebugger " << std::endl;
 
   auto bestCaloParticleMatches = [&](const ticl::Trackster& t) -> void {
     bestCPMatches.clear();

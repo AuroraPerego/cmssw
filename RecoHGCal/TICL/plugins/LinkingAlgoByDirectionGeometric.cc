@@ -562,8 +562,8 @@ void DFSVisits(std::vector<std::vector<unsigned>> &graph,
       std::copy(std::begin(thisTrackster.vertex_multiplicity()),
                 std::end(thisTrackster.vertex_multiplicity()),
                 std::back_inserter(outTrackster.vertex_multiplicity()));
-      std::cout << tabs << "Visiting " << *j << " Energy " << thisTrackster.raw_energy() << " Position "
-                << thisTrackster.barycenter() << std::endl;
+      //std::cout << tabs << "Visiting " << *j << " Energy " << thisTrackster.raw_energy() << " Position "
+        //        << thisTrackster.barycenter() << std::endl;
 
       if (!secondStep) {
         outTracksterIndices.push_back(*j);
@@ -611,8 +611,8 @@ void DFS(std::vector<std::vector<unsigned>> &graph,
       std::vector<unsigned> outTracksterIndices = {static_cast<unsigned>(i)};
 
       int currentDepth = 0;
-      std::cout << " -- Trackster " << i << " Energy " << outTrackster.raw_energy() << " Position "
-                << outTrackster.barycenter() << std::endl;
+      //std::cout << " -- Trackster " << i << " Energy " << outTrackster.raw_energy() << " Position "
+        //        << outTrackster.barycenter() << std::endl;
       DFSVisits(graph,
                 visits,
                 outTrackster,
@@ -651,8 +651,8 @@ void DFSFinal(std::vector<std::vector<unsigned>> &graph,
       tabs.push_back('\t');
       Trackster outTrackster = tracksters[i];
       std::vector<unsigned> outTracksterIndices = previousCollectionIndices[i];
-      std::cout << " -- Trackster " << i << " Energy " << outTrackster.raw_energy() << " Position "
-                << outTrackster.barycenter() << std::endl;
+      //std::cout << " -- Trackster " << i << " Energy " << outTrackster.raw_energy() << " Position "
+        //        << outTrackster.barycenter() << std::endl;
       auto currentDepth = 0;
       DFSVisits(graph,
                 visits,

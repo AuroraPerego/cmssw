@@ -363,7 +363,7 @@ private:
   std::vector<float_t> simTICLCandidate_trackTime;
   std::vector<float_t> simTICLCandidate_trackBeta;
   std::vector<float_t> simTICLCandidate_caloParticleMass;
-  std::vector<uint8_t> simTICLCandidate_pdgId;
+  std::vector<int> simTICLCandidate_pdgId;
   std::vector<int> simTICLCandidate_charge;
 
   // from TICLCandidate, product of linking
@@ -1587,17 +1587,28 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
       const auto& fts = trajectoryStateTransform::outerFreeState((track), bFieldProd);
       // to the HGCal front
       const auto& tsos = prop.propagate(fts, firstDisk_[iSide]->surface());
-      const auto& globalPos = tsos.globalPosition();
-      const auto& globalMom = tsos.globalMomentum();
-      stsSC_boundaryX.push_back(globalPos.x());
-      stsSC_boundaryY.push_back(globalPos.y());
-      stsSC_boundaryZ.push_back(globalPos.z());
-      stsSC_boundaryEta.push_back(globalPos.eta());
-      stsSC_boundaryPhi.push_back(globalPos.phi());
-      stsSC_boundaryPx.push_back(globalMom.x());
-      stsSC_boundaryPy.push_back(globalMom.y());
-      stsSC_boundaryPz.push_back(globalMom.z());
-      stsSC_trackTime.push_back(track.t0());
+      if (tsos.isValid()) {
+        const auto& globalPos = tsos.globalPosition();
+        const auto& globalMom = tsos.globalMomentum();
+        stsSC_boundaryX.push_back(globalPos.x());
+        stsSC_boundaryY.push_back(globalPos.y());
+        stsSC_boundaryZ.push_back(globalPos.z());
+        stsSC_boundaryEta.push_back(globalPos.eta());
+        stsSC_boundaryPhi.push_back(globalPos.phi());
+        stsSC_boundaryPx.push_back(globalMom.x());
+        stsSC_boundaryPy.push_back(globalMom.y());
+        stsSC_boundaryPz.push_back(globalMom.z());
+        stsSC_trackTime.push_back(track.t0());
+      } else {
+        stsSC_boundaryX.push_back(-999);
+        stsSC_boundaryY.push_back(-999);
+        stsSC_boundaryZ.push_back(-999);
+        stsSC_boundaryEta.push_back(-999);
+        stsSC_boundaryPhi.push_back(-999);
+        stsSC_boundaryPx.push_back(-999);
+        stsSC_boundaryPy.push_back(-999);
+        stsSC_boundaryPz.push_back(-999);
+      }
     } else {
       stsSC_boundaryX.push_back(-999);
       stsSC_boundaryY.push_back(-999);
@@ -1608,6 +1619,7 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
       stsSC_boundaryPy.push_back(-999);
       stsSC_boundaryPz.push_back(-999);
     }
+
     std::vector<float_t> id_probs;
     for (size_t i = 0; i < 8; i++)
       id_probs.push_back(trackster_iterator->id_probabilities(i));
@@ -1710,17 +1722,28 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
       const auto& fts = trajectoryStateTransform::outerFreeState((track), bFieldProd);
       // to the HGCal front
       const auto& tsos = prop.propagate(fts, firstDisk_[iSide]->surface());
-      const auto& globalPos = tsos.globalPosition();
-      const auto& globalMom = tsos.globalMomentum();
-      stsCP_boundaryX.push_back(globalPos.x());
-      stsCP_boundaryY.push_back(globalPos.y());
-      stsCP_boundaryZ.push_back(globalPos.z());
-      stsCP_boundaryEta.push_back(globalPos.eta());
-      stsCP_boundaryPhi.push_back(globalPos.phi());
-      stsCP_boundaryPx.push_back(globalMom.x());
-      stsCP_boundaryPy.push_back(globalMom.y());
-      stsCP_boundaryPz.push_back(globalMom.z());
-      stsCP_trackTime.push_back(track.t0());
+      if (tsos.isValid()) {
+        const auto& globalPos = tsos.globalPosition();
+        const auto& globalMom = tsos.globalMomentum();
+        stsCP_boundaryX.push_back(globalPos.x());
+        stsCP_boundaryY.push_back(globalPos.y());
+        stsCP_boundaryZ.push_back(globalPos.z());
+        stsCP_boundaryEta.push_back(globalPos.eta());
+        stsCP_boundaryPhi.push_back(globalPos.phi());
+        stsCP_boundaryPx.push_back(globalMom.x());
+        stsCP_boundaryPy.push_back(globalMom.y());
+        stsCP_boundaryPz.push_back(globalMom.z());
+        stsCP_trackTime.push_back(track.t0());
+      } else {
+        stsCP_boundaryX.push_back(-999);
+        stsCP_boundaryY.push_back(-999);
+        stsCP_boundaryZ.push_back(-999);
+        stsCP_boundaryEta.push_back(-999);
+        stsCP_boundaryPhi.push_back(-999);
+        stsCP_boundaryPx.push_back(-999);
+        stsCP_boundaryPy.push_back(-999);
+        stsCP_boundaryPz.push_back(-999);
+      }
     } else {
       stsCP_boundaryX.push_back(-999);
       stsCP_boundaryY.push_back(-999);
@@ -1888,14 +1911,13 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
     simTICLCandidate_pdgId.push_back(cand.pdgId());
     simTICLCandidate_charge.push_back(cand.charge());
     simTICLCandidate_caloParticleMass.push_back(cp.mass());
-		std::vector<int> tmpIdxVec; 
-    for (auto const& simTSCP : cand.tracksters()) {
-      auto trackster_idx = simTSCP.get() - (edm::Ptr<ticl::Trackster>(simTrackstersCP_h, 0)).get();
-      std::cout << "Trackste idx " << std::endl;
+    std::vector<int> tmpIdxVec;
+    for (auto const& simTS : cand.tracksters()) {
+      auto trackster_idx = simTS.get() - (edm::Ptr<ticl::Trackster>(simTrackstersSC_h, 0)).get();
       tmpIdxVec.push_back(trackster_idx);
     }
     simTICLCandidate_simTracksterCPIndex.push_back(tmpIdxVec);
-		tmpIdxVec.clear();
+    tmpIdxVec.clear();
     auto const& trackPtr = cand.trackPtr();
 
     //auto track_idx = track_ptr.get() - (edm::Ptr<reco::Track>(track_h, 0)).get();
@@ -1906,16 +1928,27 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
       const auto& fts = trajectoryStateTransform::outerFreeState((track), bFieldProd);
       // to the HGCal front
       const auto& tsos = prop.propagate(fts, firstDisk_[iSide]->surface());
-      const auto& globalPos = tsos.globalPosition();
-      const auto& globalMom = tsos.globalMomentum();
-      simTICLCandidate_boundaryX.push_back(globalPos.x());
-      simTICLCandidate_boundaryY.push_back(globalPos.y());
-      simTICLCandidate_boundaryZ.push_back(globalPos.z());
-      simTICLCandidate_boundaryPx.push_back(globalMom.x());
-      simTICLCandidate_boundaryPy.push_back(globalMom.y());
-      simTICLCandidate_boundaryPz.push_back(globalMom.z());
-      simTICLCandidate_trackTime.push_back(track.t0());
-      simTICLCandidate_trackBeta.push_back(track.beta());
+      if (tsos.isValid()) {
+        const auto& globalPos = tsos.globalPosition();
+        const auto& globalMom = tsos.globalMomentum();
+        simTICLCandidate_boundaryX.push_back(globalPos.x());
+        simTICLCandidate_boundaryY.push_back(globalPos.y());
+        simTICLCandidate_boundaryZ.push_back(globalPos.z());
+        simTICLCandidate_boundaryPx.push_back(globalMom.x());
+        simTICLCandidate_boundaryPy.push_back(globalMom.y());
+        simTICLCandidate_boundaryPz.push_back(globalMom.z());
+        simTICLCandidate_trackTime.push_back(track.t0());
+        simTICLCandidate_trackBeta.push_back(track.beta());
+      } else {
+        simTICLCandidate_boundaryX.push_back(-999);
+        simTICLCandidate_boundaryY.push_back(-999);
+        simTICLCandidate_boundaryZ.push_back(-999);
+        simTICLCandidate_boundaryPx.push_back(-999);
+        simTICLCandidate_boundaryPy.push_back(-999);
+        simTICLCandidate_boundaryPz.push_back(-999);
+        simTICLCandidate_trackTime.push_back(-999);
+        simTICLCandidate_trackBeta.push_back(-999);
+      }
     } else {
       simTICLCandidate_boundaryX.push_back(-999);
       simTICLCandidate_boundaryY.push_back(-999);
@@ -2242,34 +2275,31 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
 
   //Tracks
   for (size_t i = 0; i < tracks.size(); i++) {
-    if (mask_tracks[i] == true) {
+      auto track = tracks[i];
       reco::TrackRef trackref = reco::TrackRef(tracks_h, i);
-
-      track_ev.push_back(event_index);
-      track_id.push_back(i);
-
-      track_hgcal_x.push_back(tracks_propagated_x[i]);
-
-      track_hgcal_y.push_back(tracks_propagated_y[i]);
-
-      track_hgcal_z.push_back(tracks_propagated_z[i]);
-
-      track_hgcal_eta.push_back(tracks_propagated_eta[i]);
-
-      track_hgcal_phi.push_back(tracks_propagated_phi[i]);
-
-      track_hgcal_px.push_back(tracks_propagated_px[i]);
-
-      track_hgcal_py.push_back(tracks_propagated_py[i]);
-
-      track_hgcal_pz.push_back(tracks_propagated_pz[i]);
-      track_pt.push_back(tracks[i].pt());
-      track_charge.push_back(tracks[i].charge());
-
-      track_time.push_back(trackTime[trackref]);
-      track_time_quality.push_back(trackTimeQual[trackref]);
-      track_time_err.push_back(trackTimeErr[trackref]);
-      track_nhits.push_back(tracks[i].recHitsSize());
+      int iSide = int(track.eta() > 0);
+      const auto& fts = trajectoryStateTransform::outerFreeState((track), bFieldProd);
+      // to the HGCal front
+      const auto& tsos = prop.propagate(fts, firstDisk_[iSide]->surface());
+      if (tsos.isValid()) {
+        const auto& globalPos = tsos.globalPosition();
+        const auto& globalMom = tsos.globalMomentum();
+      	track_ev.push_back(event_index);
+      	track_id.push_back(i);
+      	track_hgcal_x.push_back(globalPos.x());
+      	track_hgcal_y.push_back(globalPos.y());
+      	track_hgcal_z.push_back(globalPos.z());
+      	track_hgcal_eta.push_back(globalPos.eta());
+      	track_hgcal_phi.push_back(globalPos.phi());
+      	track_hgcal_px.push_back(globalMom.x());
+      	track_hgcal_py.push_back(globalMom.y());
+      	track_hgcal_pz.push_back(globalMom.z());
+      	track_pt.push_back(globalMom.perp());
+      	track_charge.push_back(track.charge());
+      	track_time.push_back(trackTime[trackref]);
+      	track_time_quality.push_back(trackTimeQual[trackref]);
+      	track_time_err.push_back(trackTimeErr[trackref]);
+      	track_nhits.push_back(tracks[i].recHitsSize());
     }
   }
 
