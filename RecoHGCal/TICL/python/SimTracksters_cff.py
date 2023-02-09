@@ -12,11 +12,12 @@ from RecoHGCal.TICL.fineSimTrackstersProducer_cfi import fineSimTrackstersProduc
 filteredLayerClustersSimTracksters = _filteredLayerClustersProducer.clone(
     clusterFilter = "ClusterFilterByAlgoAndSize",
     algo_number = 8,
-    min_cluster_size = 1, # inclusive
+    min_cluster_size = 2, # inclusive
     iteration_label = "ticlSimTracksters"
 )
 
 ticlSimTracksters = _simTrackstersProducer.clone(
+  filtered_mask = "ticlSimTracksters"
 )
 
 ticlFineSimTracksters = _fineSimTrackstersProducer.clone(
