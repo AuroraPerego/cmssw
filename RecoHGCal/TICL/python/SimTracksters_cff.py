@@ -17,7 +17,7 @@ filteredLayerClustersSimTracksters = _filteredLayerClustersProducer.clone(
 )
 
 ticlSimTracksters = _simTrackstersProducer.clone(
-  filtered_mask = "ticlSimTracksters"
+		filtered_mask = "filteredLayerClustersSimTracksters:ticlSimTracksters"
 )
 
 ticlFineSimTracksters = _fineSimTrackstersProducer.clone(
