@@ -2275,31 +2275,31 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
 
   //Tracks
   for (size_t i = 0; i < tracks.size(); i++) {
-      auto track = tracks[i];
-      reco::TrackRef trackref = reco::TrackRef(tracks_h, i);
-      int iSide = int(track.eta() > 0);
-      const auto& fts = trajectoryStateTransform::outerFreeState((track), bFieldProd);
-      // to the HGCal front
-      const auto& tsos = prop.propagate(fts, firstDisk_[iSide]->surface());
-      if (tsos.isValid()) {
-        const auto& globalPos = tsos.globalPosition();
-        const auto& globalMom = tsos.globalMomentum();
-      	track_ev.push_back(event_index);
-      	track_id.push_back(i);
-      	track_hgcal_x.push_back(globalPos.x());
-      	track_hgcal_y.push_back(globalPos.y());
-      	track_hgcal_z.push_back(globalPos.z());
-      	track_hgcal_eta.push_back(globalPos.eta());
-      	track_hgcal_phi.push_back(globalPos.phi());
-      	track_hgcal_px.push_back(globalMom.x());
-      	track_hgcal_py.push_back(globalMom.y());
-      	track_hgcal_pz.push_back(globalMom.z());
-      	track_pt.push_back(globalMom.perp());
-      	track_charge.push_back(track.charge());
-      	track_time.push_back(trackTime[trackref]);
-      	track_time_quality.push_back(trackTimeQual[trackref]);
-      	track_time_err.push_back(trackTimeErr[trackref]);
-      	track_nhits.push_back(tracks[i].recHitsSize());
+    auto track = tracks[i];
+    reco::TrackRef trackref = reco::TrackRef(tracks_h, i);
+    int iSide = int(track.eta() > 0);
+    const auto& fts = trajectoryStateTransform::outerFreeState((track), bFieldProd);
+    // to the HGCal front
+    const auto& tsos = prop.propagate(fts, firstDisk_[iSide]->surface());
+    if (tsos.isValid()) {
+      const auto& globalPos = tsos.globalPosition();
+      const auto& globalMom = tsos.globalMomentum();
+      track_ev.push_back(event_index);
+      track_id.push_back(i);
+      track_hgcal_x.push_back(globalPos.x());
+      track_hgcal_y.push_back(globalPos.y());
+      track_hgcal_z.push_back(globalPos.z());
+      track_hgcal_eta.push_back(globalPos.eta());
+      track_hgcal_phi.push_back(globalPos.phi());
+      track_hgcal_px.push_back(globalMom.x());
+      track_hgcal_py.push_back(globalMom.y());
+      track_hgcal_pz.push_back(globalMom.z());
+      track_pt.push_back(globalMom.perp());
+      track_charge.push_back(track.charge());
+      track_time.push_back(trackTime[trackref]);
+      track_time_quality.push_back(trackTimeQual[trackref]);
+      track_time_err.push_back(trackTimeErr[trackref]);
+      track_nhits.push_back(tracks[i].recHitsSize());
     }
   }
 
@@ -2312,10 +2312,10 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
   simtrackstersSC_tree_->Fill();
   simtrackstersCP_tree_->Fill();
 
-  finesimtracksters_tree_->Fill();
+//  finesimtracksters_tree_->Fill();
 
   tracks_tree_->Fill();
-  simTICLCandidate_tree->Fill();
+// simTICLCandidate_tree->Fill();
 }
 
 void Ntupler::endJob() {}
