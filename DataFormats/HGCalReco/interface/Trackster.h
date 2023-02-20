@@ -43,8 +43,10 @@ namespace ticl {
           raw_em_energy_(0.f),
           raw_pt_(0.f),
           raw_em_pt_(0.f),
-          time_(0.f),
-          timeError_(-1.f),
+          CALOtime_(0.f),
+          CALOtimeError_(-1.f),
+          MTDtime_(0.f),
+          MTDtimeError_(-1.f),
           eigenvalues_{{0.f, 0.f, 0.f}},
           sigmas_{{0.f, 0.f, 0.f}},
           sigmasPCA_{{0.f, 0.f, 0.f}},
@@ -62,8 +64,12 @@ namespace ticl {
       seedIndex_ = index;
     }
     inline void setTimeAndError(float t, float tError) {
-      time_ = t;
-      timeError_ = tError;
+      CALOtime_ = t;
+      CALOtimeError_ = tError;
+    }
+    inline void setMTDTimeAndError(float t, float tError) {
+      MTDtime_ = t;
+      MTDtimeError_ = tError;
     }
     inline void setRegressedEnergy(float value) { regressed_energy_ = value; }
     inline void setRawEnergy(float value) { raw_energy_ = value; }
@@ -127,8 +133,10 @@ namespace ticl {
     inline const std::vector<std::array<unsigned int, 2> > &edges() const { return edges_; }
     inline const edm::ProductID &seedID() const { return seedID_; }
     inline const int seedIndex() const { return seedIndex_; }
-    inline const float time() const { return time_; }
-    inline const float timeError() const { return timeError_; }
+    inline const float time() const { return CALOtime_; }
+    inline const float timeError() const { return CALOtimeError_; }
+    inline const float MTDtime() const { return MTDtime_; }
+    inline const float MTDtimeError() const { return MTDtimeError_; }
     inline const float regressed_energy() const { return regressed_energy_; }
     inline const float raw_energy() const { return raw_energy_; }
     inline const float raw_em_energy() const { return raw_em_energy_; }
@@ -168,8 +176,11 @@ namespace ticl {
     std::vector<float> vertex_multiplicity_;
 
     // -99, -1 if not available. ns units otherwise
-    float time_;
-    float timeError_;
+    float CALOtime_;
+    float CALOtimeError_;
+
+    float MTDtime_;
+    float MTDtimeError_;
 
     int track_idx_ = -1;
 
