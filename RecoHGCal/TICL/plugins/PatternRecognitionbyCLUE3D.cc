@@ -164,10 +164,10 @@ void PatternRecognitionbyCLUE3D<TILES>::makeTracksters(
   std::vector<unsigned int> &clustersSize = output.clustersSize;
   std::vector<unsigned int> &clustersType = output.clustersType;
 
-  clustersLocalDensity.reserve(input.layerClusters.size());
-  clustersRadius.reserve(input.layerClusters.size());
-  clustersSize.reserve(input.layerClusters.size());
-  clustersType.reserve(input.layerClusters.size());
+  clustersLocalDensity.resize(input.layerClusters.size());
+  clustersRadius.resize(input.layerClusters.size());
+  clustersSize.resize(input.layerClusters.size());
+  clustersType.resize(input.layerClusters.size());
 
   const int eventNumber = input.ev.eventAuxiliary().event();
   if (PatternRecognitionAlgoBaseT<TILES>::algo_verbosity_ > VerbosityLevel::Advanced) {
@@ -305,7 +305,7 @@ void PatternRecognitionbyCLUE3D<TILES>::makeTracksters(
 
   tmp_result.resize(nTracksters);
   tmp_racksterSeeds.reserve(nTracksters);
-
+	
   for (unsigned int layer = 0; layer < clusters_.size(); ++layer) {
     const auto &thisLayer = clusters_[layer];
     if (PatternRecognitionAlgoBaseT<TILES>::algo_verbosity_ > VerbosityLevel::Advanced) {

@@ -1910,7 +1910,7 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
     simTICLCandidate_regressed_energy.push_back(cand.p4().energy());
     simTICLCandidate_pdgId.push_back(cand.pdgId());
     simTICLCandidate_charge.push_back(cand.charge());
-    simTICLCandidate_caloParticleMass.push_back(cp.mass());
+//    simTICLCandidate_caloParticleMass.push_back(cp.mass());
     std::vector<int> tmpIdxVec;
     for (auto const& simTS : cand.tracksters()) {
       auto trackster_idx = simTS.get() - (edm::Ptr<ticl::Trackster>(simTrackstersSC_h, 0)).get();
@@ -1999,7 +1999,7 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
 
     auto c_ld = 0.;
     if (layer_cluster_density[c_id] > 1e-5 && layer_cluster_density[c_id] < 3000) {
-      c_ld = layer_cluster_density[c_ld];
+      c_ld = layer_cluster_density[c_id];
     }
     cluster_ld.push_back(c_ld);
 
