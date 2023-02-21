@@ -198,6 +198,10 @@ private:
   std::vector<std::vector<float_t>> trackster_vertices_multiplicity;
   std::vector<float_t> stsSC_trackster_time;
   std::vector<float_t> stsSC_trackster_timeError;
+  std::vector<float_t> stsSC_trackster_boundary_time;
+  std::vector<float_t> stsSC_trackster_boundary_timeError;
+  std::vector<float_t> stsSC_trackster_MTD_time;
+  std::vector<float_t> stsSC_trackster_MTD_timeError;
   std::vector<float_t> stsSC_trackster_regressed_energy;
   std::vector<float_t> stsSC_trackster_raw_energy;
   std::vector<float_t> stsSC_trackster_raw_em_energy;
@@ -249,6 +253,10 @@ private:
   std::vector<std::vector<float_t>> stsSC_trackster_vertices_multiplicity;
   std::vector<float_t> stsCP_trackster_time;
   std::vector<float_t> stsCP_trackster_timeError;
+  std::vector<float_t> stsCP_trackster_boundary_time;
+  std::vector<float_t> stsCP_trackster_boundary_timeError;
+  std::vector<float_t> stsCP_trackster_MTD_time;
+  std::vector<float_t> stsCP_trackster_MTD_timeError;
   std::vector<float_t> stsCP_trackster_regressed_energy;
   std::vector<float_t> stsCP_trackster_raw_energy;
   std::vector<float_t> stsCP_trackster_raw_em_energy;
@@ -533,6 +541,10 @@ void Ntupler::clearVariables() {
 
   stsSC_trackster_time.clear();
   stsSC_trackster_timeError.clear();
+  stsSC_trackster_boundary_time.clear();
+  stsSC_trackster_boundary_timeError.clear();
+  stsSC_trackster_MTD_time.clear();
+  stsSC_trackster_MTD_timeError.clear();
   stsSC_trackster_regressed_energy.clear();
   stsSC_trackster_raw_energy.clear();
   stsSC_trackster_raw_em_energy.clear();
@@ -588,6 +600,10 @@ void Ntupler::clearVariables() {
 
   stsCP_trackster_time.clear();
   stsCP_trackster_timeError.clear();
+  stsCP_trackster_boundary_time.clear();
+  stsCP_trackster_boundary_timeError.clear();
+  stsCP_trackster_MTD_time.clear();
+  stsCP_trackster_MTD_timeError.clear();
   stsCP_trackster_regressed_energy.clear();
   stsCP_trackster_raw_energy.clear();
   stsCP_trackster_raw_em_energy.clear();
@@ -964,6 +980,10 @@ void Ntupler::beginJob() {
   simtrackstersSC_tree_->Branch("NTracksters", &stsSC_ntracksters_);
   simtrackstersSC_tree_->Branch("time", &stsSC_trackster_time);
   simtrackstersSC_tree_->Branch("timeError", &stsSC_trackster_timeError);
+  simtrackstersSC_tree_->Branch("BoundaryTime", &stsSC_trackster_boundary_time);
+  simtrackstersSC_tree_->Branch("BoundaryTimeError", &stsSC_trackster_boundary_timeError);
+  simtrackstersSC_tree_->Branch("MTDtime", &stsSC_trackster_MTD_time);
+  simtrackstersSC_tree_->Branch("MTDtimeError", &stsSC_trackster_MTD_timeError);
   simtrackstersSC_tree_->Branch("regressed_energy", &stsSC_trackster_regressed_energy);
   simtrackstersSC_tree_->Branch("raw_energy", &stsSC_trackster_raw_energy);
   simtrackstersSC_tree_->Branch("raw_em_energy", &stsSC_trackster_raw_em_energy);
@@ -1011,6 +1031,10 @@ void Ntupler::beginJob() {
   simtrackstersCP_tree_->Branch("NTracksters", &stsCP_ntracksters_);
   simtrackstersCP_tree_->Branch("time", &stsCP_trackster_time);
   simtrackstersCP_tree_->Branch("timeError", &stsCP_trackster_timeError);
+  simtrackstersCP_tree_->Branch("BoundaryTime", &stsCP_trackster_boundary_time);
+  simtrackstersCP_tree_->Branch("BoundaryTimeError", &stsCP_trackster_boundary_timeError);
+  simtrackstersCP_tree_->Branch("MTDtime", &stsCP_trackster_MTD_time);
+  simtrackstersCP_tree_->Branch("MTDtimeError", &stsCP_trackster_MTD_timeError);
   simtrackstersCP_tree_->Branch("regressed_energy", &stsCP_trackster_regressed_energy);
   simtrackstersCP_tree_->Branch("raw_energy", &stsCP_trackster_raw_energy);
   simtrackstersCP_tree_->Branch("raw_em_energy", &stsCP_trackster_raw_em_energy);
@@ -1536,6 +1560,10 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
     //per-trackster analysis
     stsSC_trackster_time.push_back(trackster_iterator->time());
     stsSC_trackster_timeError.push_back(trackster_iterator->timeError());
+    stsSC_trackster_boundary_time.push_back(trackster_iterator->BoundaryTime());
+    stsSC_trackster_boundary_timeError.push_back(trackster_iterator->BoundaryTimeError());
+    stsSC_trackster_MTD_time.push_back(trackster_iterator->MTDtime());
+    stsSC_trackster_MTD_timeError.push_back(trackster_iterator->MTDtimeError());
     stsSC_trackster_regressed_energy.push_back(trackster_iterator->regressed_energy());
     stsSC_trackster_raw_energy.push_back(trackster_iterator->raw_energy());
     stsSC_trackster_raw_em_energy.push_back(trackster_iterator->raw_em_energy());
@@ -1672,6 +1700,10 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
     //per-trackster analysis
     stsCP_trackster_time.push_back(trackster_iterator->time());
     stsCP_trackster_timeError.push_back(trackster_iterator->timeError());
+    stsCP_trackster_boundary_time.push_back(trackster_iterator->BoundaryTime());
+    stsCP_trackster_boundary_timeError.push_back(trackster_iterator->BoundaryTimeError());
+    stsCP_trackster_MTD_time.push_back(trackster_iterator->MTDtime());
+    stsCP_trackster_MTD_timeError.push_back(trackster_iterator->MTDtimeError());
     stsCP_trackster_regressed_energy.push_back(trackster_iterator->regressed_energy());
     stsCP_trackster_raw_energy.push_back(trackster_iterator->raw_energy());
     stsCP_trackster_raw_em_energy.push_back(trackster_iterator->raw_em_energy());

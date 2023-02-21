@@ -189,7 +189,7 @@ void SimTrackstersProducer::addTrackster(
   tmpTrackster.setIdProbability(tracksterParticleTypeFromPdgId(pdgId, charge), 1.f);
   tmpTrackster.setIteration(iter);
   tmpTrackster.setSeed(seed, index);
-  tmpTrackster.setTimeAndError(time, 0.f);
+  tmpTrackster.setBoundaryTimeAndError(time, 0.f);
   result.emplace_back(tmpTrackster);
 }
 
@@ -319,10 +319,10 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
   // TODO: remove time computation from PCA calculation and
   //       store time from boundary position in simTracksters
   ticl::assignPCAtoTracksters(
-      *result, layerClusters, rhtools_.getPositionLayer(rhtools_.lastLayerEE(doNose_)).z());
+      *result, layerClusters, layerClustersTimes, rhtools_.getPositionLayer(rhtools_.lastLayerEE(doNose_)).z());
   result->shrink_to_fit();
   ticl::assignPCAtoTracksters(
-      *result_fromCP, layerClusters, rhtools_.getPositionLayer(rhtools_.lastLayerEE(doNose_)).z());
+      *result_fromCP, layerClusters, layerClustersTimes, rhtools_.getPositionLayer(rhtools_.lastLayerEE(doNose_)).z());
   result_fromCP->shrink_to_fit();
 
   auto simTrackToRecoTrack = [&](UniqueSimTrackId simTkId) -> std::pair<int, float> {

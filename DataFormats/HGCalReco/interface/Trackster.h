@@ -45,6 +45,8 @@ namespace ticl {
           raw_em_pt_(0.f),
           CALOtime_(0.f),
           CALOtimeError_(-1.f),
+          BoundaryTime_(0.f),
+          BoundaryTimeError_(-1.f),
           MTDtime_(0.f),
           MTDtimeError_(-1.f),
           eigenvalues_{{0.f, 0.f, 0.f}},
@@ -66,6 +68,10 @@ namespace ticl {
     inline void setTimeAndError(float t, float tError) {
       CALOtime_ = t;
       CALOtimeError_ = tError;
+    }
+    inline void setBoundaryTimeAndError(float t, float tError) {
+      BoundaryTime_ = t;
+      BoundaryTimeError_ = tError;
     }
     inline void setMTDTimeAndError(float t, float tError) {
       MTDtime_ = t;
@@ -135,6 +141,8 @@ namespace ticl {
     inline const int seedIndex() const { return seedIndex_; }
     inline const float time() const { return CALOtime_; }
     inline const float timeError() const { return CALOtimeError_; }
+    inline const float BoundaryTime() const { return BoundaryTime_; }
+    inline const float BoundaryTimeError() const { return BoundaryTimeError_; }
     inline const float MTDtime() const { return MTDtime_; }
     inline const float MTDtimeError() const { return MTDtimeError_; }
     inline const float regressed_energy() const { return regressed_energy_; }
@@ -178,6 +186,9 @@ namespace ticl {
     // -99, -1 if not available. ns units otherwise
     float CALOtime_;
     float CALOtimeError_;
+
+    float BoundaryTime_;
+    float BoundaryTimeError_;
 
     float MTDtime_;
     float MTDtimeError_;
