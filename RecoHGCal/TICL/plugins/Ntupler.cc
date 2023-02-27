@@ -37,11 +37,13 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
 #include "DataFormats/CaloRecHit/interface/CaloCluster.h"
+#include "DataFormats/Common/interface/ValidHandle.h"
 #include "DataFormats/HGCalReco/interface/Trackster.h"
 #include "DataFormats/HGCalReco/interface/TICLGraph.h"
 #include "DataFormats/HGCalReco/interface/TICLCandidate.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
+#include "DataFormats/FTLRecHit/interface/FTLClusterCollections.h" //MTD?
 #include "DataFormats/DetId/interface/DetId.h"
 #include "DataFormats/Math/interface/Point3D.h"
 #include "DataFormats/GeometrySurface/interface/BoundDisk.h"
@@ -133,6 +135,7 @@ private:
   const edm::EDGetTokenT<hgcal::SimToRecoCollectionSimTracksters> MergeSimToRecoCP_token_;
   const edm::EDGetTokenT<std::vector<SimCluster>> simclusters_token_;
   const edm::EDGetTokenT<std::vector<CaloParticle>> caloparticles_token_;
+  const edm::EDGetTokenT<FTLClusterCollection> mtdclusters_token_; //MTD?
 
   const edm::ESGetToken<CaloGeometry, CaloGeometryRecord> geometry_token_;
   const std::string detector_;
@@ -486,6 +489,10 @@ private:
   std::vector<float> track_time_err;
   std::vector<int> track_nhits;
 
+  //MTD?
+  std::vector<float> mtd_clusters_time;
+  std::vector<float> mtd_clusters_timeErr;
+
   TTree* trackster_tree_;
   TTree* cluster_tree_;
   TTree* graph_tree_;
@@ -497,6 +504,7 @@ private:
   TTree* finesimtracksters_tree_;
   TTree* tracks_tree_;
   TTree* simTICLCandidate_tree;
+  TTree* MTD_tree; //MTD?
 };
 
 void Ntupler::clearVariables() {
@@ -830,6 +838,9 @@ void Ntupler::clearVariables() {
   track_time_quality.clear();
   track_time_err.clear();
   track_nhits.clear();
+//MTD?
+  mtd_clusters_time.clear();
+  mtd_clusters_timeErr.clear();
 };
 
 Ntupler::Ntupler(const edm::ParameterSet& ps)
@@ -885,6 +896,7 @@ Ntupler::Ntupler(const edm::ParameterSet& ps)
           ps.getParameter<edm::InputTag>("MergesimToRecoAssociatorCP"))),
       simclusters_token_(consumes(ps.getParameter<edm::InputTag>("simclusters"))),
       caloparticles_token_(consumes(ps.getParameter<edm::InputTag>("caloparticles"))),
+      mtdclusters_token_(consumes(ps.getParameter<edm::InputTag>("recCluTag"))), //MTD? 
       geometry_token_(esConsumes<CaloGeometry, CaloGeometryRecord, edm::Transition::BeginRun>()),
       detector_(ps.getParameter<std::string>("detector")),
       propName_(ps.getParameter<std::string>("propagator")),
@@ -923,6 +935,7 @@ void Ntupler::beginJob() {
   finesimtracksters_tree_ = fs->make<TTree>("fineSimTracksters", "TICL Fine SimTracksters");
   tracks_tree_ = fs->make<TTree>("tracks", "Tracks");
   simTICLCandidate_tree = fs->make<TTree>("simTICLCandidate", "Sim TICL Candidate");
+  MTD_tree = fs->make<TTree>("ETL", "ETL Clusters");
 
   simTICLCandidate_tree->Branch("simTICLCandidate_raw_energy", &simTICLCandidate_raw_energy);
   simTICLCandidate_tree->Branch("simTICLCandidate_regressed_energy", &simTICLCandidate_regressed_energy);
@@ -1277,6 +1290,10 @@ void Ntupler::beginJob() {
   tracks_tree_->Branch("track_time_err", &track_time_err);
   tracks_tree_->Branch("track_nhits", &track_nhits);
 
+//MTD?
+  MTD_tree->Branch("mtd_clusters_time", &mtd_clusters_time);
+  MTD_tree->Branch("mtd_clusters_timeErr", &mtd_clusters_timeErr);
+
   event_index = 0;
 }
 
@@ -1476,6 +1493,13 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
 
   const auto& simclusters = event.get(simclusters_token_);
   const auto& caloparticles = event.get(caloparticles_token_);
+
+//MTD?
+  //edm::Handle<std::vector<FTLClusterCollection>> mtdclusters_h;
+  //event.getByToken(mtdclusters_token_, mtdclusters_h);
+  //const auto& mtdclusters = *mtdclusters_h;
+  auto mtdclusters_h = makeValid(event.getHandle(mtdclusters_token_));  
+  const auto& mtdclusters = *mtdclusters_h;
 
   ev_event_ = event_index;
   ntracksters_ = tracksters.size();
@@ -2335,6 +2359,17 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
     }
   }
 
+
+  //MTD? loop e fill FTLClusterRef;
+  for (const auto& DetSetClu : mtdclusters) {
+     for (const auto& cluster : DetSetClu) {
+	  //for(auto cluster_iterator = cluster.begin(); cluster_iterator != cluster.end(); ++cluster_iterator){
+             mtd_clusters_time.push_back(cluster.time()); 
+             mtd_clusters_timeErr.push_back(cluster.timeError());
+	  //}
+     }
+  }
+
   trackster_tree_->Fill();
   cluster_tree_->Fill();
   graph_tree_->Fill();
@@ -2343,7 +2378,7 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
   associations_tree_->Fill();
   simtrackstersSC_tree_->Fill();
   simtrackstersCP_tree_->Fill();
-
+  MTD_tree->Fill(); //MTD?
 //  finesimtracksters_tree_->Fill();
 
   tracks_tree_->Fill();
@@ -2399,6 +2434,7 @@ void Ntupler::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
                           edm::InputTag("tracksterSimTracksterAssociationLinking", "simToReco"));
   desc.add<edm::InputTag>("simclusters", edm::InputTag("mix", "MergedCaloTruth"));
   desc.add<edm::InputTag>("caloparticles", edm::InputTag("mix", "MergedCaloTruth"));
+  desc.add<edm::InputTag>("recCluTag", edm::InputTag("mtdClusters", "FTLEndcap")); //MTD?
   desc.add<std::string>("detector", "HGCAL");
   desc.add<std::string>("propagator", "PropagatorWithMaterial");
   descriptions.add("ticlNtuplizer", desc);
