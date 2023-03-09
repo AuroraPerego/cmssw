@@ -47,8 +47,10 @@ namespace ticl {
           CALOtimeError_(-1.f),
           BoundaryTime_(0.f),
           BoundaryTimeError_(-1.f),
-          MTDtime_(0.f),
+          MTDtime_(-99.f),
           MTDtimeError_(-1.f),
+          tMtd_(-99.f),
+          tMtdError_(-1.f),
           eigenvalues_{{0.f, 0.f, 0.f}},
           sigmas_{{0.f, 0.f, 0.f}},
           sigmasPCA_{{0.f, 0.f, 0.f}},
@@ -76,6 +78,10 @@ namespace ticl {
     inline void setMTDTimeAndError(float t, float tError) {
       MTDtime_ = t;
       MTDtimeError_ = tError;
+    }
+    inline void settMtdAndError(float t, float error) {
+      tMtd_ = t;
+      tMtdError_ = error;
     }
     inline void setRegressedEnergy(float value) { regressed_energy_ = value; }
     inline void setRawEnergy(float value) { raw_energy_ = value; }
@@ -145,6 +151,8 @@ namespace ticl {
     inline const float BoundaryTimeError() const { return BoundaryTimeError_; }
     inline const float MTDtime() const { return MTDtime_; }
     inline const float MTDtimeError() const { return MTDtimeError_; }
+    inline const float tMtd() const { return tMtd_; }
+    inline const float tMtdError() const { return tMtdError_; }
     inline const float regressed_energy() const { return regressed_energy_; }
     inline const float raw_energy() const { return raw_energy_; }
     inline const float raw_em_energy() const { return raw_em_energy_; }
@@ -190,8 +198,11 @@ namespace ticl {
     float BoundaryTime_;
     float BoundaryTimeError_;
 
-    float MTDtime_;
+    float MTDtime_; // time at the vertex
     float MTDtimeError_;
+
+    float tMtd_; // time in MTD (average of the two layers)
+    float tMtdError_; 
 
     int track_idx_ = -1;
 
