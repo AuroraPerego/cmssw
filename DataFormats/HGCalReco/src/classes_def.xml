@@ -1,6 +1,10 @@
 
 <lcgdict>
-  <class name="ticl::Trackster" ClassVersion="9">
+  <class name="ticl::Trackster" ClassVersion="13">
+    <version ClassVersion="13" checksum="2623031334"/>
+    <version ClassVersion="12" checksum="3201469164"/>
+    <version ClassVersion="11" checksum="1973741866"/>
+    <version ClassVersion="10" checksum="481327058"/>
     <version ClassVersion="9" checksum="1001808235"/>
     <version ClassVersion="8" checksum="749412802"/>
     <version ClassVersion="7" checksum="1072014319"/>
@@ -54,4 +58,16 @@
   <class name="std::vector<TICLCandidate>" />
   <class name="edm::Wrapper<TICLCandidate>" />
   <class name="edm::Wrapper<std::vector<TICLCandidate> >" />
+
+  <class name="Node">
+  </class>
+  <class name="std::vector<Node>" />
+  <class name="edm::Wrapper<Node>" />
+  <class name="edm::Wrapper<std::vector<Node> >" />
+
+  <class name="TICLGraph">
+  </class>
+  <class name="std::vector<TICLGraph>" />
+  <class name="edm::Wrapper<TICLGraph>" />
+  <class name="edm::Wrapper<std::vector<TICLGraph> >" />
 </lcgdict>

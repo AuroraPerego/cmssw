@@ -1,6 +1,9 @@
 <use name="CommonTools/Utils"/>
 <use name="DataFormats/CaloRecHit"/>
 <use name="DataFormats/Common"/>
+<use name="DataFormats/DetId"/>
+<use name="DataFormats/ForwardDetId"/>
+<use name="DataFormats/FTLRecHit"/>
 <use name="DataFormats/GeometrySurface"/>
 <use name="DataFormats/HGCalReco"/>
 <use name="DataFormats/L1TCorrelator"/>
@@ -16,12 +19,15 @@
 <use name="Geometry/CaloGeometry"/>
 <use name="Geometry/CommonDetUnit" source_only="1"/>
 <use name="Geometry/HGCalCommonData"/>
+<use name="Geometry/MTDGeometryBuilder"/>
 <use name="Geometry/Records"/>
 <use name="MagneticField/Engine"/>
 <use name="MagneticField/Records"/>
 <use name="PhysicsTools/TensorFlow"/>
 <use name="RecoLocalCalo/HGCalRecAlgos"/>
 <use name="RecoLocalCalo/HGCalRecProducers"/>
+<use name="RecoLocalFastTime/Records"/>
+<use name="RecoLocalFastTime/FTLClusterizer"/>
 <use name="RecoHGCal/TICL"/>
 <use name="RecoParticleFlow/PFProducer"/>
 <use name="SimDataFormats/Associations"/>
@@ -29,6 +35,8 @@
 <use name="TrackingTools/GeomPropagators"/>
 <use name="TrackingTools/Records"/>
 <use name="TrackingTools/TrajectoryState"/>
+<use name="PhysicsTools/UtilAlgos"/>
+<use name="FWCore/ServiceRegistry"/>
 <use name="fastjet"/>
 <library file="*.cc" name="RecoHGCalTICLPlugins">
   <flags EDM_PLUGIN="1"/>
