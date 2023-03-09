@@ -922,14 +922,6 @@ Ntupler::Ntupler(const edm::ParameterSet& ps)
       tracks_time_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTime"))),
       tracks_time_quality_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTimeQual"))),
       tracks_time_err_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTimeErr"))),
-      hgcaltracks_x_token_(consumes<std::vector<double>>(ps.getParameter<edm::InputTag>("hgcaltracks_x"))),
-      hgcaltracks_y_token_(consumes<std::vector<double>>(ps.getParameter<edm::InputTag>("hgcaltracks_y"))),
-      hgcaltracks_z_token_(consumes<std::vector<double>>(ps.getParameter<edm::InputTag>("hgcaltracks_z"))),
-      hgcaltracks_eta_token_(consumes<std::vector<double>>(ps.getParameter<edm::InputTag>("hgcaltracks_eta"))),
-      hgcaltracks_phi_token_(consumes<std::vector<double>>(ps.getParameter<edm::InputTag>("hgcaltracks_phi"))),
-      hgcaltracks_px_token_(consumes<std::vector<double>>(ps.getParameter<edm::InputTag>("hgcaltracks_px"))),
-      hgcaltracks_py_token_(consumes<std::vector<double>>(ps.getParameter<edm::InputTag>("hgcaltracks_py"))),
-      hgcaltracks_pz_token_(consumes<std::vector<double>>(ps.getParameter<edm::InputTag>("hgcaltracks_pz"))),
       tracksters_merged_token_(
           consumes<std::vector<ticl::Trackster>>(ps.getParameter<edm::InputTag>("trackstersmerged"))),
       layerClustersLocalDensity_token_(
@@ -1473,38 +1465,6 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
   edm::Handle<std::vector<bool>> mask_tracks_h;
   event.getByToken(tracks_mask_token_, mask_tracks_h);
   const auto& mask_tracks = *mask_tracks_h;
-
-  edm::Handle<std::vector<double>> hgcaltracks_x_h;
-  event.getByToken(hgcaltracks_x_token_, hgcaltracks_x_h);
-  const auto& tracks_propagated_x = *hgcaltracks_x_h;
-
-  edm::Handle<std::vector<double>> hgcaltracks_y_h;
-  event.getByToken(hgcaltracks_y_token_, hgcaltracks_y_h);
-  const auto& tracks_propagated_y = *hgcaltracks_y_h;
-
-  edm::Handle<std::vector<double>> hgcaltracks_z_h;
-  event.getByToken(hgcaltracks_z_token_, hgcaltracks_z_h);
-  const auto& tracks_propagated_z = *hgcaltracks_z_h;
-
-  edm::Handle<std::vector<double>> hgcaltracks_eta_h;
-  event.getByToken(hgcaltracks_eta_token_, hgcaltracks_eta_h);
-  const auto& tracks_propagated_eta = *hgcaltracks_eta_h;
-
-  edm::Handle<std::vector<double>> hgcaltracks_phi_h;
-  event.getByToken(hgcaltracks_phi_token_, hgcaltracks_phi_h);
-  const auto& tracks_propagated_phi = *hgcaltracks_phi_h;
-
-  edm::Handle<std::vector<double>> hgcaltracks_px_h;
-  event.getByToken(hgcaltracks_px_token_, hgcaltracks_px_h);
-  const auto& tracks_propagated_px = *hgcaltracks_px_h;
-
-  edm::Handle<std::vector<double>> hgcaltracks_py_h;
-  event.getByToken(hgcaltracks_py_token_, hgcaltracks_py_h);
-  const auto& tracks_propagated_py = *hgcaltracks_py_h;
-
-  edm::Handle<std::vector<double>> hgcaltracks_pz_h;
-  event.getByToken(hgcaltracks_pz_token_, hgcaltracks_pz_h);
-  const auto& tracks_propagated_pz = *hgcaltracks_pz_h;
 
   edm::Handle<edm::ValueMap<float>> trackTime_h;
   event.getByToken(tracks_time_token_, trackTime_h);
@@ -2536,14 +2496,6 @@ void Ntupler::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   desc.add<edm::InputTag>("ticlcandidates", edm::InputTag("ticlTrackstersMerge"));
   desc.add<edm::InputTag>("tracks", edm::InputTag("generalTracks"));
   desc.add<edm::InputTag>("masked_tracks", edm::InputTag("ticlTrackstersMerge", "maskTracks"));
-  desc.add<edm::InputTag>("hgcaltracks_x", edm::InputTag("ticlTrackstersMerge", "hgcaltracksX"));
-  desc.add<edm::InputTag>("hgcaltracks_y", edm::InputTag("ticlTrackstersMerge", "hgcaltracksY"));
-  desc.add<edm::InputTag>("hgcaltracks_z", edm::InputTag("ticlTrackstersMerge", "hgcaltracksZ"));
-  desc.add<edm::InputTag>("hgcaltracks_eta", edm::InputTag("ticlTrackstersMerge", "hgcaltracksEta"));
-  desc.add<edm::InputTag>("hgcaltracks_phi", edm::InputTag("ticlTrackstersMerge", "hgcaltracksPhi"));
-  desc.add<edm::InputTag>("hgcaltracks_px", edm::InputTag("ticlTrackstersMerge", "hgcaltracksPx"));
-  desc.add<edm::InputTag>("hgcaltracks_py", edm::InputTag("ticlTrackstersMerge", "hgcaltracksPy"));
-  desc.add<edm::InputTag>("hgcaltracks_pz", edm::InputTag("ticlTrackstersMerge", "hgcaltracksPz"));
   desc.add<edm::InputTag>("tracksTime", edm::InputTag("tofPID:t0"));
   desc.add<edm::InputTag>("tracksTimeQual", edm::InputTag("mtdTrackQualityMVA:mtdQualMVA"));
   desc.add<edm::InputTag>("tracksTimeErr", edm::InputTag("tofPID:sigmat0"));
