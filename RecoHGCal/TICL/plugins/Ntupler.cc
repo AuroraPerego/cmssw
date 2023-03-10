@@ -110,7 +110,6 @@ private:
   const edm::EDGetTokenT<TICLGraph> ticl_graph_token_;
   const edm::EDGetTokenT<std::vector<TICLCandidate>> ticl_candidates_token_;
   const edm::EDGetTokenT<std::vector<reco::Track>> tracks_token_;
-  const edm::EDGetTokenT<std::vector<bool>> tracks_mask_token_;
   const edm::EDGetTokenT<edm::ValueMap<float>> tracks_time_token_;
   const edm::EDGetTokenT<edm::ValueMap<float>> tracks_time_quality_token_;
   const edm::EDGetTokenT<edm::ValueMap<float>> tracks_time_err_token_;
@@ -918,7 +917,6 @@ Ntupler::Ntupler(const edm::ParameterSet& ps)
       // ticl_graph_token_(consumes<TICLGraph>(ps.getParameter<edm::InputTag>("ticlgraph"))),
       ticl_candidates_token_(consumes<std::vector<TICLCandidate>>(ps.getParameter<edm::InputTag>("ticlcandidates"))),
       tracks_token_(consumes<std::vector<reco::Track>>(ps.getParameter<edm::InputTag>("tracks"))),
-      tracks_mask_token_(consumes<std::vector<bool>>(ps.getParameter<edm::InputTag>("masked_tracks"))),
       tracks_time_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTime"))),
       tracks_time_quality_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTimeQual"))),
       tracks_time_err_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTimeErr"))),
@@ -1461,10 +1459,6 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
   edm::Handle<std::vector<reco::Track>> tracks_h;
   event.getByToken(tracks_token_, tracks_h);
   const auto& tracks = *tracks_h;
-
-  edm::Handle<std::vector<bool>> mask_tracks_h;
-  event.getByToken(tracks_mask_token_, mask_tracks_h);
-  const auto& mask_tracks = *mask_tracks_h;
 
   edm::Handle<edm::ValueMap<float>> trackTime_h;
   event.getByToken(tracks_time_token_, trackTime_h);
@@ -2177,14 +2171,12 @@ void Ntupler::analyze(const edm::Event& event, const edm::EventSetup& setup) {
       auto ts_idx = ts_ptr.get() - (edm::Ptr<ticl::Trackster>(tracksters_handle, 0)).get();
       tracksters_in_candidate[i].push_back(ts_idx);
     }
-
+    
+    track_in_candidate[i] = -1;
     if (track_ptr.isNull())
       continue;
     uint32_t tk_idx = track_ptr.get() - (edm::Ptr<reco::Track>(tracks_h, 0)).get();
     track_in_candidate[i] = tk_idx;
-    if (mask_tracks[tk_idx] == false) {
-      //std::cout << "SOMETHING WRONG "<< std::endl;
-    }
   }
 
   nTrackstersMerged = trackstersmerged.size();
@@ -2495,7 +2487,6 @@ void Ntupler::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   desc.add<edm::InputTag>("ticlgraph", edm::InputTag("ticlGraph"));
   desc.add<edm::InputTag>("ticlcandidates", edm::InputTag("ticlTrackstersMerge"));
   desc.add<edm::InputTag>("tracks", edm::InputTag("generalTracks"));
-  desc.add<edm::InputTag>("masked_tracks", edm::InputTag("ticlTrackstersMerge", "maskTracks"));
   desc.add<edm::InputTag>("tracksTime", edm::InputTag("tofPID:t0"));
   desc.add<edm::InputTag>("tracksTimeQual", edm::InputTag("mtdTrackQualityMVA:mtdQualMVA"));
   desc.add<edm::InputTag>("tracksTimeErr", edm::InputTag("tofPID:sigmat0"));
