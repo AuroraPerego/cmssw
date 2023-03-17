@@ -10,7 +10,7 @@ Error = log/test.err.$(Cluster).$(Process)
 Environment = "CMSSW_BASE=$ENV(CMSSW_BASE)"
 
 RequestMemory = 20000
-RequestCpus = 8
+RequestCpus = 4
 
 #24h runtume
 +MaxRuntime = 24*3600
@@ -25,13 +25,13 @@ RequestCpus = 8
 #run_as_owner = True
 
 use_x509userproxy = True
-x509userproxy = $X509_USER_PROXY
+x509userproxy = /afs/cern.ch/user/a/aperego/public/CMSSW_13_0_0_pre2/src/Validation/RecoParticleFlow/test/x509up_u144911
 
 #transfer section
 transfer_output_files = QCDPU/step3.log,QCDPU/step3_inMINIAODSIM.root
-transfer_output_remaps = "step3.log=/eos/user/w/wredjeb/HGCAL/TICLv4Linking/QCDPU/step3.$(Cluster).$(Process).log;step3_inMINIAODSIM.root=/eos/user/w/wredjeb/HGCAL/TICLv4Linking/QCDPU/step3_inMINIAODSIM.$(Cluster).$(Process).root"
+transfer_output_remaps = "step3.log=/eos/user/a/aperego/Timing/Condor_QCD_PU/step3.$(Cluster).$(Process).log;step3_inMINIAODSIM.root=/eos/user/a/aperego/Timing/Condor_QCD_PU/step3_inMINIAODSIM.$(Cluster).$(Process).root"
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 
-Queue 18
+Queue 10
 

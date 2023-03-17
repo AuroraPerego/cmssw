@@ -129,7 +129,7 @@ if __name__ == "__main__":
     #prefix = "root://xrootd-cms.infn.it//"
     tmpdir = "tmp"
     datasets = [
-        Dataset("/RelValQCD_FlatPt_15_3000HS_14/CMSSW_12_1_0_pre2-PU_121X_mcRun3_2021_realistic_v1-v1/GEN-SIM-DIGI-RAW", "QCD_PU", prefix, None, False, tmpdir)]
+        Dataset("/RelValQCD_Pt15To7000_Flat_14/CMSSW_13_0_0_pre2-125X_mcRun4_realistic_v5_2026D88noPU-v2/GEN-SIM-DIGI-RAW", "QCD_PU", prefix, None, False, tmpdir)]
 #        Dataset("/RelValQCD_FlatPt_15_3000HS_14/CMSSW_12_1_0_pre2-121X_mcRun3_2021_realistic_v1-v1/GEN-SIM-DIGI-RAW", "QCD_noPU", prefix, None, False, tmpdir),
 #        Dataset("/RelValQCD_FlatPt_15_3000HS_14/CMSSW_12_1_0_pre2-121X_mcRun3_2021_realistic_v1-v1/GEN-SIM-DIGI-RAW", "QCD_noPU", prefix, None, False, tmpdir),
 #        Dataset("/RelValZEE_14/CMSSW_12_1_0_pre2-PU_121X_mcRun3_2021_realistic_v1-v1/GEN-SIM-DIGI-RAW", "ZEE_PU", prefix, None, False, tmpdir),
