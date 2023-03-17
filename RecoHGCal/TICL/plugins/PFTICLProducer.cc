@@ -57,7 +57,7 @@ PFTICLProducer::PFTICLProducer(const edm::ParameterSet& conf)
 
 void PFTICLProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
-  desc.add<edm::InputTag>("ticlCandidateSrc", edm::InputTag("ticlTrackstersMerge"));
+  desc.add<edm::InputTag>("ticlCandidateSrc", edm::InputTag("ticlSimTracksters"));
   desc.add<edm::InputTag>("trackTimeValueMap", edm::InputTag("tofPID:t0"));
   desc.add<edm::InputTag>("trackTimeErrorMap", edm::InputTag("tofPID:sigmat0"));
   desc.add<edm::InputTag>("trackTimeQualityMap", edm::InputTag("mtdTrackQualityMVA:mtdQualMVA"));
@@ -151,7 +151,7 @@ void PFTICLProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
     auto time = ticl_cand.time();
     auto timeE = ticl_cand.timeError();
 
-    if (useMTDTiming_ and candidate.charge()) {
+    if (useMTDTiming_ and candidate.charge() and candidate.trackRef().isNonnull()) {
       // Ignore HGCAL timing until it will be TOF corrected
       time = -99.;
       timeE = -1.;

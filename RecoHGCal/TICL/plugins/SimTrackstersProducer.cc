@@ -404,7 +404,7 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
     cand.setTime((*result_fromCP)[cp_index].time());
     cand.setTimeError(0);
 
-    if(trackIndex != -1)
+    if(trackIndex != -1 && caloparticles[cp_index].charge()!=0)
       cand.setTrackPtr(edm::Ptr<reco::Track>(recoTracks_h, trackIndex));
   }
 
