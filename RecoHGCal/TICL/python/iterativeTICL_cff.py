@@ -8,6 +8,7 @@ from RecoHGCal.TICL.TrkEMStep_cff import *
 from RecoHGCal.TICL.TrkStep_cff import *
 from RecoHGCal.TICL.EMStep_cff import *
 from RecoHGCal.TICL.HADStep_cff import *
+from RecoHGCal.TICL.SimTracksters_cff import *
 
 from RecoHGCal.TICL.ticlLayerTileProducer_cfi import ticlLayerTileProducer
 from RecoHGCal.TICL.pfTICLProducer_cfi import pfTICLProducer as _pfTICLProducer
@@ -17,7 +18,6 @@ from RecoHGCal.TICL.ticlGraphProducer_cfi import ticlGraphProducer as _ticlGraph
 from RecoHGCal.TICL.tracksterSelectionTf_cfi import *
 
 ticlLayerTileTask = cms.Task(ticlLayerTileProducer)
-
 ticlTrackstersMerge = _trackstersMergeProducer.clone(
   linkingPSet = cms.PSet(
     cutTk = cms.string('1.48 < abs(eta) < 3.0 && pt > 1. && quality("highPurity") && hitPattern().numberOfLostHits("MISSING_OUTER_HITS") < 5'),
@@ -31,11 +31,13 @@ ticlTrackstersMerge = _trackstersMergeProducer.clone(
   
   )
 )
+
 ticlTrackstersMergeV3 = _trackstersMergeProducerV3.clone()
 ticlGraph = _ticlGraphProducer.clone()
 
-
-pfTICL = _pfTICLProducer.clone()
+pfTICL = _pfTICLProducer.clone(
+  ticlCandidateSrc = 'ticlSimTracksters'
+)
 ticlPFTask = cms.Task(pfTICL)
 
 ticlIterationsTask = cms.Task(
@@ -64,6 +66,7 @@ ticl_v3.toModify(pfTICL, ticlCandidateSrc = "ticlTrackstersMergeV3")
 mergeTICLTask = cms.Task(ticlLayerTileTask
     ,ticlIterationsTask
     ,ticlTracksterMergeTask
+    ,ticlSimTrackstersTask
     ,ticlPFTask
     ,ticlGraphTask
 )

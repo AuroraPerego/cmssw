@@ -5,7 +5,11 @@ from RecoHGCal.TICL.TICLSeedingRegions_cff import ticlSeedingGlobal, ticlSeeding
 from RecoHGCal.TICL.filteredLayerClustersProducer_cfi import filteredLayerClustersProducer as _filteredLayerClustersProducer
 from RecoHGCal.TICL.fineSimTrackstersProducer_cfi import fineSimTrackstersProducer as _fineSimTrackstersProducer
 
-
+from SimCalorimetry.HGCalSimProducers.hgcHitAssociation_cfi import lcAssocByEnergyScoreProducer, scAssocByEnergyScoreProducer
+from SimCalorimetry.HGCalAssociatorProducers.LCToCPAssociation_cfi import layerClusterCaloParticleAssociation as layerClusterCaloParticleAssociationProducer
+from SimCalorimetry.HGCalAssociatorProducers.LCToSCAssociation_cfi import layerClusterSimClusterAssociation as layerClusterSimClusterAssociationProducer
+from SimTracker.TrackAssociation.trackingParticleRecoTrackAsssociation_cfi import trackingParticleRecoTrackAsssociation
+from SimGeneral.TrackingAnalysis.simHitTPAssociation_cfi import simHitTPAssocProducer
 # CA - PATTERN RECOGNITION
 
 
@@ -53,4 +57,4 @@ premix_stage2.toModify(ticlFineSimTracksters,
     caloparticles = "mixData:MergedCaloTruth",
 )
 
-ticlSimTrackstersTask = cms.Task(ticlSeedingGlobal, filteredLayerClustersSimTracksters, ticlSimTracksters, ticlFineSimTracksters)
+ticlSimTrackstersTask = cms.Task(simHitTPAssocProducer, trackingParticleRecoTrackAsssociation, lcAssocByEnergyScoreProducer, layerClusterCaloParticleAssociationProducer, scAssocByEnergyScoreProducer, layerClusterSimClusterAssociationProducer, ticlSeedingGlobal, filteredLayerClustersSimTracksters, ticlSimTracksters, ticlFineSimTracksters)

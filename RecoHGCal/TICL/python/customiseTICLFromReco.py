@@ -25,6 +25,7 @@ def customiseTICLFromReco(process):
                             process.TFESSource,
                             process.ticlLayerTileTask,
                             process.ticlIterationsTask,
+                            process.ticlSimTrackstersTask,
                             process.ticlTracksterMergeTask)
 
     process.ntuplizer = ticlNtuplizer.clone()

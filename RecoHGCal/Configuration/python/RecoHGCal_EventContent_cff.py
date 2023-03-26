@@ -24,7 +24,8 @@ TICL_RECO = cms.PSet(
       ['keep *_ticlGraph_*_*'] +
       ['keep *_layerClusterSimClusterAssociationProducer_*_*','keep *_layerClusterCaloParticleAssociationProducer_*_*', 'keep *_layerClusterSimTracksterAssociationProducer_*_*'] + 
       ['keep *_tracksterSimTracksterAssociationLinking_*_*' ,'keep *_tracksterSimTracksterAssociationPR_*_*'] +
-      ['keep *_tracksterSimTracksterAssociationLinkingbyCLUE3D_*_*', 'keep *_tracksterSimTracksterAssociationPRbyCLUE3D_*_*', 'keep *_muons1stStep_*_*']
+      ['keep **_tracksterSimTracksterAssociationLinkingbyCLUE3D_*_*', 'keep *_tracksterSimTracksterAssociationPRbyCLUE3D_*_*', 'keep *_muons1stStep_*_*'] + 
+      ['keep *_ticlSimTracksters_*_*']
       )
     )
 TICL_RECO.outputCommands.extend(TICL_AOD.outputCommands)
@@ -35,7 +36,7 @@ TICL_FEVT = cms.PSet(
       'keep *_ticlSimTracksters_*_*',
       'keep *_ticlSimTICLCandidates_*_*',
       'keep *_ticlSimTrackstersFromCP_*_*',
-			'keep recoMuons_muons1stStep_*_*',
+      'keep recoMuons_muons1stStep_*_*',
       'keep *_ticlFineSimTracksters_*_*',
       'keep *_ticlFineSimTrackstersFromCP_*_*',
       )
@@ -57,7 +58,7 @@ def customiseHGCalOnlyEventContent(process):
                                             'keep SimVertexs_g4SimHits_*_*',
                                             'keep *_tofPID_*_*',
                                             'keep *_mtdTrackQualityMVA_*_*',
-																						'keep recoMuons_muons1stStep_*_*',
+					    'keep recoMuons_muons1stStep_*_*',
                                             'keep *_ticlFineSimTracksters_*_*',
                                             'keep *_ticlFineSimTrackstersFromCP_*_*',
                                             'keep *_layerClusterSimClusterAssociationProducer_*_*',

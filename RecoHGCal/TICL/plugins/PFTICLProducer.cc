@@ -57,7 +57,7 @@ PFTICLProducer::PFTICLProducer(const edm::ParameterSet& conf)
 
 void PFTICLProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
-  desc.add<edm::InputTag>("ticlCandidateSrc", edm::InputTag("ticlSimTracksters"));
+  desc.add<edm::InputTag>("ticlCandidateSrc", edm::InputTag("ticlTrackstersMerge"));
   desc.add<edm::InputTag>("trackTimeValueMap", edm::InputTag("tofPID:t0"));
   desc.add<edm::InputTag>("trackTimeErrorMap", edm::InputTag("tofPID:sigmat0"));
   desc.add<edm::InputTag>("trackTimeQualityMap", edm::InputTag("mtdTrackQualityMVA:mtdQualMVA"));
@@ -106,27 +106,25 @@ void PFTICLProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
     // fix for floating point rounding could go slightly below 0
     hcal_energy = std::max(0.f, hcal_energy);
     reco::PFCandidate::ParticleType part_type;
-    switch (abs_pdg_id) {
-      case 11:
-        part_type = reco::PFCandidate::e;
-        break;
-      case 13:
-        part_type = reco::PFCandidate::mu;
-        break;
-      case 22:
-        part_type = reco::PFCandidate::gamma;
-        break;
-      case 130:
-        part_type = reco::PFCandidate::h0;
-        break;
-      case 211:
-        part_type = reco::PFCandidate::h;
-        break;
-      // default also handles neutral pions (111) for the time being (not yet foreseen in PFCandidate)
-      default:
-        part_type = reco::PFCandidate::X;
-    }
 
+    if (abs_pdg_id == 22) {
+      part_type = reco::PFCandidate::gamma; 
+    } else if (abs_pdg_id == 11) {
+      part_type = reco::PFCandidate::e;
+    } else if (abs_pdg_id == 13) {
+      part_type = reco::PFCandidate::mu;
+    } else {
+      bool isHadron = (abs_pdg_id > 100 and abs_pdg_id < 900) or (abs_pdg_id > 1000 and abs_pdg_id < 9000);
+      if (isHadron) {
+        if (charge != 0) {
+          part_type = reco::PFCandidate::h;
+        } else {
+          part_type = reco::PFCandidate::h0;
+        }
+      } else {
+        part_type = reco::PFCandidate::X;
+      }
+    }
     candidates->emplace_back(charge, four_mom, part_type);
 
     auto& candidate = candidates->back();
