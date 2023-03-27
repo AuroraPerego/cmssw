@@ -180,7 +180,7 @@ public:
   /** @brief add rechit energy */
   void addHitEnergy(float energy) { energies_.emplace_back(energy); }
 
-  /** @brief add rechit time */
+  /** @brief add hit time */
   void addHitTime(float time) { times_.emplace_back(time); }
 
   /** @brief Returns list of rechit IDs and fractions for this SimCluster */
@@ -215,6 +215,22 @@ public:
   /** @brief clear the times list */
   void clearHitsTime() { std::vector<float>().swap(times_); }
 
+  /** @brief computes the time of the cluster */
+  void computeClusterTime() { 
+    auto nsim = times_.size();
+    if (nsim == 0){
+      simhit_time_ = -99.;
+    } else {
+      for (const auto& t : times_){
+        simhit_time_ += t;
+      }
+      simhit_time_ = simhit_time_ / nsim; 
+    }	
+ }
+
+  /** @brief returns the time of the cluster */
+  float simTime() const { return simhit_time_; }
+
   /** @brief returns the accumulated sim energy in the cluster */
   float simEnergy() const { return simhit_energy_; }
 
@@ -230,6 +246,7 @@ private:
 
   uint32_t particleId_{0};
   float simhit_energy_{0.f};
+  float simhit_time_{0.f};
   std::vector<uint32_t> hits_;
   std::vector<float> fractions_;
   std::vector<float> energies_;

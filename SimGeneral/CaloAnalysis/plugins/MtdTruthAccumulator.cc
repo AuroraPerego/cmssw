@@ -480,11 +480,10 @@ void MtdTruthAccumulator::finalizeEvent(edm::Event &event, edm::EventSetup const
         sc.addHitEnergy(hAndE.second);
         sc.addHitTime(simTime);
 //calcolo il simcluster time????
-//per cluster time geometry (?) di sicuro prendelo da trackextender with mtd
 //cp time non so, forse no o forse è t0 invece che tmtd
 //vertici ghost per avere due simcluster??
       }
-      std::cout << sc.simEnergy() << "  " << sc.particleId() << std::endl;
+     sc.computeClusterTime();
     }
   }
 
@@ -688,25 +687,25 @@ void MtdTruthAccumulator::fillSimHits(std::vector<std::pair<DetId, const PSimHit
       }
 // std::cout << "rawId= " << id.rawId() << "  tof= " << m_detIdToTotalSimTime[id.rawId()] << "  det= " << id.det() << "  subdet= " << id.subdetId() << std::endl;
       // MTD timemap[??] += time*energy poi / energymap?
-   if (isEtl){
-       ETLDetId detId =  simHit.detUnitId();
-       auto local_point = simHit.localPosition();
-       DetId geoId = detId.geographicalId();
-       const MTDGeomDet* thedet = geom->idToDet(geoId);
-       const auto& global_point = thedet->toGlobal(local_point);
-
-       std::cout << "rawId= " << id.rawId() << "  pos= " << detId.zside() << " " << detId.nDisc() << "  tof= " << m_detIdToTotalSimTime[id.rawId()] << "  pos= " << global_point  << std::endl;
- } else {
-       BTLDetId detId = simHit.detUnitId();
-    DetId geoId = detId.geographicalId(MTDTopologyMode::crysLayoutFromTopoMode(topology->getMTDTopologyMode()));
-    const MTDGeomDet* thedet = geom->idToDet(geoId);
-    const ProxyMTDTopology& topoproxy = static_cast<const ProxyMTDTopology&>(thedet->topology());
-    const RectangularMTDTopology& topo = static_cast<const RectangularMTDTopology&>(topoproxy.specificTopology());
- 
-    Local3DPoint local_point(0., 0., 0.);
-    local_point = topo.pixelToModuleLocalPoint(local_point, detId.row(topo.nrows()), detId.column(topo.nrows()));
-    const auto& global_point = thedet->toGlobal(local_point);
- }
+//   if (isEtl){
+//       ETLDetId detId =  simHit.detUnitId();
+//       auto local_point = simHit.localPosition();
+//       DetId geoId = detId.geographicalId();
+//       const MTDGeomDet* thedet = geom->idToDet(geoId);
+//       const auto& global_point = thedet->toGlobal(local_point);
+//
+////       std::cout << "rawId= " << id.rawId() << "  pos= " << detId.zside() << " " << detId.nDisc() << "  tof= " << m_detIdToTotalSimTime[id.rawId()] << "  pos= " << global_point  << std::endl;
+// } else {
+//       BTLDetId detId = simHit.detUnitId();
+//    DetId geoId = detId.geographicalId(MTDTopologyMode::crysLayoutFromTopoMode(topology->getMTDTopologyMode()));
+//    const MTDGeomDet* thedet = geom->idToDet(geoId);
+//    const ProxyMTDTopology& topoproxy = static_cast<const ProxyMTDTopology&>(thedet->topology());
+//    const RectangularMTDTopology& topo = static_cast<const RectangularMTDTopology&>(topoproxy.specificTopology());
+// 
+//    Local3DPoint local_point(0., 0., 0.);
+//    local_point = topo.pixelToModuleLocalPoint(local_point, detId.row(topo.nrows()), detId.column(topo.nrows()));
+//    const auto& global_point = thedet->toGlobal(local_point);
+// }
     }
   }  // end of loop over InputTags
 }

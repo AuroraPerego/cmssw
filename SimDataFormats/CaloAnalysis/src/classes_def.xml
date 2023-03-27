@@ -1,5 +1,4 @@
-<lcgdict>
-  <class name="CaloParticle"  ClassVersion="4">
+<lcgdict>                                                                                                                                                                                     <class name="CaloParticle"  ClassVersion="4">
    <version ClassVersion="4" checksum="1423471036"/>
   </class>
   <class name="CaloParticleCollection"/>
@@ -8,7 +7,8 @@
   <class name="CaloParticleRefVector"/>
   <class name="CaloParticleRefProd"/>
   <class name="CaloParticleContainer"/>
-  <class name="SimCluster"  ClassVersion="5">
+  <class name="SimCluster"  ClassVersion="6">
+   <version ClassVersion="6" checksum="337554252"/>
     <version ClassVersion="5" checksum="1671921505"/>
     <version ClassVersion="4" checksum="3868743425"/>
     <version ClassVersion="3" checksum="1773780587"/>
