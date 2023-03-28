@@ -87,7 +87,6 @@ void PFTICLProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
   const auto& muons = *muonH;
 
   auto candidates = std::make_unique<reco::PFCandidateCollection>();
-
   for (const auto& ticl_cand : ticl_candidates) {
     const auto abs_pdg_id = std::abs(ticl_cand.pdgId());
     const auto charge = ticl_cand.charge();
@@ -130,11 +129,13 @@ void PFTICLProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
     auto& candidate = candidates->back();
     candidate.setEcalEnergy(ecal_energy, ecal_energy);
     candidate.setHcalEnergy(hcal_energy, hcal_energy);
-    if (candidate.charge()) {  // otherwise PFCandidate throws
+    reco::TrackRef trackref(ticl_cand.trackPtr().id(), int(ticl_cand.trackPtr().key()), &evt.productGetter());
+    if (candidate.charge() and trackref.isNonnull()) {  // otherwise PFCandidate throws
       // Construct edm::Ref from edm::Ptr. As of now, assumes type to be reco::Track. To be extended (either via
       // dynamic type checking or configuration) if additional track types are needed.
-      reco::TrackRef trackref(ticl_cand.trackPtr().id(), int(ticl_cand.trackPtr().key()), &evt.productGetter());
+   //   reco::TrackRef trackref(ticl_cand.trackPtr().id(), int(ticl_cand.trackPtr().key()), &evt.productGetter());
       candidate.setTrackRef(trackref);
+
       // Utilize PFMuonAlgo
       const int muId = PFMuonAlgo::muAssocToTrack(trackref, muons);
       if (muId != -1) {

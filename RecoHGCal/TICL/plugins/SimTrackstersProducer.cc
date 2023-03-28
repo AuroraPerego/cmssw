@@ -194,6 +194,7 @@ void SimTrackstersProducer::addTrackster(
   }
 
   tmpTrackster.setIdProbability(tracksterParticleTypeFromPdgId(pdgId, charge), 1.f);
+  tmpTrackster.setRegressedEnergy(energy);
   tmpTrackster.setIteration(iter);
   tmpTrackster.setSeed(seed, index);
   tmpTrackster.setBoundaryTimeAndError(time, 0.f);
@@ -403,8 +404,7 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
     auto trackIndex = (*result_fromCP)[cp_index].trackIdx();
     cand.setTime((*result_fromCP)[cp_index].time());
     cand.setTimeError(0);
-
-    if(trackIndex != -1 && caloparticles[cp_index].charge()!=0)
+    if(trackIndex != -1 && caloparticles[cp_index].charge()!=0 && recoTracks_h.isValid())
       cand.setTrackPtr(edm::Ptr<reco::Track>(recoTracks_h, trackIndex));
   }
 
@@ -427,6 +427,12 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
     if(!cand.trackPtr().isNull())
     {
       auto track = cand.trackPtr();
+std::cout << __LINE__ << std::endl;
+std::cout << regressedEnergy << std::endl;
+std::cout << track->momentum().unit().x() << std::endl;
+std::cout << track->momentum().unit().y() << std::endl;
+std::cout << track->momentum().unit().z() << std::endl;
+std::cout << __LINE__ << std::endl;
       math::XYZTLorentzVector p4(regressedEnergy * track->momentum().unit().x(),
                                        regressedEnergy * track->momentum().unit().y(),
                                        regressedEnergy * track->momentum().unit().z(),
@@ -446,7 +452,6 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
     }
 
   }
-
   evt.put(std::move(result_ticlCandidates));
   evt.put(std::move(output_mask));
   evt.put(std::move(result_fromCP), "fromCPs");

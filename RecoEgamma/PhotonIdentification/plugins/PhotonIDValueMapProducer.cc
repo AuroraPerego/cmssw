@@ -40,7 +40,7 @@ namespace {
   struct CachingPtrCandidate {
     CachingPtrCandidate(const reco::Candidate* cPtr, bool isAOD)
         : candidate(cPtr),
-          track(isAOD ? &*static_cast<const reco::PFCandidate*>(cPtr)->trackRef() : nullptr),
+          track((isAOD and static_cast<const reco::PFCandidate*>(cPtr)->trackRef().isNonnull())? &*static_cast<const reco::PFCandidate*>(cPtr)->trackRef() : nullptr),
           packed(isAOD ? nullptr : static_cast<const pat::PackedCandidate*>(cPtr)) {}
 
     const reco::Candidate* candidate;
@@ -295,7 +295,6 @@ void PhotonIDValueMapProducer::produce(edm::StreamID, edm::Event& iEvent, const 
         // with the PV
         float dxy = -999;
         float dz = -999;
-
         getImpactParameters(CachingPtrCandidate(&*iCand, isAOD_), pv, dxy, dz);
 
         if (fabs(dxy) > dxyMax || fabs(dz) > dzMax)

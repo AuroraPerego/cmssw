@@ -426,9 +426,10 @@ PileupJetIdentifier PileupJetIdAlgo::computeIdVariables(const reco::Jet* jet,
             internalId_.dZ_ = std::abs(lPack->dz(vtx->position()));
           } else if (lPF != nullptr) {
             pfTrk = (lPF->trackRef().get() == nullptr) ? lPF->gsfTrackRef().get() : lPF->trackRef().get();
+if (pfTrk != nullptr ){
             internalId_.d0_ = std::abs(pfTrk->dxy(vtx->position()));
             internalId_.dZ_ = std::abs(pfTrk->dz(vtx->position()));
-          }
+    }      }
         } else {
           internalId_.d0_ = std::abs(pfTrk->dxy(vtx->position()));
           internalId_.dZ_ = std::abs(pfTrk->dz(vtx->position()));
