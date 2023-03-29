@@ -89,7 +89,7 @@ void PFTICLProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
   auto candidates = std::make_unique<reco::PFCandidateCollection>();
   for (const auto& ticl_cand : ticl_candidates) {
     const auto abs_pdg_id = std::abs(ticl_cand.pdgId());
-    const auto charge = ticl_cand.charge();
+    auto charge = ticl_cand.charge();
     const auto& four_mom = ticl_cand.p4();
     float total_raw_energy = 0.f;
     float total_em_raw_energy = 0.f;
@@ -124,13 +124,28 @@ void PFTICLProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
         part_type = reco::PFCandidate::X;
       }
     }
+    
+    reco::TrackRef trackref(ticl_cand.trackPtr().id(), int(ticl_cand.trackPtr().key()), &evt.productGetter());
+//    if(charge != 0 and trackref.isNull()) {
+//      charge = 0;
+//      switch (abs_pdg_id) {
+//          case 11:
+//            std::cout << "fotone carico!" << std::endl;
+//          case 22:
+//            part_type = reco::PFCandidate::gamma;
+//            break;
+//          default:
+//            part_type = reco::PFCandidate::h0;
+//      }                  
+//    }
     candidates->emplace_back(charge, four_mom, part_type);
 
     auto& candidate = candidates->back();
     candidate.setEcalEnergy(ecal_energy, ecal_energy);
     candidate.setHcalEnergy(hcal_energy, hcal_energy);
-    reco::TrackRef trackref(ticl_cand.trackPtr().id(), int(ticl_cand.trackPtr().key()), &evt.productGetter());
-    if (candidate.charge() and trackref.isNonnull()) {  // otherwise PFCandidate throws
+    if (candidate.charge() and trackref.isNull())
+       std::cout << "non ha funzionato" << std::endl;
+    if (candidate.charge()) {  // otherwise PFCandidate throws
       // Construct edm::Ref from edm::Ptr. As of now, assumes type to be reco::Track. To be extended (either via
       // dynamic type checking or configuration) if additional track types are needed.
    //   reco::TrackRef trackref(ticl_cand.trackPtr().id(), int(ticl_cand.trackPtr().key()), &evt.productGetter());
