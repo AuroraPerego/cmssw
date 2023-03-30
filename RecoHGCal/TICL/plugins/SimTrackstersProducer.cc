@@ -463,11 +463,11 @@ std::cout << "AAAAAAAAAAAAAAAA" << std::endl;
     }
     if (cand.trackPtr().isNonnull() and charge != 0) {
       auto const& track = cand.trackPtr().get();
-if(std::abs(pdgId)==13){
-      cand.setPdgId(pdgId);
-}else{
-      cand.setPdgId((isHad(pdgId) ? 211 : 11) * charge);
-}
+      if(std::abs(pdgId)==13){
+        cand.setPdgId(pdgId);
+      }else{
+        cand.setPdgId((isHad(pdgId) ? 211 : 11) * charge);
+      }
       cand.setCharge(charge);
       math::XYZTLorentzVector p4(regressedEnergy * track->momentum().unit().x(),
                                  regressedEnergy * track->momentum().unit().y(),
@@ -478,9 +478,6 @@ if(std::abs(pdgId)==13){
       cand.setPdgId(isHad(pdgId) ? 130 : 22);
       cand.setCharge(0);
 
-    auto particleType = tracksterParticleTypeFromPdgId(cand.pdgId(), 1);
-    cand.setIdProbability(particleType, 1.f);
-
       const auto& simTracksterFromCP = (*result_fromCP)[i];
       float regressedEnergy = simTracksterFromCP.regressed_energy();
       math::XYZTLorentzVector p4(regressedEnergy * simTracksterFromCP.barycenter().unit().x(),
@@ -489,7 +486,11 @@ if(std::abs(pdgId)==13){
                                  regressedEnergy);
       cand.setP4(p4);
     }
+    auto particleType = tracksterParticleTypeFromPdgId(cand.pdgId(), 1);
+    cand.setIdProbability(particleType, 1.f);
   }
+
+
   for (size_t i = 0; i < result_ticlCandidates->size(); ++i) {
     auto const& cand = (*result_ticlCandidates)[i];
     std::cout << "--- candidate " << i << " ---" << std::endl;
