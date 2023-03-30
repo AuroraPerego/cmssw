@@ -113,7 +113,7 @@ void PFTICLProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
     } else if (abs_pdg_id == 13) {
       part_type = reco::PFCandidate::mu;
     } else {
-      bool isHadron = (abs_pdg_id > 100 and abs_pdg_id < 900) or (abs_pdg_id > 1000 and abs_pdg_id < 9000);
+      bool isHadron = (abs_pdg_id > 100 and abs_pdg_id < 900 and abs_pdg_id != 111) or (abs_pdg_id > 1000 and abs_pdg_id < 9000);
       if (isHadron) {
         if (charge != 0) {
           part_type = reco::PFCandidate::h;
@@ -144,7 +144,7 @@ void PFTICLProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
     candidate.setEcalEnergy(ecal_energy, ecal_energy);
     candidate.setHcalEnergy(hcal_energy, hcal_energy);
     if (candidate.charge() and trackref.isNull())
-       std::cout << "non ha funzionato" << std::endl;
+       std::cout << "ERRORE non ha funzionato" << std::endl;
     if (candidate.charge()) {  // otherwise PFCandidate throws
       // Construct edm::Ref from edm::Ptr. As of now, assumes type to be reco::Track. To be extended (either via
       // dynamic type checking or configuration) if additional track types are needed.
