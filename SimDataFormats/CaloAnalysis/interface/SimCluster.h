@@ -217,14 +217,16 @@ public:
 
   /** @brief computes the time of the cluster */
   void computeClusterTime() { 
-    auto nsim = times_.size();
+    uint32_t nsim = times_.size();
+    auto tot_en = 0.;
     if (nsim == 0){
       simhit_time_ = -99.;
     } else {
-      for (const auto& t : times_){
-        simhit_time_ += t;
+      for (uint32_t i = 0; i < nsim; i++){
+        simhit_time_ += times_[i]*energies_[i];
+        tot_en += energies_[i];
       }
-      simhit_time_ = simhit_time_ / nsim; 
+      simhit_time_ = simhit_time_ / tot_en; 
     }	
  }
 
