@@ -65,7 +65,8 @@ public:
                     const Trackster::IterationIndex iter,
                     std::vector<float>& output_mask,
                     std::vector<Trackster>& result,
-                    const bool add = false); // if true result[index] = .., if false result.emplace_back(..)
+                    const bool add = false, // if true result[index] = .., if false result.emplace_back(..)
+                    int* loop_index = 0);   // to fill the map 
 
 private:
   std::string detector_;
@@ -131,6 +132,7 @@ SimTrackstersProducer::SimTrackstersProducer(const edm::ParameterSet& ps)
   produces<std::vector<float>>("fromCPs");
   produces<std::map<uint, std::vector<uint>>>();
   produces<std::vector<TICLCandidate>>();
+  produces<std::vector<TICLCandidate>>("all");
 }
 
 void SimTrackstersProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
@@ -177,7 +179,8 @@ void SimTrackstersProducer::addTrackster(
     const Trackster::IterationIndex iter,
     std::vector<float>& output_mask,
     std::vector<Trackster>& result,
-    const bool add) {
+    const bool add,
+    int* loop_index) {
   Trackster tmpTrackster;
   if (lcVec.empty()) 
     return; 
@@ -201,6 +204,7 @@ void SimTrackstersProducer::addTrackster(
   tmpTrackster.setSeed(seed, index);
   if(add){
     result[index] = tmpTrackster;
+    *loop_index +=1;
   } else {
     result.emplace_back(tmpTrackster);
   }
@@ -252,6 +256,7 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
   const auto num_caloparticles = caloparticles.size();
   result_fromCP->resize(num_caloparticles);
   std::map<uint, uint> SimClusterToCaloParticleMap;
+  int loop_index = 0;
   for (const auto& [key, lcVec] : caloParticlesToRecoColl) {
     auto const& cp = *(key);
     auto cpIndex = &cp - &caloparticles[0];
@@ -280,7 +285,9 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
                    key.id(),
                    ticl::Trackster::SIM,
                    *output_mask,
-                   *result);
+                   *result,
+		   false,
+                   &loop_index);
     } else {
       for (const auto& scRef : cp.simClusters()) {
         const auto& it = simClustersToRecoColl.find(scRef);
@@ -301,7 +308,9 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
                      scRef.id(),
                      ticl::Trackster::SIM,
                      *output_mask,
-                     *result);
+                     *result,
+		     false,
+                     &loop_index);
 
         if (result->empty())
           continue;
@@ -326,11 +335,12 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
                  ticl::Trackster::SIM_CP,
                  *output_mask_fromCP,
                  *result_fromCP, 
-		 true);
+		 true,
+                 &loop_index);
 
     if (result_fromCP->empty())
       continue;
-    const auto index = result_fromCP->size() - 1;
+    const auto index = loop_index - 1; 
     if (cpToSc_SimTrackstersMap->find(index) == cpToSc_SimTrackstersMap->end()) {
       (*cpToSc_SimTrackstersMap)[index] = scSimTracksterIdx;
     }
@@ -427,12 +437,16 @@ if (simTrackstersFromCP[i].vertices().size() == 0)
     }
   }
   
-    auto isHad = [](int pdgId) {
-      pdgId = std::abs(pdgId);
-      if (pdgId == 111)
-        return false;
-      return (pdgId > 100 and pdgId < 900) or (pdgId > 1000 and pdgId < 9000);
-    };
+  auto ChargedToNeutral = [](const int pdgId){
+    if (pdgId == 111)
+        return 22;
+    else if (pdgId > 100 and pdgId < 900) 
+        return 130;    
+    else if (pdgId > 1000 and pdgId < 9000)
+        return 2112;
+    else 
+        return 22;
+  };
 
   for (size_t i = 0; i < result_ticlCandidates->size(); ++i) {
     auto cp_index = (*result_fromCP)[i].seedIndex();
@@ -453,12 +467,7 @@ if (simTrackstersFromCP[i].vertices().size() == 0)
     auto charge = cp.charge();
     if (cand.trackPtr().isNonnull() and charge != 0) {
       auto const& track = cand.trackPtr().get();
-//    cand.setPdgId(pdgId);
-      if(std::abs(pdgId)==13){
-        cand.setPdgId(pdgId);
-      }else{
-        cand.setPdgId((isHad(pdgId) ? 211 : 11) * charge);
-      }
+      cand.setPdgId(pdgId);
       cand.setCharge(charge);
       math::XYZTLorentzVector p4(regressedEnergy * track->momentum().unit().x(),
                                  regressedEnergy * track->momentum().unit().y(),
@@ -466,13 +475,12 @@ if (simTrackstersFromCP[i].vertices().size() == 0)
                                  regressedEnergy);
       cand.setP4(p4);
     } else {  // neutral candidates
-      cand.setPdgId(isHad(pdgId) ? 130 : 22);
       cand.setCharge(0);
-//    if (cp.charge() == 0){
-//      cand.setPdgId(pdgId);
-//    } else {
-//      cand.setPdgId(isHad(pdgId) ? 130 : 22);
-//    }
+      if (cp.charge() == 0){
+        cand.setPdgId(pdgId);
+      } else {
+        cand.setPdgId(ChargedToNeutral(std::abs(pdgId)));
+      }
 
       const auto& simTracksterFromCP = (*result_fromCP)[i];
       float regressedEnergy = simTracksterFromCP.regressed_energy();
@@ -512,6 +520,9 @@ if (simTrackstersFromCP[i].vertices().size() == 0)
 //              << "\nCP phi = " << cp.phi() << "\nCP energy = " << cp.energy() << std::endl;
 //  }
 
+  // save in the event a collection with the empty candidates (CP but no tracksters)
+  auto all_result_ticlCandidates = std::make_unique<std::vector<TICLCandidate>>(*result_ticlCandidates); 
+
   std::vector<int> toRemove;
   std::vector<int> all_nums(result_fromCP->size()); // vector containing all caloparticles indexes
   std::iota(all_nums.begin(), all_nums.end(), 0); // fill the vector with consecutive numbers starting from 0
@@ -523,6 +534,7 @@ if (simTrackstersFromCP[i].vertices().size() == 0)
     result_ticlCandidates->erase(result_ticlCandidates->begin() + r);
   }
   evt.put(std::move(result_ticlCandidates));
+  evt.put(std::move(all_result_ticlCandidates), "all");
   evt.put(std::move(output_mask));
   evt.put(std::move(result_fromCP), "fromCPs");
   evt.put(std::move(output_mask_fromCP), "fromCPs");

@@ -51,7 +51,6 @@
 #include "SimGeneral/MixingModule/interface/PileUpEventPrincipal.h"
 #include "SimGeneral/TrackingAnalysis/interface/EncodedTruthId.h"
 
-//#include "Geometry/Records/interface/CaloGeometryRecord.h"
 #include "Geometry/MTDCommonData/interface/MTDTopologyMode.h"
 #include "Geometry/Records/interface/MTDDigiGeometryRecord.h"
 #include "Geometry/MTDGeometryBuilder/interface/MTDGeometry.h"
@@ -152,6 +151,7 @@ private:
 
   std::unordered_map<Index_t, float> m_detIdToTotalSimEnergy;  // keep track of cell normalizations
   std::unordered_map<Index_t, float> m_detIdToTotalSimTime;
+  std::unordered_map<Index_t, int> m_detIdToDisc;
   std::unordered_multimap<Barcode_t, Index_t> m_simHitBarcodeToIndex;
 
   /** The maximum bunch crossing BEFORE the signal crossing to create
@@ -405,6 +405,7 @@ void MtdTruthAccumulator::initializeEvent(edm::Event const &event, edm::EventSet
 
   m_detIdToTotalSimEnergy.clear();
   m_detIdToTotalSimTime.clear();
+  m_detIdToDisc.clear();
 
   // if (geomWatcher_.check(setup)) {
      auto geometryHandle = setup.getTransientHandle(geomToken_);
@@ -469,6 +470,7 @@ void MtdTruthAccumulator::finalizeEvent(edm::Event &event, edm::EventSetup const
       for (auto &hAndE : hitsAndEnergies) {
         const float totalenergy = m_detIdToTotalSimEnergy[hAndE.first];
         const float simTime = m_detIdToTotalSimTime[hAndE.first];
+        const int disk = m_detIdToDisc[hAndE.first];
         // MTD 
         float fraction = 0.;
         if (totalenergy > 0)
@@ -478,12 +480,9 @@ void MtdTruthAccumulator::finalizeEvent(edm::Event &event, edm::EventSetup const
               << "TotalSimEnergy for hit " << hAndE.first << " is 0! The fraction for this hit cannot be computed.";
         sc.addRecHitAndFraction(hAndE.first, fraction);
         sc.addHitEnergy(hAndE.second);
-        sc.addHitTime(simTime);
-//calcolo il simcluster time????
-//cp time non so, forse no o forse è t0 invece che tmtd
-//vertici ghost per avere due simcluster??
-      }
-     sc.computeClusterTime();
+        sc.addHitTime(simTime, disk);
+     }
+     sc.computeClusterTime(); //FIX
     }
   }
 
@@ -496,6 +495,9 @@ void MtdTruthAccumulator::finalizeEvent(edm::Event &event, edm::EventSetup const
     for (unsigned j = m_caloParticles.sc_start_[i]; j < m_caloParticles.sc_stop_[i]; ++j) {
       edm::Ref<SimClusterCollection> ref(scHandle, j);
       cp.addSimCluster(ref);
+      const auto vertIndex = cp.g4Tracks()[0].vertIndex();
+      if (vertIndex != -1)
+        cp.addSimTime(hSimVertices->at(vertIndex).position().t());
     }
   }
 
@@ -505,6 +507,7 @@ void MtdTruthAccumulator::finalizeEvent(edm::Event &event, edm::EventSetup const
 
   std::unordered_map<Index_t, float>().swap(m_detIdToTotalSimEnergy);
   std::unordered_map<Index_t, float>().swap(m_detIdToTotalSimTime);
+  std::unordered_map<Index_t, int>().swap(m_detIdToDisc);
   std::unordered_multimap<Barcode_t, Index_t>().swap(m_simHitBarcodeToIndex);
 }
 
@@ -682,30 +685,27 @@ void MtdTruthAccumulator::fillSimHits(std::vector<std::pair<DetId, const PSimHit
       m_detIdToTotalSimEnergy[id.rawId()] += simHit.energyLoss();
       // --- Get the time of the first SIM hit in the cell
       if (m_detIdToTotalSimTime[id.rawId()] == 0. || simHit.tof() < m_detIdToTotalSimTime[id.rawId()]) {
-             m_detIdToTotalSimTime[id.rawId()] = simHit.tof();
-             // auto hit_pos = simHit.localPosition();
+        m_detIdToTotalSimTime[id.rawId()] = simHit.tof();
+        if (isEtl){
+            ETLDetId detId =  simHit.detUnitId();
+     //     auto local_point = simHit.localPosition();
+     //     DetId geoId = detId.geographicalId();
+     //     const MTDGeomDet* thedet = geom->idToDet(geoId);
+     //     const auto& global_point = thedet->toGlobal(local_point);
+            m_detIdToDisc[id.rawId()] = detId.nDisc();
+        } else {
+            m_detIdToDisc[id.rawId()] = 1;
+     //    BTLDetId detId = simHit.detUnitId();
+     //    DetId geoId = detId.geographicalId(MTDTopologyMode::crysLayoutFromTopoMode(topology->getMTDTopologyMode()));
+     //    const MTDGeomDet* thedet = geom->idToDet(geoId);
+     //    const ProxyMTDTopology& topoproxy = static_cast<const ProxyMTDTopology&>(thedet->topology());
+     //    const RectangularMTDTopology& topo = static_cast<const RectangularMTDTopology&>(topoproxy.specificTopology());
+     // 
+     //    Local3DPoint local_point(0., 0., 0.);
+     //    local_point = topo.pixelToModuleLocalPoint(local_point, detId.row(topo.nrows()), detId.column(topo.nrows()));
+     //    const auto& global_point = thedet->toGlobal(local_point);
+        }  
       }
-// std::cout << "rawId= " << id.rawId() << "  tof= " << m_detIdToTotalSimTime[id.rawId()] << "  det= " << id.det() << "  subdet= " << id.subdetId() << std::endl;
-      // MTD timemap[??] += time*energy poi / energymap?
-//   if (isEtl){
-//       ETLDetId detId =  simHit.detUnitId();
-//       auto local_point = simHit.localPosition();
-//       DetId geoId = detId.geographicalId();
-//       const MTDGeomDet* thedet = geom->idToDet(geoId);
-//       const auto& global_point = thedet->toGlobal(local_point);
-//
-////       std::cout << "rawId= " << id.rawId() << "  pos= " << detId.zside() << " " << detId.nDisc() << "  tof= " << m_detIdToTotalSimTime[id.rawId()] << "  pos= " << global_point  << std::endl;
-// } else {
-//       BTLDetId detId = simHit.detUnitId();
-//    DetId geoId = detId.geographicalId(MTDTopologyMode::crysLayoutFromTopoMode(topology->getMTDTopologyMode()));
-//    const MTDGeomDet* thedet = geom->idToDet(geoId);
-//    const ProxyMTDTopology& topoproxy = static_cast<const ProxyMTDTopology&>(thedet->topology());
-//    const RectangularMTDTopology& topo = static_cast<const RectangularMTDTopology&>(topoproxy.specificTopology());
-// 
-//    Local3DPoint local_point(0., 0., 0.);
-//    local_point = topo.pixelToModuleLocalPoint(local_point, detId.row(topo.nrows()), detId.column(topo.nrows()));
-//    const auto& global_point = thedet->toGlobal(local_point);
-// }
     }
   }  // end of loop over InputTags
 }

@@ -181,7 +181,10 @@ public:
   void addHitEnergy(float energy) { energies_.emplace_back(energy); }
 
   /** @brief add hit time */
-  void addHitTime(float time) { times_.emplace_back(time); }
+  void addHitTime(float time, int nDisk) {
+    times_.emplace_back(time);
+    disk_.emplace_back(nDisk);
+  }
 
   /** @brief Returns list of rechit IDs and fractions for this SimCluster */
   std::vector<std::pair<uint32_t, float>> hits_and_fractions() const {
@@ -253,6 +256,7 @@ private:
   std::vector<float> fractions_;
   std::vector<float> energies_;
   std::vector<float> times_;
+  std::vector<int> disk_;
 
   math::XYZTLorentzVectorF theMomentum_;
 
