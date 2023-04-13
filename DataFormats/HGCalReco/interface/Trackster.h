@@ -173,6 +173,13 @@ namespace ticl {
       return id_probabilities_[(int)type];
     }
 
+    inline void setMTDcluster (edm::ProductID seed, int index){
+       MTDcluster_ = std::make_pair(seed, index);
+    }
+
+    inline const edm::ProductID MTDSeedId() const { return MTDcluster_.first; }
+    inline const int MTDSeedIndex() const { return MTDcluster_.second; }
+
   private:
 
     Vector barycenter_;
@@ -203,6 +210,8 @@ namespace ticl {
 
     float tMtd_; // time in MTD (average of the two layers)
     float tMtdError_; 
+
+    std::pair<edm::ProductID, int>  MTDcluster_;
 
     int track_idx_ = -1;
 
