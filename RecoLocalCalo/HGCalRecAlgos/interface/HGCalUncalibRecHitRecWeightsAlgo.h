@@ -84,7 +84,7 @@ public:
 
     if (sample.getToAValid()) {
       const auto& dist2center = geom_ ? geom_->getPosition(dataFrame.id()).mag() : 0;
-      jitter_ = double(sample.toa()) * toaLSBToNS_ - dist2center / c_cm_ns - tofDelay_;
+      jitter_ = double(sample.toa()) * toaLSBToNS_ - tofDelay_;
     }
 
     int thickness = (ddd_ != nullptr) ? ddd_->waferType(dataFrame.id(), false) : 0;

@@ -87,10 +87,9 @@ void PFTICLProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
   const auto& muons = *muonH;
 
   auto candidates = std::make_unique<reco::PFCandidateCollection>();
-
   for (const auto& ticl_cand : ticl_candidates) {
     const auto abs_pdg_id = std::abs(ticl_cand.pdgId());
-    const auto charge = ticl_cand.charge();
+    auto charge = ticl_cand.charge();
     const auto& four_mom = ticl_cand.p4();
     float total_raw_energy = 0.f;
     float total_em_raw_energy = 0.f;
@@ -106,37 +105,52 @@ void PFTICLProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
     // fix for floating point rounding could go slightly below 0
     hcal_energy = std::max(0.f, hcal_energy);
     reco::PFCandidate::ParticleType part_type;
-    switch (abs_pdg_id) {
-      case 11:
-        part_type = reco::PFCandidate::e;
-        break;
-      case 13:
-        part_type = reco::PFCandidate::mu;
-        break;
-      case 22:
-        part_type = reco::PFCandidate::gamma;
-        break;
-      case 130:
-        part_type = reco::PFCandidate::h0;
-        break;
-      case 211:
-        part_type = reco::PFCandidate::h;
-        break;
-      // default also handles neutral pions (111) for the time being (not yet foreseen in PFCandidate)
-      default:
-        part_type = reco::PFCandidate::X;
-    }
 
+    if (abs_pdg_id == 22) {
+      part_type = reco::PFCandidate::gamma; 
+    } else if (abs_pdg_id == 11) {
+      part_type = reco::PFCandidate::e;
+    } else if (abs_pdg_id == 13) {
+      part_type = reco::PFCandidate::mu;
+    } else {
+      bool isHadron = (abs_pdg_id > 100 and abs_pdg_id < 900 and abs_pdg_id != 111) or (abs_pdg_id > 1000 and abs_pdg_id < 9000);
+      if (isHadron) {
+        if (charge != 0) {
+          part_type = reco::PFCandidate::h;
+        } else {
+          part_type = reco::PFCandidate::h0;
+        }
+      } else {
+        part_type = reco::PFCandidate::X;
+      }
+    }
+    
+    reco::TrackRef trackref(ticl_cand.trackPtr().id(), int(ticl_cand.trackPtr().key()), &evt.productGetter());
+//    if(charge != 0 and trackref.isNull()) {
+//      charge = 0;
+//      switch (abs_pdg_id) {
+//          case 11:
+//            std::cout << "fotone carico!" << std::endl;
+//          case 22:
+//            part_type = reco::PFCandidate::gamma;
+//            break;
+//          default:
+//            part_type = reco::PFCandidate::h0;
+//      }                  
+//    }
     candidates->emplace_back(charge, four_mom, part_type);
 
     auto& candidate = candidates->back();
     candidate.setEcalEnergy(ecal_energy, ecal_energy);
     candidate.setHcalEnergy(hcal_energy, hcal_energy);
+    if (candidate.charge() and trackref.isNull())
+       std::cout << "ERRORE non ha funzionato" << std::endl;
     if (candidate.charge()) {  // otherwise PFCandidate throws
       // Construct edm::Ref from edm::Ptr. As of now, assumes type to be reco::Track. To be extended (either via
       // dynamic type checking or configuration) if additional track types are needed.
-      reco::TrackRef trackref(ticl_cand.trackPtr().id(), int(ticl_cand.trackPtr().key()), &evt.productGetter());
+   //   reco::TrackRef trackref(ticl_cand.trackPtr().id(), int(ticl_cand.trackPtr().key()), &evt.productGetter());
       candidate.setTrackRef(trackref);
+
       // Utilize PFMuonAlgo
       const int muId = PFMuonAlgo::muAssocToTrack(trackref, muons);
       if (muId != -1) {
@@ -151,7 +165,7 @@ void PFTICLProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
     auto time = ticl_cand.time();
     auto timeE = ticl_cand.timeError();
 
-    if (useMTDTiming_ and candidate.charge()) {
+    if (useMTDTiming_ and candidate.charge() and candidate.trackRef().isNonnull()) {
       // Ignore HGCAL timing until it will be TOF corrected
       time = -99.;
       timeE = -1.;

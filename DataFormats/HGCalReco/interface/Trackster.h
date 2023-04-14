@@ -37,19 +37,25 @@ namespace ticl {
     enum class PCAOrdering { ascending = 0, descending };
 
     Trackster()
-        : iterationIndex_(0),
-          seedIndex_(-1),
-          time_(0.f),
-          timeError_(-1.f),
+        : barycenter_({0., 0., 0.}),
           regressed_energy_(0.f),
           raw_energy_(0.f),
           raw_em_energy_(0.f),
           raw_pt_(0.f),
           raw_em_pt_(0.f),
-          barycenter_({0., 0., 0.}),
+          CALOtime_(0.f),
+          CALOtimeError_(-1.f),
+          BoundaryTime_(0.f),
+          BoundaryTimeError_(-1.f),
+          MTDtime_(-99.f),
+          MTDtimeError_(-1.f),
+          tMtd_(-99.f),
+          tMtdError_(-1.f),
           eigenvalues_{{0.f, 0.f, 0.f}},
           sigmas_{{0.f, 0.f, 0.f}},
-          sigmasPCA_{{0.f, 0.f, 0.f}} {
+          sigmasPCA_{{0.f, 0.f, 0.f}},
+          seedIndex_(-1),
+          iterationIndex_(0) {
       zeroProbabilities();
     }
 
@@ -62,8 +68,20 @@ namespace ticl {
       seedIndex_ = index;
     }
     inline void setTimeAndError(float t, float tError) {
-      time_ = t;
-      timeError_ = tError;
+      CALOtime_ = t;
+      CALOtimeError_ = tError;
+    }
+    inline void setBoundaryTimeAndError(float t, float tError) {
+      BoundaryTime_ = t;
+      BoundaryTimeError_ = tError;
+    }
+    inline void setMTDTimeAndError(float t, float tError) {
+      MTDtime_ = t;
+      MTDtimeError_ = tError;
+    }
+    inline void settMtdAndError(float t, float error) {
+      tMtd_ = t;
+      tMtdError_ = error;
     }
     inline void setRegressedEnergy(float value) { regressed_energy_ = value; }
     inline void setRawEnergy(float value) { raw_energy_ = value; }
@@ -73,6 +91,9 @@ namespace ticl {
     inline void setRawPt(float value) { raw_pt_ = value; }
     inline void setRawEmPt(float value) { raw_em_pt_ = value; }
     inline void setBarycenter(Vector value) { barycenter_ = value; }
+    inline void setTrackIdx(int index) { track_idx_ = index; }
+    int trackIdx() const { return track_idx_; }
+
     inline void fillPCAVariables(Eigen::Vector3d &eigenvalues,
                                  Eigen::Matrix3d &eigenvectors,
                                  Eigen::Vector3d &sigmas,
@@ -124,8 +145,14 @@ namespace ticl {
     inline const std::vector<std::array<unsigned int, 2> > &edges() const { return edges_; }
     inline const edm::ProductID &seedID() const { return seedID_; }
     inline const int seedIndex() const { return seedIndex_; }
-    inline const float time() const { return time_; }
-    inline const float timeError() const { return timeError_; }
+    inline const float time() const { return CALOtime_; }
+    inline const float timeError() const { return CALOtimeError_; }
+    inline const float BoundaryTime() const { return BoundaryTime_; }
+    inline const float BoundaryTimeError() const { return BoundaryTimeError_; }
+    inline const float MTDtime() const { return MTDtime_; }
+    inline const float MTDtimeError() const { return MTDtimeError_; }
+    inline const float tMtd() const { return tMtd_; }
+    inline const float tMtdError() const { return tMtdError_; }
     inline const float regressed_energy() const { return regressed_energy_; }
     inline const float raw_energy() const { return raw_energy_; }
     inline const float raw_em_energy() const { return raw_em_energy_; }
@@ -146,14 +173,54 @@ namespace ticl {
       return id_probabilities_[(int)type];
     }
 
+    inline void setMTDcluster (edm::ProductID seed, int index){
+       MTDcluster_ = std::make_pair(seed, index);
+    }
+
+    inline const edm::ProductID MTDSeedId() const { return MTDcluster_.first; }
+    inline const int MTDSeedIndex() const { return MTDcluster_.second; }
+
   private:
-    // TICL iteration producing the trackster
-    uint8_t iterationIndex_;
+
+    Vector barycenter_;
+    // regressed energy
+    float regressed_energy_;
+    float raw_energy_;
+    float raw_em_energy_;
+    float raw_pt_;
+    float raw_em_pt_;
+
+    // trackster ID probabilities
+    std::array<float, 8> id_probabilities_;
 
     // The vertices of the DAG are the indices of the
     // 2d objects in the global collection
     std::vector<unsigned int> vertices_;
     std::vector<float> vertex_multiplicity_;
+
+    // -99, -1 if not available. ns units otherwise
+    float CALOtime_;
+    float CALOtimeError_;
+
+    float BoundaryTime_;
+    float BoundaryTimeError_;
+
+    float MTDtime_; // time at the vertex
+    float MTDtimeError_;
+
+    float tMtd_; // time in MTD (average of the two layers)
+    float tMtdError_; 
+
+    std::pair<edm::ProductID, int>  MTDcluster_;
+
+    int track_idx_ = -1;
+
+    // PCA Variables
+    std::array<Vector, 3> eigenvectors_;
+    std::array<float, 3> eigenvalues_;
+    std::array<float, 3> sigmas_;
+    std::array<float, 3> sigmasPCA_;
+
 
     // The edges connect two vertices together in a directed doublet
     // ATTENTION: order matters!
@@ -174,30 +241,8 @@ namespace ticl {
     // can be cooked using the previous ProductID and this index.
     int seedIndex_;
 
-    // We also need the pointer to the original seeding region ??
-    // something like:
-    // int seedingRegionIdx;
-
-    // -99, -1 if not available. ns units otherwise
-    float time_;
-    float timeError_;
-
-    // regressed energy
-    float regressed_energy_;
-    float raw_energy_;
-    float raw_em_energy_;
-    float raw_pt_;
-    float raw_em_pt_;
-
-    // PCA Variables
-    Vector barycenter_;
-    std::array<float, 3> eigenvalues_;
-    std::array<Vector, 3> eigenvectors_;
-    std::array<float, 3> sigmas_;
-    std::array<float, 3> sigmasPCA_;
-
-    // trackster ID probabilities
-    std::array<float, 8> id_probabilities_;
+    // TICL iteration producing the trackster
+    uint8_t iterationIndex_;
   };
 
   typedef std::vector<Trackster> TracksterCollection;

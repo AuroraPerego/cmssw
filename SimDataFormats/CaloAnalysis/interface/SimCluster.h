@@ -180,6 +180,12 @@ public:
   /** @brief add rechit energy */
   void addHitEnergy(float energy) { energies_.emplace_back(energy); }
 
+  /** @brief add hit time */
+  void addHitTime(float time, int nDisk) {
+    times_.emplace_back(time);
+    disk_.emplace_back(nDisk);
+  }
+
   /** @brief Returns list of rechit IDs and fractions for this SimCluster */
   std::vector<std::pair<uint32_t, float>> hits_and_fractions() const {
     std::vector<std::pair<uint32_t, float>> result;
@@ -209,6 +215,27 @@ public:
   /** @brief clear the energies list */
   void clearHitsEnergy() { std::vector<float>().swap(energies_); }
 
+  /** @brief clear the times list */
+  void clearHitsTime() { std::vector<float>().swap(times_); }
+
+  /** @brief computes the time of the cluster */
+  void computeClusterTime() { 
+    uint32_t nsim = times_.size();
+    auto tot_en = 0.;
+    if (nsim == 0){
+      simhit_time_ = -99.;
+    } else {
+      for (uint32_t i = 0; i < nsim; i++){
+        simhit_time_ += times_[i]*energies_[i];
+        tot_en += energies_[i];
+      }
+      simhit_time_ = simhit_time_ / tot_en; 
+    }	
+ }
+
+  /** @brief returns the time of the cluster */
+  float simTime() const { return simhit_time_; }
+
   /** @brief returns the accumulated sim energy in the cluster */
   float simEnergy() const { return simhit_energy_; }
 
@@ -224,9 +251,12 @@ private:
 
   uint32_t particleId_{0};
   float simhit_energy_{0.f};
+  float simhit_time_{0.f};
   std::vector<uint32_t> hits_;
   std::vector<float> fractions_;
   std::vector<float> energies_;
+  std::vector<float> times_;
+  std::vector<int> disk_;
 
   math::XYZTLorentzVectorF theMomentum_;
 
