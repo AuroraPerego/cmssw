@@ -219,18 +219,19 @@ public:
   void clearHitsTime() { std::vector<float>().swap(times_); }
 
   /** @brief computes the time of the cluster */
-  void computeClusterTime() { 
+  float computeClusterTime(int disk=1) { 
     uint32_t nsim = times_.size();
     auto tot_en = 0.;
-    if (nsim == 0){
-      simhit_time_ = -99.;
-    } else {
-      for (uint32_t i = 0; i < nsim; i++){
+    simhit_time_ = 0.;
+    for (uint32_t i = 0; i < nsim; i++){
+      if( disk_[i] == disk){
         simhit_time_ += times_[i]*energies_[i];
         tot_en += energies_[i];
-      }
-      simhit_time_ = simhit_time_ / tot_en; 
-    }	
+      }	
+    }
+    if (tot_en != 0.)
+      simhit_time_ = simhit_time_ / tot_en; 	
+    return simhit_time_;
  }
 
   /** @brief returns the time of the cluster */
@@ -244,6 +245,12 @@ public:
     simhit_energy_ += hit.energy();
     ++nsimhits_;
   }
+
+  /** @brief for ETL: return vector of hits' disk (1 or 2) */
+  std::vector<int> nDisk () const { return disk_; }
+
+  /** @brief return vector of hits' times */
+  std::vector<float> times () const { return times_; }
 
 private:
   uint64_t nsimhits_{0};
