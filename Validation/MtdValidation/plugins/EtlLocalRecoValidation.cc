@@ -383,13 +383,13 @@ void EtlLocalRecoValidation::analyze(const edm::Event& iEvent, const edm::EventS
               << "\n  charge " << SC.charge() << "\n  pdgId  " << SC.pdgId() << "\n  energy " << SC.energy()
               << "\n  eta    " << SC.eta() << "\n  phi    " << SC.phi() << "\n  number of cells = " << SC.nDisk().size()
               << std::endl;
-    std::vector<int> nDisk = SC.nDisk();
+    std::vector<uint8_t> nDisk = SC.nDisk();
     std::vector<float> nTimes = SC.times();
     for (unsigned int i = 0; i < SC.hits_and_fractions().size(); ++i) {
       std::cout << std::fixed << std::setprecision(3) << "hit " << SC.hits_and_fractions()[i].first << " disk "
                 << nDisk[i] << " time " << nTimes[i] << std::endl;
     }
-    for (unsigned int i = 1; i < 3; i++) {
+    for (uint8_t i = 1; i < 3; i++) {
       if (std::find(begin(nDisk), end(nDisk), i) != std::end(nDisk)) {
         float clTime = SC.computeClusterTime(i);
         std::cout << std::fixed << std::setprecision(3) << " Cluster time " << clTime << " for disk " << i << std::endl;

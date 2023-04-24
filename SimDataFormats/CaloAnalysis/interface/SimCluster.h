@@ -181,7 +181,7 @@ public:
   void addHitEnergy(float energy) { energies_.emplace_back(energy); }
 
   /** @brief add hit time */
-  void addHitTime(float time, int nDisk) {
+  void addHitTime(float time, uint8_t nDisk) {
     times_.emplace_back(time);
     disk_.emplace_back(nDisk);
   }
@@ -219,7 +219,7 @@ public:
   void clearHitsTime() { std::vector<float>().swap(times_); }
 
   /** @brief computes the time of the cluster */
-  float computeClusterTime(int disk=1) { 
+  float computeClusterTime(uint8_t disk=1) { 
     uint32_t nsim = times_.size();
     auto tot_en = 0.;
     simhit_time_ = 0.;
@@ -247,7 +247,7 @@ public:
   }
 
   /** @brief for ETL: return vector of hits' disk (1 or 2) */
-  std::vector<int> nDisk () const { return disk_; }
+  std::vector<uint8_t> nDisk () const { return disk_; }
 
   /** @brief return vector of hits' times */
   std::vector<float> times () const { return times_; }
@@ -263,7 +263,7 @@ private:
   std::vector<float> fractions_;
   std::vector<float> energies_;
   std::vector<float> times_;
-  std::vector<int> disk_;
+  std::vector<uint8_t> disk_;
 
   math::XYZTLorentzVectorF theMomentum_;
 

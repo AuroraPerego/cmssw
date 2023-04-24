@@ -151,7 +151,7 @@ private:
 
   std::unordered_map<Index_t, float> m_detIdToTotalSimEnergy;  // keep track of cell normalizations
   std::unordered_map<Index_t, float> m_detIdToTotalSimTime;
-  std::unordered_map<Index_t, int> m_detIdToDisc;
+  std::unordered_map<Index_t, uint8_t> m_detIdToDisc;
   std::unordered_multimap<Barcode_t, Index_t> m_simHitBarcodeToIndex;
 
   /** The maximum bunch crossing BEFORE the signal crossing to create
@@ -470,7 +470,7 @@ void MtdTruthAccumulator::finalizeEvent(edm::Event &event, edm::EventSetup const
       for (auto &hAndE : hitsAndEnergies) {
         const float totalenergy = m_detIdToTotalSimEnergy[hAndE.first];
         const float simTime = m_detIdToTotalSimTime[hAndE.first];
-        const int disk = m_detIdToDisc[hAndE.first];
+        const uint8_t disk = m_detIdToDisc[hAndE.first];
         // MTD 
         float fraction = 0.;
         if (totalenergy > 0)
@@ -507,7 +507,7 @@ void MtdTruthAccumulator::finalizeEvent(edm::Event &event, edm::EventSetup const
 
   std::unordered_map<Index_t, float>().swap(m_detIdToTotalSimEnergy);
   std::unordered_map<Index_t, float>().swap(m_detIdToTotalSimTime);
-  std::unordered_map<Index_t, int>().swap(m_detIdToDisc);
+  std::unordered_map<Index_t, uint8_t>().swap(m_detIdToDisc);
   std::unordered_multimap<Barcode_t, Index_t>().swap(m_simHitBarcodeToIndex);
 }
 
