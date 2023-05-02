@@ -28,6 +28,8 @@
 
 #include "SimDataFormats/CaloAnalysis/interface/CaloParticle.h"
 #include "SimDataFormats/CaloAnalysis/interface/SimCluster.h"
+#include "SimDataFormats/CaloAnalysis/interface/MtdSimTrackster.h"
+#include "SimDataFormats/CaloAnalysis/interface/MtdSimTracksterFwd.h"
 #include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"
 
 #include "SimDataFormats/Track/interface/UniqueSimTrackId.h"
@@ -76,7 +78,7 @@ private:
   const edm::EDGetTokenT<std::vector<float>> filtered_layerclusters_mask_token_;
 
   const edm::EDGetTokenT<std::vector<SimCluster>> simclusters_token_;
-  const edm::EDGetTokenT<std::vector<SimCluster>> MTDsimclusters_token_;
+  const edm::EDGetTokenT<MtdSimTracksterCollection> MTDsimTracksters_token_;
   const edm::EDGetTokenT<std::vector<CaloParticle>> caloparticles_token_;
   const edm::EDGetTokenT<std::vector<CaloParticle>> MTDcaloparticles_token_;
 
@@ -110,7 +112,7 @@ SimTrackstersProducer::SimTrackstersProducer(const edm::ParameterSet& ps)
       clustersTime_token_(consumes(ps.getParameter<edm::InputTag>("time_layerclusters"))),
       filtered_layerclusters_mask_token_(consumes(ps.getParameter<edm::InputTag>("filtered_mask"))),
       simclusters_token_(consumes(ps.getParameter<edm::InputTag>("simclusters"))),
-      MTDsimclusters_token_(consumes(ps.getParameter<edm::InputTag>("MTDsimclusters"))),
+      MTDsimTracksters_token_(consumes(ps.getParameter<edm::InputTag>("MTDsimTracksters"))),
       caloparticles_token_(consumes(ps.getParameter<edm::InputTag>("caloparticles"))),
       MTDcaloparticles_token_(consumes(ps.getParameter<edm::InputTag>("MTDcaloparticles"))),
       associatorMapSimClusterToReco_token_(
@@ -146,7 +148,7 @@ void SimTrackstersProducer::fillDescriptions(edm::ConfigurationDescriptions& des
   desc.add<edm::InputTag>("time_layerclusters", edm::InputTag("hgcalLayerClusters", "timeLayerCluster"));
   desc.add<edm::InputTag>("filtered_mask", edm::InputTag("filteredLayerClustersSimTracksters", "ticlSimTracksters"));
   desc.add<edm::InputTag>("simclusters", edm::InputTag("mix", "MergedCaloTruth"));
-  desc.add<edm::InputTag>("MTDsimclusters", edm::InputTag("mix", "MergedMtdTruth"));
+  desc.add<edm::InputTag>("MTDsimTracksters", edm::InputTag("mix", "MergedMtdTruthST"));
   desc.add<edm::InputTag>("caloparticles", edm::InputTag("mix", "MergedCaloTruth"));
   desc.add<edm::InputTag>("MTDcaloparticles", edm::InputTag("mix", "MergedMtdTruth"));
   desc.add<edm::InputTag>("layerClusterSimClusterAssociator",
@@ -236,9 +238,9 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
   evt.getByToken(caloparticles_token_, caloParticles_h);
   const auto& caloparticles = *caloParticles_h;
 
-  edm::Handle<std::vector<SimCluster>> MTDsimclusters_h;
-  evt.getByToken(MTDsimclusters_token_, MTDsimclusters_h);
-  const auto& MTDsimclusters = *MTDsimclusters_h;
+  edm::Handle<MtdSimTracksterCollection> MTDsimTracksters_h;
+  evt.getByToken(MTDsimTracksters_token_, MTDsimTracksters_h);
+  const auto& MTDsimTracksters = *MTDsimTracksters_h;
 
   edm::Handle<std::vector<CaloParticle>> MTDcaloParticles_h;
   evt.getByToken(MTDcaloparticles_token_, MTDcaloParticles_h);
@@ -393,8 +395,8 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
   }
 
   std::unordered_map<unsigned int, unsigned int> SimTrackToMtdSC;
-  for (unsigned int i = 0; i < MTDsimclusters.size(); ++i){
-    const auto& simTrack = MTDsimclusters[i].g4Tracks()[0];
+  for (unsigned int i = 0; i < MTDsimTracksters.size(); ++i){
+    const auto& simTrack = MTDsimTracksters[i].g4Tracks()[0];
     SimTrackToMtdSC[simTrack.trackId()] = i;
   }
 
@@ -448,7 +450,7 @@ if (simTrackstersFromCP[i].vertices().size() == 0)
       auto pos = SimTrackToMtdSC.find(simTrack.trackId());
       if (pos != SimTrackToMtdSC.end()) {
         auto& MTDscIdx = pos->second;
-        simTracksters[i].setMTDcluster(MTDsimclusters_h.id(), MTDscIdx); 
+        simTracksters[i].setMTDcluster(MTDsimTracksters_h.id(), MTDscIdx); 
 }
     }
   }
@@ -560,8 +562,8 @@ if (simTrackstersFromCP[i].vertices().size() == 0)
 //  for (auto const& tk :  cand.tracksters()){
 //   if (tk->MTDSeedId() == MTDcaloParticles_h.id()){
 //      std::cout << "MTD CP for tk " << MTDcaloparticles[tk->MTDSeedIndex()].simTime() << std::endl; 
-//   } else if (tk->MTDSeedId() == MTDsimclusters_h.id()){
-//     std::cout << "MTD SC for tk " << MTDsimclusters[tk->MTDSeedIndex()].simTime() << std::endl;
+//   } else if (tk->MTDSeedId() == MTDsimTracksters_h.id()){
+//     std::cout << "MTD SC for tk " << MTDsimTracksters[tk->MTDSeedIndex()].simTime() << std::endl;
 //   }
 //  }
 // }
