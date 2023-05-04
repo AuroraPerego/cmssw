@@ -1,4 +1,3 @@
-#define PRINT_DEBUG
 #define DEBUG false
 #if DEBUG
 // boost optional (used by boost graph) results in some false positives with
