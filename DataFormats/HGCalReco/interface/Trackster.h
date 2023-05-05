@@ -47,8 +47,8 @@ namespace ticl {
           CALOtimeError_(-1.f),
           BoundaryTime_(0.f),
           BoundaryTimeError_(-1.f),
-          MTDtime_(-99.f),
-          MTDtimeError_(-1.f),
+          t0Mtd_(-99.f),
+          t0MtdError_(-1.f),
           tMtd_(-99.f),
           tMtdError_(-1.f),
           eigenvalues_{{0.f, 0.f, 0.f}},
@@ -75,11 +75,11 @@ namespace ticl {
       BoundaryTime_ = t;
       BoundaryTimeError_ = tError;
     }
-    inline void setMTDTimeAndError(float t, float tError) {
-      MTDtime_ = t;
-      MTDtimeError_ = tError;
+    inline void sett0MtdTimeAndError(float t, float tError) {
+      t0Mtd_ = t;
+      t0MtdError_ = tError;
     }
-    inline void settMtdAndError(float t, float error) {
+    inline void settMtdTimeAndError(float t, float error) {
       tMtd_ = t;
       tMtdError_ = error;
     }
@@ -149,8 +149,8 @@ namespace ticl {
     inline const float timeError() const { return CALOtimeError_; }
     inline const float BoundaryTime() const { return BoundaryTime_; }
     inline const float BoundaryTimeError() const { return BoundaryTimeError_; }
-    inline const float MTDtime() const { return MTDtime_; }
-    inline const float MTDtimeError() const { return MTDtimeError_; }
+    inline const float MTDtime() const { return t0Mtd_; }
+    inline const float MTDtimeError() const { return t0MtdError_; }
     inline const float tMtd() const { return tMtd_; }
     inline const float tMtdError() const { return tMtdError_; }
     inline const float regressed_energy() const { return regressed_energy_; }
@@ -173,12 +173,11 @@ namespace ticl {
       return id_probabilities_[(int)type];
     }
 
-    inline void setMTDcluster (edm::ProductID seed, int index){
-       MTDcluster_ = std::make_pair(seed, index);
+    inline void setMTDcluster (int32_t index){
+       MTDclusterIndex_ = index;
     }
 
-    inline const edm::ProductID MTDSeedId() const { return MTDcluster_.first; }
-    inline const int MTDSeedIndex() const { return MTDcluster_.second; }
+    inline const int32_t MTDSeedIndex() const { return MTDclusterIndex_; }
 
   private:
 
@@ -205,13 +204,15 @@ namespace ticl {
     float BoundaryTime_;
     float BoundaryTimeError_;
 
-    float MTDtime_; // time at the vertex
-    float MTDtimeError_;
+    // time propagated back from mtd to the vertex and corrected
+    float t0Mtd_; 
+    float t0MtdError_;
 
-    float tMtd_; // time in MTD (average of the two layers)
+    // time in MTD (average of the two layers w/ propagation for ETL)
+    float tMtd_; 
     float tMtdError_; 
 
-    std::pair<edm::ProductID, int>  MTDcluster_;
+    int32_t MTDclusterIndex_{-1};
 
     int track_idx_ = -1;
 
