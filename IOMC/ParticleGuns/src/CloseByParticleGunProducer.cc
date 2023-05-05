@@ -53,6 +53,7 @@ CloseByParticleGunProducer::CloseByParticleGunProducer(const ParameterSet& pset)
   fUseDeltaT = pgun_params.getParameter<bool>("UseDeltaT");
   fTMax = pgun_params.getParameter<double>("TMax");
   fTMin = pgun_params.getParameter<double>("TMin");
+  fOffsetFirst = pgun_params.getParameter<double>("OffsetFirst");
 
   produces<HepMCProduct>("unsmeared");
   produces<GenEventInfoProduct>();
@@ -90,6 +91,7 @@ void CloseByParticleGunProducer::fillDescriptions(ConfigurationDescriptions& des
     psd0.add<bool>("UseDeltaT", true);
     psd0.add<double>("TMin", 0.05);
     psd0.add<double>("TMax", 0.05);
+    psd0.add<double>("OffsetFirst", 0.);
     desc.add<edm::ParameterSetDescription>("PGunParameters", psd0);
   }
   desc.addUntracked<int>("Verbosity", 0);
@@ -160,12 +162,12 @@ void CloseByParticleGunProducer::produce(Event& e, const EventSetup& es) {
     double py = 0.;
     double pz = mom;
     double energy = fEn;
-
+    
     // Compute Vertex Position
     double x = fR * cos(phi);
     double y = fR * sin(phi);
     constexpr double c = 2.99792458e+1;  // cm/ns
-    double timeOffset = (sqrt(x * x + y * y + fZ * fZ) / c + ip * fT) * ns * c_light;
+    double timeOffset = fOffsetFirst + (sqrt(x * x + y * y + fZ * fZ) / (pz / energy) + ip * fT) * ns * c_light;
     // ns = 1, cm = 10, c_light is in mm/ns
     HepMC::GenVertex* Vtx = new HepMC::GenVertex(HepMC::FourVector(x * cm, y * cm, fZ * cm, timeOffset));
     HepMC::FourVector p(px, py, pz, energy);

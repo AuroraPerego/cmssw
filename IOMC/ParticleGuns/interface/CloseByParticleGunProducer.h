@@ -30,6 +30,7 @@ namespace edm {
     bool fOverlapping = false;
     bool fRandomShoot = false;
     bool fUseDeltaT = true;
+    double fOffsetFirst = 0.;
     std::vector<int> fPartIDs;
   };
 }  // namespace edm
