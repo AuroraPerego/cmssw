@@ -21,9 +21,7 @@ namespace edm {
 namespace mtd {
   class MTDGeomUtil {
   public:
-    MTDGeomUtil()
-        : geom_(nullptr),
-	  topology_(nullptr) {}
+    MTDGeomUtil() : geom_(nullptr), topology_(nullptr) {}
     ~MTDGeomUtil() {}
 
     void setGeometry(MTDGeometry const* geom);
@@ -32,7 +30,7 @@ namespace mtd {
     bool isETL(const DetId&) const;
     bool isBTL(const DetId&) const;
 
-    GlobalPoint getPosition(const DetId& id, int row=0, int column=0) const;
+    GlobalPoint getPosition(const DetId& id, int row = 0, int column = 0) const;
     GlobalPoint getPosition(const DetId& id, const LocalPoint& local_point) const;
 
     // zside returns +/- 1
@@ -52,7 +50,10 @@ namespace mtd {
     // 4-vector helper functions using DetId
     float getEta(const DetId& id, const LocalPoint& local_point, const float& vertex_z = 0.) const;
     float getPhi(const DetId& id, const LocalPoint& local_point) const;
-    float getPt(const DetId& id, const LocalPoint& local_point, const float& hitEnergy, const float& vertex_z = 0.) const;
+    float getPt(const DetId& id,
+                const LocalPoint& local_point,
+                const float& hitEnergy,
+                const float& vertex_z = 0.) const;
 
     inline const MTDGeometry* getGeometry() const { return geom_; };
     inline const MTDTopology* getTopology() const { return topology_; };

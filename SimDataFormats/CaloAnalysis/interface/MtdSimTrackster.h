@@ -169,9 +169,7 @@ public:
   std::vector<uint32_t> clusters() const { return clusters_; }
 
   /** @brief add simhit's energy to cluster */
-  void addCluster(const uint32_t sc) {
-   clusters_.push_back(sc);
-  }
+  void addCluster(const uint32_t sc) { clusters_.push_back(sc); }
 
 private:
   uint64_t nsimclusters_{0};
