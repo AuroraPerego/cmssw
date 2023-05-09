@@ -183,8 +183,14 @@ public:
   /** @brief returns the accumulated sim energy in the cluster */
   float simEnergy() const { return simhit_energy_; }
 
+  /** @brief returns the time of the caloparticle */
+  float simTime() const { return simhit_time_; }
+
+  void addSimTime(const float time) { simhit_time_ = time; }
+
   /** @brief add simhit's energy to cluster */
-  void addSimHit(const PCaloHit &hit) {
+  template <typename T>
+  void addSimHit(const T &hit) {
     simhit_energy_ += hit.energy();
     ++nsimhits_;
   }
@@ -195,6 +201,7 @@ private:
 
   uint32_t particleId_{0};
   float simhit_energy_{0.f};
+  float simhit_time_{-99.f};
   std::vector<uint32_t> hits_;
   std::vector<float> fractions_;
 

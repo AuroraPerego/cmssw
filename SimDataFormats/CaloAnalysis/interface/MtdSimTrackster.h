@@ -1,11 +1,12 @@
-#ifndef SimDataFormats_SimCluster_h
-#define SimDataFormats_SimCluster_h
+#ifndef SimDataFormats_MtdMtdSimTrackster_h
+#define SimDataFormats_MtdMtdSimTrackster_h
 
+#include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/Math/interface/LorentzVector.h"
 #include "DataFormats/Math/interface/Point3D.h"
 #include "DataFormats/Math/interface/Vector3D.h"
-#include "SimDataFormats/CaloHit/interface/PCaloHit.h"
+#include "SimDataFormats/CaloAnalysis/interface/SimCluster.h"
 #include "SimDataFormats/Track/interface/SimTrack.h"
 #include <vector>
 
@@ -15,19 +16,8 @@
 class SimTrack;
 class EncodedEventId;
 
-/** @brief Monte Carlo truth information used for tracking validation.
- *
- * Object with references to the original SimTrack and parent and daughter
- * TrackingVertices. Simulation with high (~100) pileup was taking too much
- * memory so the class was slimmed down and copies of the SimHits were removed.
- *
- * @author original author unknown, re-engineering and slimming by Subir Sarkar
- * (subir.sarkar@cern.ch), some tweaking and documentation by Mark Grimes
- * (mark.grimes@bristol.ac.uk).
- * @date original date unknown, re-engineering Jan-May 2013
- */
-class SimCluster {
-  friend std::ostream &operator<<(std::ostream &s, SimCluster const &tp);
+class MtdSimTrackster {
+  friend std::ostream &operator<<(std::ostream &s, MtdSimTrackster const &tp);
 
 public:
   typedef int Charge;                                       ///< electric charge type
@@ -40,13 +30,14 @@ public:
   typedef reco::GenParticleRefVector::iterator genp_iterator;
   typedef std::vector<SimTrack>::const_iterator g4t_iterator;
 
-  SimCluster();
+  MtdSimTrackster();
 
-  SimCluster(const SimTrack &simtrk);
-  SimCluster(EncodedEventId eventID, uint32_t particleID);  // for PU
+  MtdSimTrackster(const SimCluster &sc);
+  MtdSimTrackster(EncodedEventId eventID, uint32_t particleID);  // for PU
+  MtdSimTrackster(const SimCluster &sc, const std::vector<uint32_t> SCs, const float time, const GlobalPoint pos);
 
   // destructor
-  ~SimCluster();
+  ~MtdSimTrackster();
 
   /** @brief PDG ID.
    *
@@ -62,7 +53,7 @@ public:
   /** @brief Signal source, crossing number.
    *
    * Note this is taken from the first SimTrack only, but there shouldn't be any
-   * SimTracks from different crossings in the SimCluster. */
+   * SimTracks from different crossings in the MtdSimTrackster. */
   EncodedEventId eventId() const { return event_; }
 
   uint64_t particleId() const { return particleId_; }
@@ -166,105 +157,29 @@ public:
   bool longLived() const { return status() & longLivedTag; }
 
   /** @brief Gives the total number of SimHits, in the cluster */
-  int numberOfSimHits() const { return nsimhits_; }
+  int numberOfClusters() const { return nsimclusters_; }
 
-  /** @brief Gives the total number of SimHits, in the cluster */
-  int numberOfRecHits() const { return hits_.size(); }
+  /** @brief returns the position of the cluster */
+  GlobalPoint position() const { return posAtEntrance_; }
 
-  /** @brief add rechit with fraction */
-  void addRecHitAndFraction(uint32_t hit, float fraction) {
-    hits_.emplace_back(hit);
-    fractions_.emplace_back(fraction);
-  }
+  /** @brief returns the time of the cluster */
+  float time() const { return timeAtEntrance_; }
 
-  /** @brief add rechit energy */
-  void addHitEnergy(float energy) { energies_.emplace_back(energy); }
-
-  /** @brief add hit time */
-  void addHitTime(float time) { times_.emplace_back(time); }
-
-  /** @brief Returns list of rechit IDs and fractions for this SimCluster */
-  std::vector<std::pair<uint32_t, float>> hits_and_fractions() const {
-    std::vector<std::pair<uint32_t, float>> result;
-    for (size_t i = 0; i < hits_.size(); ++i) {
-      result.emplace_back(hits_[i], fractions_[i]);
-    }
-    return result;
-  }
-
-  /** @brief Returns list of rechit IDs and energies for this SimCluster */
-  std::vector<std::pair<uint32_t, float>> hits_and_energies() const {
-    assert(hits_.size() == energies_.size());
-    std::vector<std::pair<uint32_t, float>> result;
-    result.reserve(hits_.size());
-    for (size_t i = 0; i < hits_.size(); ++i) {
-      result.emplace_back(hits_[i], energies_[i]);
-    }
-    return result;
-  }
-
-  /** @brief Returns list of rechit IDs and times for this SimCluster */
-  std::vector<std::pair<uint32_t, float>> hits_and_times() const {
-    assert(hits_.size() == times_.size());
-    std::vector<std::pair<uint32_t, float>> result;
-    result.reserve(hits_.size());
-    for (size_t i = 0; i < hits_.size(); ++i) {
-      result.emplace_back(hits_[i], times_[i]);
-    }
-    return result;
-  }
-
-  /** @brief clear the hits and fractions list */
-  void clearHitsAndFractions() {
-    std::vector<uint32_t>().swap(hits_);
-    std::vector<float>().swap(fractions_);
-  }
-
-  /** @brief clear the energies list */
-  void clearHitsEnergy() { std::vector<float>().swap(energies_); }
-
-  /** @brief clear the times list */
-  void clearHitsTime() { std::vector<float>().swap(times_); }
-
-  void clear() {
-    clearHitsAndFractions();
-    clearHitsEnergy();
-    clearHitsTime();
-  }
-
-  /** @brief computes the time of the cluster */
-  float computeClusterTime() {
-    float time = 0.;
-    float tot_en = 0.;
-    for (uint32_t i = 0; i < times_.size(); i++) {
-      time += times_[i] * energies_[i];
-      tot_en += energies_[i];
-    }
-    if (tot_en != 0.)
-      time = time / tot_en;
-    return time;
-  }
-
-  /** @brief returns the accumulated sim energy in the cluster */
-  float simEnergy() const { return simhit_energy_; }
+  /** @brief returns the layer clusters indexes in the sim trackster*/
+  std::vector<uint32_t> clusters() const { return clusters_; }
 
   /** @brief add simhit's energy to cluster */
-  template <typename T>
-  void addSimHit(const T &hit) {
-    simhit_energy_ += hit.energy();
-    ++nsimhits_;
-  }
+  void addCluster(const uint32_t sc) { clusters_.push_back(sc); }
 
 private:
-  uint64_t nsimhits_{0};
+  uint64_t nsimclusters_{0};
   EncodedEventId event_;
 
   uint32_t particleId_{0};
-  float simhit_energy_{0.f};
-  std::vector<uint32_t> hits_;
-  std::vector<float> fractions_;
-  std::vector<float> energies_;
-  std::vector<float> times_;
+  float timeAtEntrance_{0.f};
+  GlobalPoint posAtEntrance_;
+  // indexes of the MtdSimLayerClusters contained in the simTrackster
+  std::vector<uint32_t> clusters_;
 
   math::XYZTLorentzVectorF theMomentum_;
 
@@ -273,4 +188,4 @@ private:
   reco::GenParticleRefVector genParticles_;
 };
 
-#endif  // SimDataFormats_SimCluster_H
+#endif  // SimDataFormats_MtdSimTrackster_H
