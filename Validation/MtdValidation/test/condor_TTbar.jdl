@@ -1,0 +1,38 @@
+#This condor submission file runs the RECO step in N jobs on a single RelVal file
+Universe = vanilla
+
+Executable = $ENV(CMSSW_BASE)/src/Validation/MtdValidation/test/run_relval.sh
+Arguments = "TTbar reco $(Process) $(Cluster)"
+
+Log = log/test.$(Cluster).log
+Output = log/test.out.$(Cluster).$(Process)
+Error = log/test.err.$(Cluster).$(Process)
+Environment = "CMSSW_BASE=$ENV(CMSSW_BASE)"
+
+RequestMemory = 20000
+RequestCpus = 4
+ 
+#8h runtume
++MaxRuntime = 24*3600
++JobFlavour = "tomorrow"
+
+#choose job environment using singularity
+#+RunAsOwner = True
+#+SleepSlot = True
+#+InteractiveUser = true
+#+SingularityImage = "/cvmfs/singularity.opensciencegrid.org/bbockelm/cms:rhel7"
+#+SingularityBindCVMFS = True
+#run_as_owner = True
+
+use_x509userproxy = True
+x509userproxy = $ENV(CMSSW_BASE)/src/Validation/MtdValidation/test/x509up_u144911
+
+#transfer section
+#root://eosuser.cern.ch//eos/user/a/aperego/...
+transfer_output_files = ""
+#Zee/step3.log,Zee/step3_inMINIAODSIM.root,Zee/step3_inMINIAODSIM_inDQM.root
+#transfer_output_remaps = "step3.log=root://eosuser.cern.ch//eos/user/a/aperego/Timing/root_files/Zee/step3.$(Cluster).$(Process).log;step3_inMINIAODSIM.root=root://eosuser.cern.ch//eos/user/a/aperego/Timing/root_files/Zee/step3_inMINIAODSIM.$(Cluster).$(Process).root;step3_inMINIAODSIM_inDQM.root=root://eosuser.cern.ch//eos/user/a/aperego/Timing/root_files/Zee/step3_inMINIAODSIM_inDQM.$(Cluster).$(Process).root"
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+
+Queue 90

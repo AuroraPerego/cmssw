@@ -129,8 +129,9 @@ if __name__ == "__main__":
     #prefix = "root://xrootd-cms.infn.it//"
     tmpdir = "tmp"
     datasets = [
-        Dataset("/RelValZEE_14/CMSSW_13_1_0_pre3-PU_131X_mcRun4_realistic_v2_2026D95PU200-v1/GEN-SIM-DIGI-RAW", "Zee", prefix, None, False, tmpdir),
-        Dataset("/RelValTTbar_14TeV/CMSSW_13_1_0_pre3-PU_131X_mcRun4_realistic_v2_2026D95PU200-v1/GEN-SIM-DIGI-RAW", "TTbar", prefix, None, False, tmpdir)]
+        Dataset("/RelValZEE_14/CMSSW_13_1_0_pre3-131X_mcRun4_realistic_v2_2026D95noPU-v1/GEN-SIM-DIGI-RAW", "Zee_noPU", prefix, None, False, tmpdir)]#,
+#        Dataset("/RelValZEE_14/CMSSW_13_1_0_pre3-PU_131X_mcRun4_realistic_v2_2026D95PU200-v1/GEN-SIM-DIGI-RAW", "Zee", prefix, None, False, tmpdir),
+#        Dataset("/RelValTTbar_14TeV/CMSSW_13_1_0_pre3-PU_131X_mcRun4_realistic_v2_2026D95PU200-v1/GEN-SIM-DIGI-RAW", "TTbar", prefix, None, False, tmpdir)]
 #        Dataset("/RelValQCD_FlatPt_15_3000HS_14/CMSSW_12_1_0_pre2-121X_mcRun3_2021_realistic_v1-v1/GEN-SIM-DIGI-RAW", "QCD_noPU", prefix, None, False, tmpdir),
 #        Dataset("/RelValQCD_FlatPt_15_3000HS_14/CMSSW_12_1_0_pre2-121X_mcRun3_2021_realistic_v1-v1/GEN-SIM-DIGI-RAW", "QCD_noPU", prefix, None, False, tmpdir),
 #        Dataset("/RelValZEE_14/CMSSW_12_1_0_pre2-PU_121X_mcRun3_2021_realistic_v1-v1/GEN-SIM-DIGI-RAW", "ZEE_PU", prefix, None, False, tmpdir),

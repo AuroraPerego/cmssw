@@ -32,8 +32,8 @@ CONDITIONS=auto:phase2_realistic_T21 ERA=Phase2C17I13M9 GEOM=Extended2026D95
 NTHREADS=20
 
 #Argument parsing
-if [ "$#" -ne 4 ]; then
-    echo "Must pass exactly 3 arguments: run_relval.sh [Zee|TTbar] [reco|dqm] [njob] [cluster]"
+if [ "$#" -ne 3 ]; then
+    echo "Must pass exactly 3 arguments: run_relval.sh [Zee|TTbar|conf] [njob] [cluster]"
     exit 0
 fi
 
@@ -63,25 +63,17 @@ fi
 ##RelVal samples
 if [ "$1" == "Zee" ]; then
     INPUT_FILELIST=${CMSSW_BASE}/src/Validation/MtdValidation/test/tmp/das_cache/Zee.txt
+    OUTPUT_DIR=root://eosuser.cern.ch//eos/user/a/aperego/Timing/root_files/Zee
     NAME=Zee
 elif [ "$1" == "TTbar" ]; then
     INPUT_FILELIST=${CMSSW_BASE}/src/Validation/MtdValidation/test/tmp/das_cache/TTbar.txt
+    OUTPUT_DIR=root://eosuser.cern.ch//eos/user/a/aperego/Timing/root_files/TTbar
     NAME=TTbar	
-elif [ "$1" == "conf" ]; then  # special switch for creating conf file, 
-    INPUT_FILELIST=${CMSSW_BASE}/src/Validation/MtdValidation/test/tmp/das_cache/TTbar.txt # dummy
+elif [ "$1" == "conf" ]; then
+    INPUT_FILELIST=${CMSSW_BASE}/src/Validation/MtdValidation/test/tmp/das_cache/TTbar.txt
     NAME=conf
 else
     echo "Argument 1 must be [Zee|TTbar|conf] but was $1"
-    exit 1
-fi
-
-##Which step to do
-if [ "$2" == "reco" ]; then
-    STEP="RECO"
-elif [ "$2" == "dqm" ]; then
-    STEP="DQM"
-else
-    echo "Argument 2 must be [reco|dqm] but was $2"
     exit 1
 fi
 
@@ -92,68 +84,40 @@ SKIPEVENTS=$(($NJOB * $PERJOB))
 echo $INPUT_FILELIST $NAME $STEP $SKIPEVENTS
 #env
 
-if [ $STEP == "RECO" ]; then
-
-    if [ $NAME == "conf" ]; then
-	mkdir -p $NAME
-	cd $NAME
-
-	FILENAME=`sed -n "${NJOB}p" $INPUT_FILELIST`
-	echo "FILENAME="$FILENAME
-
-	cmsDriver.py step3 --conditions $CONDITIONS -s RAW2DIGI,L1Reco,RECOSIM,PAT --datatier MINIAODSIM --nThreads $NTHREADS -n -1 --era $ERA --eventcontent MINIAODSIM --geometry=$GEOM --filein step2.root --fileout file:step3_inMINIAODSIM.root --no_exec --python_filename=step3.py $CUSTOM
-	
-    else
-	
-	#Start of workflow
-	echo "Making subdirectory $NAME"
-
-	if [ -e $NAME ]; then
-            echo "directory $NAME exists, aborting"
-            exit 1
-	fi
-
-	mkdir $NAME
-	cd $NAME
-
-	FILENAME=`sed -n "${NJOB}p" $INPUT_FILELIST`
-	echo "FILENAME="$FILENAME
-	#Run the actual CMS reco with particle flow.
-	echo "Running step RECO" 
-        cmsDriver.py step3 -s RAW2DIGI,L1Reco,RECO,RECOSIM,PAT,VALIDATION:@phase2Validation+@miniAODValidation,DQM:@phase2+@miniAODDQM --conditions $CONDITIONS --datatier MINIAODSIM,DQMIO  --nThreads $NTHREADS -n -1 --era $ERA --eventcontent MINIAODSIM,DQM --geometry=$GEOM --filein $FILENAME --fileout file:step3_inMINIAODSIM.root | tee step3.log  2>&1
-        xrdcp step3_inMINIAODSIM.root root://eosuser.cern.ch//eos/user/a/aperego/Timing/root_files/Zee/step3_inMINIAODSIM_$4_$3.root
-        xrdcp step3_inMINIAODSIM_inDQM.root root://eosuser.cern.ch//eos/user/a/aperego/Timing/root_files/Zee/step3_inMINIAODSIM_inDQM_$4_$3.root
-        xrdcp step3.log root://eosuser.cern.ch//eos/user/a/aperego/Timing/root_files/Zee/step3_$4_$3.log
-	#cmsDriver.py step3 --conditions $CONDITIONS -s RAW2DIGI,L1Reco,RECOSIM,PAT --datatier MINIAODSIM --nThreads $NTHREADS -n -1 --era $ERA --eventcontent MINIAODSIM --geometry=$GEOM --filein $FILENAME --fileout file:step3_inMINIAODSIM.root $CUSTOM | tee step3.log  2>&1
-   
-	#NanoAOD
-	#On lxplus, this step takes about 1 minute / 1000 events
-	#Can be skipped if doing DQM directly from RECO
-	#cmsDriver.py step4 --conditions $CONDITIONS -s NANO --datatier NANOAODSIM --nThreads $NTHREADS -n $N --era $ERA --eventcontent NANOAODSIM --filein file:step3_inMINIAODSIM.root --fileout file:step4.root > step4.log 2>&1
-
-    fi
-	
-elif [ $STEP == "DQM" ]; then
-    echo "Running step DQM" 
-
+if [ $NAME == "conf" ]; then
+    mkdir -p $NAME
     cd $NAME
+
+    FILENAME=`sed -n "${NJOB}p" $INPUT_FILELIST`
+    echo "FILENAME="$FILENAME
+
+    cmsDriver.py step3 --conditions $CONDITIONS -s RAW2DIGI,L1Reco,RECOSIM,PAT --datatier MINIAODSIM --nThreads $NTHREADS -n -1 --era $ERA --eventcontent MINIAODSIM --geometry=$GEOM --filein step2.root --fileout file:step3_inMINIAODSIM.root --no_exec --python_filename=step3.py $CUSTOM
     
-    #get all the filenames and make them into a python-compatible list of strings
-    #STEP3FNS=`ls -1 step3*MINIAODSIM*.root | sed 's/^/"file:/;s/$/",/' | tr '\n' ' '`
-    du step3*MINIAODSIM*.root | grep -v "^0" | awk '{print $2}' | sed 's/^/file:/' > step3_filelist.txt
-    cat step3_filelist.txt 
+else
+    
+    #Start of workflow
+    echo "Making subdirectory $NAME"
 
-    #Run the DQM sequences (PF DQM only)
-    #override the filenames here as cmsDriver does not allow multiple input files and there is no easy way to merge EDM files
-    cmsDriver.py step5 --conditions $CONDITIONS -s DQM:@pfDQM --datatier DQMIO --nThreads $NTHREADS --era $ERA --eventcontent DQM --filein filelist:step3_filelist.txt --fileout file:step5.root -n -1 2>&1 | tee step5.log
+    if [ -e $NAME ]; then
+        echo "directory $NAME exists, aborting"
+        exit 1
+    fi
 
-    #Harvesting converts the histograms stored in TTrees to be stored in folders by run etc
-    cmsDriver.py step6 --conditions $CONDITIONS -s HARVESTING:@pfDQM --era $ERA --filetype DQM --filein file:step5.root --fileout file:step6.root 2>&1 | tee step6.log
+    mkdir $NAME
+    cd $NAME
+
+    FILENAME=`sed -n "${NJOB}p" $INPUT_FILELIST`
+    echo "FILENAME="$FILENAME
+    #Run the actual CMS reco 
+    echo "Running step RECO" 
+    cmsDriver.py step3 -s RAW2DIGI,L1Reco,RECO,RECOSIM,PAT,VALIDATION:@phase2Validation+@miniAODValidation,DQM:@phase2+@miniAODDQM --conditions $CONDITIONS --datatier MINIAODSIM,DQMIO  --nThreads $NTHREADS -n -1 --era $ERA --eventcontent MINIAODSIM,DQM --no_exec --geometry=$GEOM --filein $FILENAME --fileout file:step3_inMINIAODSIM.root | tee step3.log  2>&1
+    sed -i '$a process.TFileService = cms.Service("TFileService", fileName = cms.string("histo.root"))' step3_RAW2DIGI_L1Reco_RECO_RECOSIM_PAT_VALIDATION_DQM.py
+    cmsRun -n $NTHREADS step3_RAW2DIGI_L1Reco_RECO_RECOSIM_PAT_VALIDATION_DQM.py
+    xrdcp step3_inMINIAODSIM.root $OUTPUT_DIR/step3_inMINIAODSIM_$4_$3.root
+    xrdcp step3_inMINIAODSIM_inDQM.root $OUTPUT_DIR/step3_inMINIAODSIM_inDQM_$4_$3.root
+    xrdcp step3.log $OUTPUT_DIR/step3_$4_$3.log
+    xrdcp histo.root $OUTPUT_DIR/histo_$4_$3.root
+    # hadd ttree_Zee.root histo_$4_*.root
+ 
+    cd ..
 fi
-
-#echo "Exit code was $?"
-#tail -n3 *.log
-
-cd ..
-
-#find . -name "*"
