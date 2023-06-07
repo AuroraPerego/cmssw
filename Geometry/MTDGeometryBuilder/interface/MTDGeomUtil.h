@@ -1,3 +1,6 @@
+// Author: Aurora Perego, Fabio Cossutti - aurora.perego@cern.ch, fabio.cossutti@ts.infn.it
+// Date: 05/2023
+
 #ifndef __RecoLocalFastTime_FTLCommonAlgos_MTDGeomUtil_h__
 #define __RecoLocalFastTime_FTLCommonAlgos_MTDGeomUtil_h__
 
@@ -30,8 +33,8 @@ namespace mtd {
     bool isETL(const DetId&) const;
     bool isBTL(const DetId&) const;
 
-    GlobalPoint getPosition(const DetId& id, int row = 0, int column = 0) const;
-    GlobalPoint getPosition(const DetId& id, const LocalPoint& local_point) const;
+    std::pair<LocalPoint, GlobalPoint> getPosition(const DetId& id, int row = 0, int column = 0) const;
+    GlobalPoint getGlobalPosition(const DetId& id, const LocalPoint& local_point) const;
 
     // zside returns +/- 1
     int zside(const DetId& id) const;

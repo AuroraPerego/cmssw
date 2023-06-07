@@ -23,7 +23,6 @@
 <use name="Geometry/HcalCommonData"/>
 <use name="Geometry/MTDGeometryBuilder"/>
 <use name="Geometry/MTDNumberingBuilder"/>
-<use name="RecoLocalFastTime/FTLCommonAlgos"/>
 
 <library file="*.cc" name="SimGeneralCaloAnalysisPlugins">
   <flags EDM_PLUGIN="1"/>

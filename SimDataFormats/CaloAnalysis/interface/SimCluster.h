@@ -180,9 +180,6 @@ public:
   /** @brief add rechit energy */
   void addHitEnergy(float energy) { energies_.emplace_back(energy); }
 
-  /** @brief add hit time */
-  void addHitTime(float time) { times_.emplace_back(time); }
-
   /** @brief Returns list of rechit IDs and fractions for this SimCluster */
   std::vector<std::pair<uint32_t, float>> hits_and_fractions() const {
     std::vector<std::pair<uint32_t, float>> result;
@@ -203,17 +200,6 @@ public:
     return result;
   }
 
-  /** @brief Returns list of rechit IDs and times for this SimCluster */
-  std::vector<std::pair<uint32_t, float>> hits_and_times() const {
-    assert(hits_.size() == times_.size());
-    std::vector<std::pair<uint32_t, float>> result;
-    result.reserve(hits_.size());
-    for (size_t i = 0; i < hits_.size(); ++i) {
-      result.emplace_back(hits_[i], times_[i]);
-    }
-    return result;
-  }
-
   /** @brief clear the hits and fractions list */
   void clearHitsAndFractions() {
     std::vector<uint32_t>().swap(hits_);
@@ -223,39 +209,16 @@ public:
   /** @brief clear the energies list */
   void clearHitsEnergy() { std::vector<float>().swap(energies_); }
 
-  /** @brief clear the times list */
-  void clearHitsTime() { std::vector<float>().swap(times_); }
-
-  void clear() {
-    clearHitsAndFractions();
-    clearHitsEnergy();
-    clearHitsTime();
-  }
-
-  /** @brief computes the time of the cluster */
-  float computeClusterTime() {
-    float time = 0.;
-    float tot_en = 0.;
-    for (uint32_t i = 0; i < times_.size(); i++) {
-      time += times_[i] * energies_[i];
-      tot_en += energies_[i];
-    }
-    if (tot_en != 0.)
-      time = time / tot_en;
-    return time;
-  }
-
   /** @brief returns the accumulated sim energy in the cluster */
   float simEnergy() const { return simhit_energy_; }
 
   /** @brief add simhit's energy to cluster */
-  template <typename T>
-  void addSimHit(const T &hit) {
+  void addSimHit(const PCaloHit &hit) {
     simhit_energy_ += hit.energy();
     ++nsimhits_;
   }
 
-private:
+protected:
   uint64_t nsimhits_{0};
   EncodedEventId event_;
 
@@ -264,7 +227,6 @@ private:
   std::vector<uint32_t> hits_;
   std::vector<float> fractions_;
   std::vector<float> energies_;
-  std::vector<float> times_;
 
   math::XYZTLorentzVectorF theMomentum_;
 

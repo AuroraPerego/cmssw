@@ -4,10 +4,6 @@
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
-#include <numeric>
-
-const unsigned int MtdSimTrackster::longLivedTag = 65536;
-
 MtdSimTrackster::MtdSimTrackster() {
   // No operation
 }
@@ -42,7 +38,6 @@ MtdSimTrackster::MtdSimTrackster(const SimCluster &sc,
   clusters_ = SCs;
   timeAtEntrance_ = time;
   posAtEntrance_ = pos;
-  nsimclusters_ = SCs.size();
 }
 
 MtdSimTrackster::~MtdSimTrackster() {}
@@ -62,7 +57,6 @@ std::ostream &operator<<(std::ostream &s, MtdSimTrackster const &tp) {
       s << " Mismatch b/t MtdSimTrackster and Geant types" << std::endl;
     }
   }
-  //  s << " # of cells = " << tp.hits_.size()
-  //    << ", effective cells = " << std::accumulate(tp.fractions_.begin(), tp.fractions_.end(), 0.f) << std::endl;
+  s << " # of clusters = " << tp.clusters_.size() << std::endl;
   return s;
 }
