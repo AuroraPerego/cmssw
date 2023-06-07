@@ -657,7 +657,6 @@ void MtdEleIsoAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
           if (TrkMTDTimeErr > 0 && ele_sigTrkTimeErr > 0) {
             dt_sigTrk = fabs(TrkMTDTime - ele_sigTrkTime);
             //dt_sigTrk_signif = dt_sigTrk/std::sqrt(TrkMTDTimeErr*TrkMTDTimeErr + ele_sigTrkTimeErr*ele_sigTrkTimeErr);
-    std::cout << "dt_sigTrk "  << dt_sigTrk << " err trk " << TrkMTDTimeErr << " err ele " << ele_sigTrkTimeErr << " tot err " << std::sqrt(TrkMTDTimeErr*TrkMTDTimeErr + ele_sigTrkTimeErr*ele_sigTrkTimeErr)*3 << std::endl;
 
             for (long unsigned int i = 0; i < N_tracks_MTD.size(); i++) {
               if (dt_sigTrk < max_dt_track_cut[i]) {
@@ -680,7 +679,6 @@ void MtdEleIsoAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
           if (TrkMTDTimeErr > 0 && Vtx_chosen.tError() > 0) {
             dt_vtx = TrkMTDTime - Vtx_chosen.t();
             //dt_vtx_signif = dt_vtx/std::sqrt(TrkMTDTimeErr*TrkMTDTimeErr + Vtx_chosen.tError()*Vtx_chosen.tError());
-    std::cout << "dt_vtx "  << dt_vtx << " err trk " << TrkMTDTimeErr << " err vtx " << Vtx_chosen.tError() << " tot err " << TrkMTDTimeErr*3 << std::endl;
 
             for (long unsigned int i = 0; i < N_tracks_MTD.size(); i++) {
               if (dt_vtx < max_dt_vtx_cut[i]) {
@@ -699,10 +697,8 @@ void MtdEleIsoAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
       }
 
       rel_pT_sum_noMTD = pT_sum_noMTD / ele.gsfTrack()->pt();  // rel_ch_iso calculation
- std::cout << "no mtd: pt sum " << pT_sum_noMTD << " rel " << rel_pT_sum_noMTD << " ele pt " << ele.gsfTrack()->pt() << " ntracks " << N_tracks_noMTD << std::endl;
       for (long unsigned int i = 0; i < N_tracks_MTD.size(); i++) {
         rel_pT_sum_MTD[i] = pT_sum_MTD[i] / ele.gsfTrack()->pt();
- std::cout << "mtd:" << i << " pt sum " << pT_sum_MTD[i] << " rel " << rel_pT_sum_MTD[i] << " ele pt " << ele.gsfTrack()->pt() << " ntracks " << N_tracks_MTD[i] << std::endl;
       }
 
       // defining vectors for more efficient hist filling
@@ -1785,8 +1781,8 @@ void MtdEleIsoAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& descrip
 //       0.12});  // example for vector initialization, works for int, does not work for predifined pointers, like in the next line
 //  //desc.add<std::vector<MonitorElement*>>("Ntracks_EB_list_Sig_test", {meEleISO_Ntracks_MTD_1_Sig_EB_,meEleISO_Ntracks_MTD_2_Sig_EB_,meEleISO_Ntracks_MTD_3_Sig_EB_,meEleISO_Ntracks_MTD_4_Sig_EB_,meEleISO_Ntracks_MTD_5_Sig_EB_,meEleISO_Ntracks_MTD_6_Sig_EB_,meEleISO_Ntracks_MTD_7_Sig_EB_}); // example that does not work...
   desc.addUntracked<bool>("optionTrackMatchToPV", false);
-  desc.addUntracked<bool>("option_dtToPV", true);
-  desc.addUntracked<bool>("option_dtToTrack", false);
+  desc.addUntracked<bool>("option_dtToPV", false);
+  desc.addUntracked<bool>("option_dtToTrack", true);
 
   descriptions.add("mtdEleIsoAnalyzer", desc);
 }
