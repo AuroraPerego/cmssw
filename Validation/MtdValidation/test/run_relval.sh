@@ -32,8 +32,8 @@ CONDITIONS=auto:phase2_realistic_T21 ERA=Phase2C17I13M9 GEOM=Extended2026D95
 NTHREADS=20
 
 #Argument parsing
-if [ "$#" -ne 3 ]; then
-    echo "Must pass exactly 3 arguments: run_relval.sh [Zee|TTbar|conf] [njob] [cluster]"
+if [ "$#" -ne 4 ]; then
+    echo "Must pass exactly 3 arguments: run_relval.sh [Zee|TTbar|ZeenoPU|TTbarnoPU|conf] [reco] [njob] [cluster]"
     exit 0
 fi
 
@@ -69,11 +69,19 @@ elif [ "$1" == "TTbar" ]; then
     INPUT_FILELIST=${CMSSW_BASE}/src/Validation/MtdValidation/test/tmp/das_cache/TTbar.txt
     OUTPUT_DIR=root://eosuser.cern.ch//eos/user/a/aperego/Timing/root_files/TTbar
     NAME=TTbar	
+elif [ "$1" == "ZeenoPU" ]; then
+    INPUT_FILELIST=${CMSSW_BASE}/src/Validation/MtdValidation/test/tmp/das_cache/Zee_noPU.txt
+    OUTPUT_DIR=root://eosuser.cern.ch//eos/user/a/aperego/Timing/root_files/Zee_noPU
+    NAME=ZeenoPU
+elif [ "$1" == "TTbarnoPU" ]; then
+    INPUT_FILELIST=${CMSSW_BASE}/src/Validation/MtdValidation/test/tmp/das_cache/TTbar_noPU.txt
+    OUTPUT_DIR=root://eosuser.cern.ch//eos/user/a/aperego/Timing/root_files/TTbar_noPU
+    NAME=TTbarnoPU
 elif [ "$1" == "conf" ]; then
     INPUT_FILELIST=${CMSSW_BASE}/src/Validation/MtdValidation/test/tmp/das_cache/TTbar.txt
     NAME=conf
 else
-    echo "Argument 1 must be [Zee|TTbar|conf] but was $1"
+    echo "Argument 1 must be [Zee|TTbar|ZeenoPU|TTbarnoPU|conf] but was $1"
     exit 1
 fi
 
