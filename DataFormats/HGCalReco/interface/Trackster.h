@@ -8,6 +8,7 @@
 #include <vector>
 #include "DataFormats/Provenance/interface/ProductID.h"
 #include "DataFormats/Math/interface/Vector3D.h"
+#include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 
 #include <Eigen/Core>
 
@@ -43,8 +44,15 @@ namespace ticl {
           raw_em_energy_(0.f),
           raw_pt_(0.f),
           raw_em_pt_(0.f),
-          time_(0.f),
-          timeError_(-1.f),
+          CALOtime_(0.f),
+          CALOtimeError_(-1.f),
+          t0Mtd_(0.f),
+          t0MtdError_(-1.f),
+          tMtd_(0.f),
+          tMtdError_(-1.f),
+          speed_(0.f),
+          tMtdSim_(-99.f),
+          tMtdPos_(0., 0., 0.),
           eigenvalues_{{0.f, 0.f, 0.f}},
           sigmas_{{0.f, 0.f, 0.f}},
           sigmasPCA_{{0.f, 0.f, 0.f}},
@@ -62,8 +70,25 @@ namespace ticl {
       seedIndex_ = index;
     }
     inline void setTimeAndError(float t, float tError) {
-      time_ = t;
-      timeError_ = tError;
+      CALOtime_ = t;
+      CALOtimeError_ = tError;
+    }
+    inline void sett0MtdTimeAndError(float t, float tError) {
+      t0Mtd_ = t;
+      t0MtdError_ = tError;
+    }
+    inline void settMtdTimeAndError(float t, float tError) {
+      tMtd_ = t;
+      tMtdError_ = tError;
+    }
+    inline void setSpeed(float v) {
+      speed_ = v;
+    }
+    inline void setMTDSimTime(float t) {
+      tMtdSim_ = t;
+    }
+    inline void settMtdPos(GlobalPoint pos) {
+      tMtdPos_ = pos;
     }
     inline void setRegressedEnergy(float value) { regressed_energy_ = value; }
     inline void setRawEnergy(float value) { raw_energy_ = value; }
@@ -127,8 +152,15 @@ namespace ticl {
     inline const std::vector<std::array<unsigned int, 2> > &edges() const { return edges_; }
     inline const edm::ProductID &seedID() const { return seedID_; }
     inline const int seedIndex() const { return seedIndex_; }
-    inline const float time() const { return time_; }
-    inline const float timeError() const { return timeError_; }
+    inline const float time() const { return CALOtime_; }
+    inline const float timeError() const { return CALOtimeError_; }
+    inline const float t0Mtd() const { return t0Mtd_; }
+    inline const float t0MtdError() const { return t0MtdError_; }
+    inline const float tMtd() const { return tMtd_; }
+    inline const float tMtdError() const { return tMtdError_; }
+    inline const float speed() const { return speed_; }
+    inline const float MTDSimTime() const { return tMtdSim_; }
+    inline const GlobalPoint tMtdPos() const { return tMtdPos_; }
     inline const float regressed_energy() const { return regressed_energy_; }
     inline const float raw_energy() const { return raw_energy_; }
     inline const float raw_em_energy() const { return raw_em_energy_; }
@@ -167,8 +199,19 @@ namespace ticl {
     std::vector<float> vertex_multiplicity_;
 
     // -99, -1 if not available. ns units otherwise
-    float time_;
-    float timeError_;
+    float CALOtime_;
+    float CALOtimeError_;
+   
+    // MTD time
+    float t0Mtd_;
+    float t0MtdError_;
+    float tMtd_;
+    float tMtdError_;
+    float speed_; 
+    // float simt0Mtd_; maybe?
+    float tMtdSim_;
+    GlobalPoint tMtdPos_;
+
 
     int track_idx_ = -1;
 

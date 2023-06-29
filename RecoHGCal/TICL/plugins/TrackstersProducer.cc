@@ -196,6 +196,8 @@ void TrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
     }
   }
 
+std::cout << "number of tracksters " << (*result).size() << std::endl; 
+std::cout << "number of output_mask " << (*output_mask).size() << std::endl; 
   evt.put(std::move(result));
   evt.put(std::move(output_mask));
 }
