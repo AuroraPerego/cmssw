@@ -118,7 +118,6 @@ private:
   edm::ESGetToken<CaloGeometry, CaloGeometryRecord> caloGeometry_token_;
   const edm::EDGetTokenT<std::vector<ticl::Trackster>> simTracksters_SC_token_;
   const edm::EDGetTokenT<std::vector<ticl::Trackster>> simTracksters_CP_token_;
-  const edm::EDGetTokenT<std::vector<ticl::Trackster>> fineSimTracksters_token_;
   const edm::EDGetTokenT<std::vector<TICLCandidate>> simTICLCandidate_token_;
   const edm::EDGetTokenT<hgcal::RecoToSimCollectionSimTracksters>
       tsRecoToSimSC_token_;
@@ -241,6 +240,7 @@ private:
   std::vector<float> stsSC_trackster_sigmaPCA2;
   std::vector<float> stsSC_trackster_sigmaPCA3;
   std::vector<int> stsSC_pdgID;
+  std::vector<int> stsSC_trackIdx;
   std::vector<float> stsSC_trackTime;
   std::vector<float> stsSC_boundaryX;
   std::vector<float> stsSC_boundaryY;
@@ -300,6 +300,7 @@ private:
   std::vector<float> stsCP_trackster_sigmaPCA2;
   std::vector<float> stsCP_trackster_sigmaPCA3;
   std::vector<int> stsCP_pdgID;
+  std::vector<int> stsCP_trackIdx;
   std::vector<float> stsCP_trackTime;
   std::vector<float> stsCP_boundaryX;
   std::vector<float> stsCP_boundaryY;
@@ -351,6 +352,7 @@ private:
   std::vector<float> simTICLCandidate_caloParticleMass;
   std::vector<int> simTICLCandidate_pdgId;
   std::vector<int> simTICLCandidate_charge;
+  std::vector<int> simTICLCandidate_track_in_candidate;
 
   // from TICLCandidate, product of linking
   size_t nCandidates;
@@ -364,7 +366,7 @@ private:
   std::vector<float> candidate_time_err;
   std::vector<std::vector<float>> candidate_id_probabilities;
   std::vector<std::vector<uint32_t>> tracksters_in_candidate;
-  std::vector<uint32_t> track_in_candidate;
+  std::vector<int> track_in_candidate;
 
   // merged tracksters
   size_t nTrackstersMerged;
@@ -579,6 +581,7 @@ void TICLDumper::clearVariables() {
   stsSC_trackster_barycenter_eta.clear();
   stsSC_trackster_barycenter_phi.clear();
   stsSC_pdgID.clear();
+  stsSC_trackIdx.clear();
   stsSC_trackTime.clear();
   stsSC_boundaryX.clear();
   stsSC_boundaryY.clear();
@@ -632,6 +635,7 @@ void TICLDumper::clearVariables() {
   stsCP_trackster_barycenter_eta.clear();
   stsCP_trackster_barycenter_phi.clear();
   stsCP_pdgID.clear();
+  stsCP_trackIdx.clear();
   stsCP_trackTime.clear();
   stsCP_boundaryX.clear();
   stsCP_boundaryY.clear();
@@ -681,6 +685,7 @@ void TICLDumper::clearVariables() {
   simTICLCandidate_caloParticleMass.clear();
   simTICLCandidate_pdgId.clear();
   simTICLCandidate_charge.clear();
+  simTICLCandidate_track_in_candidate.clear();
 
   nCandidates = 0;
   candidate_charge.clear();
@@ -944,34 +949,21 @@ void TICLDumper::beginJob() {
   MTDclusters_tree =
       fs->make<TTree>("MTDclusters", "MTD clusters");
 
-  simTICLCandidate_tree->Branch("simTICLCandidate_raw_energy",
-                                &simTICLCandidate_raw_energy);
-  simTICLCandidate_tree->Branch("simTICLCandidate_regressed_energy",
-                                &simTICLCandidate_regressed_energy);
-  simTICLCandidate_tree->Branch("simTICLCandidate_simTracksterCPIndex",
-                                &simTICLCandidate_simTracksterCPIndex);
-  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryX",
-                                &simTICLCandidate_boundaryX);
-  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryY",
-                                &simTICLCandidate_boundaryY);
-  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryZ",
-                                &simTICLCandidate_boundaryZ);
-  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryPx",
-                                &simTICLCandidate_boundaryPx);
-  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryPy",
-                                &simTICLCandidate_boundaryPy);
-  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryPz",
-                                &simTICLCandidate_boundaryPz);
-  simTICLCandidate_tree->Branch("simTICLCandidate_trackTime",
-                                &simTICLCandidate_trackTime);
-  simTICLCandidate_tree->Branch("simTICLCandidate_trackBeta",
-                                &simTICLCandidate_trackBeta);
-  simTICLCandidate_tree->Branch("simTICLCandidate_caloParticleMass",
-                                &simTICLCandidate_caloParticleMass);
-  simTICLCandidate_tree->Branch("simTICLCandidate_pdgId",
-                                &simTICLCandidate_pdgId);
-  simTICLCandidate_tree->Branch("simTICLCandidate_charge",
-                                &simTICLCandidate_charge);
+  simTICLCandidate_tree->Branch("simTICLCandidate_raw_energy", &simTICLCandidate_raw_energy);
+  simTICLCandidate_tree->Branch("simTICLCandidate_regressed_energy", &simTICLCandidate_regressed_energy);
+  simTICLCandidate_tree->Branch("simTICLCandidate_simTracksterCPIndex", &simTICLCandidate_simTracksterCPIndex);
+  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryX", &simTICLCandidate_boundaryX);
+  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryY", &simTICLCandidate_boundaryY);
+  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryZ", &simTICLCandidate_boundaryZ);
+  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryPx", &simTICLCandidate_boundaryPx);
+  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryPy", &simTICLCandidate_boundaryPy);
+  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryPz", &simTICLCandidate_boundaryPz);
+  simTICLCandidate_tree->Branch("simTICLCandidate_trackTime", &simTICLCandidate_trackTime);
+  simTICLCandidate_tree->Branch("simTICLCandidate_trackBeta", &simTICLCandidate_trackBeta);
+  simTICLCandidate_tree->Branch("simTICLCandidate_caloParticleMass", &simTICLCandidate_caloParticleMass);
+  simTICLCandidate_tree->Branch("simTICLCandidate_pdgId", &simTICLCandidate_pdgId);
+  simTICLCandidate_tree->Branch("simTICLCandidate_charge", &simTICLCandidate_charge);
+  simTICLCandidate_tree->Branch("simTICLCandidate_track_in_candidate", &simTICLCandidate_track_in_candidate);
 
   trackster_tree_->Branch("event", &ev_event_);
   trackster_tree_->Branch("NClusters", &nclusters_);
@@ -1049,6 +1041,7 @@ void TICLDumper::beginJob() {
   simtrackstersSC_tree_->Branch("sigmaPCA2", &stsSC_trackster_sigmaPCA2);
   simtrackstersSC_tree_->Branch("sigmaPCA3", &stsSC_trackster_sigmaPCA3);
   simtrackstersSC_tree_->Branch("pdgID", &stsSC_pdgID);
+  simtrackstersSC_tree_->Branch("trackIdx", &stsSC_trackIdx);
   simtrackstersSC_tree_->Branch("trackTime", &stsSC_trackTime);
   simtrackstersSC_tree_->Branch("boundaryX", &stsSC_boundaryX);
   simtrackstersSC_tree_->Branch("boundaryY", &stsSC_boundaryY);
@@ -1115,6 +1108,7 @@ void TICLDumper::beginJob() {
   simtrackstersCP_tree_->Branch("trackster_barycenter_phi",
                                 &stsCP_trackster_barycenter_phi);
   simtrackstersCP_tree_->Branch("pdgID", &stsCP_pdgID);
+  simtrackstersCP_tree_->Branch("trackIdx", &stsCP_trackIdx);
   simtrackstersCP_tree_->Branch("trackTime", &stsCP_trackTime);
   simtrackstersCP_tree_->Branch("boundaryX", &stsCP_boundaryX);
   simtrackstersCP_tree_->Branch("boundaryY", &stsCP_boundaryY);
@@ -1164,7 +1158,6 @@ void TICLDumper::beginJob() {
                                 &stsCP_trackster_vertices_multiplicity);  // NEW
 
   graph_tree_->Branch("linked_inners", &node_linked_inners);
-  graph_tree_->Branch("linked_scores", &node_linked_scores);
   graph_tree_->Branch("linked_outers", &node_linked_outers);
   graph_tree_->Branch("isRootTrackster", &isRootTrackster);
 
@@ -1682,7 +1675,7 @@ void TICLDumper::analyze(const edm::Event& event,
       stsSC_boundaryPz.push_back(-999);
     }
     auto const trackIdx = trackster_iterator->trackIdx();
-
+				stsSC_trackIdx.push_back(trackIdx);
     if (trackIdx != -1) {
       auto track = tracks[trackIdx];
       stsSC_trackIdx.push_back(trackIdx);
@@ -1843,7 +1836,7 @@ void TICLDumper::analyze(const edm::Event& event,
       stsCP_boundaryPz.push_back(-999);
     }
     auto const trackIdx = trackster_iterator->trackIdx();
-
+				stsCP_trackIdx.push_back(trackIdx);
     if (trackIdx != -1) {
       auto track = tracks[trackIdx];
       stsCP_trackIdx.push_back(trackIdx);
@@ -1934,6 +1927,7 @@ void TICLDumper::analyze(const edm::Event& event,
     stsCP_trackster_vertices_multiplicity.push_back(vertices_multiplicity);
   }
 
+ 	simTICLCandidate_track_in_candidate.resize(simTICLCandidates.size(), -1);
   for (size_t i = 0; i < simTICLCandidates.size(); ++i) {
     auto const& cand = simTICLCandidates[i];
     // auto const& cp = caloparticles[simTrackstersCP[i].seedIndex()];
@@ -1954,6 +1948,9 @@ void TICLDumper::analyze(const edm::Event& event,
     if (!trackPtr.isNull()) {
       auto const& track = *trackPtr;
       int iSide = int(track.eta() > 0);
+    		int tk_idx = trackPtr.get() - (edm::Ptr<reco::Track>(tracks_h, 0)).get();
+ 		   simTICLCandidate_track_in_candidate[i] = tk_idx;
+  
 
       const auto& fts =
           trajectoryStateTransform::outerFreeState((track), bFieldProd);
@@ -2016,11 +2013,7 @@ void TICLDumper::analyze(const edm::Event& event,
     cluster_layer_id.push_back(layerId);
     uint32_t number_of_hits = cluster_iterator->hitsAndFractions().size();
     cluster_number_of_hits.push_back(number_of_hits);
-    if (ticl::returnIndex(lc_seed, rhtools_) == -1)
-      std::cout << "TICL Dumper " << ticl::returnIndex(lc_seed, rhtools_)
-                << std::endl;
     cluster_type.push_back(ticl::returnIndex(lc_seed, rhtools_));
-
     cluster_timeErr.push_back(layerClustersTimes.get(c_id).second);
     cluster_time.push_back(layerClustersTimes.get(c_id).first);
     c_id += 1;
@@ -2029,7 +2022,7 @@ void TICLDumper::analyze(const edm::Event& event,
   tracksters_in_candidate.resize(ticlcandidates.size());
   track_in_candidate.resize(ticlcandidates.size(), -1);
   nCandidates = ticlcandidates.size();
-  for (size_t i = 0; i < ticlcandidates.size(); ++i) {
+  for (int i = 0; i < static_cast<int>(ticlcandidates.size()); ++i) {
     const auto& candidate = ticlcandidates[i];
     candidate_charge.push_back(candidate.charge());
     candidate_pdgId.push_back(candidate.pdgId());
@@ -2040,9 +2033,8 @@ void TICLDumper::analyze(const edm::Event& event,
     candidate_time.push_back(candidate.time());
     candidate_time_err.push_back(candidate.timeError());
     std::vector<float> id_probs;
-    for (int i = 0; i < 8; i++) {
-      ticl::Trackster::ParticleType type =
-          static_cast<ticl::Trackster::ParticleType>(i);
+    for (int j = 0; j < 8; j++) {
+      ticl::Trackster::ParticleType type = static_cast<ticl::Trackster::ParticleType>(j);
       id_probs.push_back(candidate.id_probability(type));
     }
     candidate_id_probabilities.push_back(id_probs);
@@ -2054,11 +2046,9 @@ void TICLDumper::analyze(const edm::Event& event,
                     (edm::Ptr<ticl::Trackster>(tracksters_handle, 0)).get();
       tracksters_in_candidate[i].push_back(ts_idx);
     }
-
     if (track_ptr.isNull())
       continue;
-    uint32_t tk_idx =
-        track_ptr.get() - (edm::Ptr<reco::Track>(tracks_h, 0)).get();
+    int tk_idx = track_ptr.get() - (edm::Ptr<reco::Track>(tracks_h, 0)).get();
     track_in_candidate[i] = tk_idx;
   }
 
@@ -2629,6 +2619,19 @@ simLC_DirectMatch_.push_back(simLC_DirectMatch);
         }
 
 std::cout << "------------------------------\n";
+
+  node_linked_inners.resize(tracksters.size());
+  node_linked_outers.resize(tracksters.size());
+  isRootTrackster.resize(tracksters.size(), false);
+  for (size_t i = 0; i < tracksters.size(); ++i) {
+    const auto& node = graph.getNode((int)i);
+    auto this_inners = node.getInner();
+    auto this_outers = node.getOuter();
+    node_linked_inners[i].insert(node_linked_inners[i].end(), this_inners.begin(), this_inners.end());
+    node_linked_outers[i].insert(node_linked_outers[i].end(), this_outers.begin(), this_outers.end());
+    if (node.getInner().empty())
+      isRootTrackster[i] = true;
+  }
 
   trackster_tree_->Fill();
   cluster_tree_->Fill();
