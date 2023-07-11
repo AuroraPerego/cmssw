@@ -182,7 +182,7 @@ void CloseByParticleGunProducer::produce(Event& e, const EventSetup& es) {
     const double v = p.pz() / p.e();
     const double radius = sqrt(p.px() * p.px() + p.py() * p.py()) * 87.78f;  // cm (1 GeV track has 1 GeV/c / (e * 3.8T) ~ 87 cm radius in a 3.8T field)
     const double arc = 2 * asin(sqrt(x * x + y * y) / (2 * radius)) * radius;
-    const double path = if  PData->charge() ? sqrt(arc * arc + fZ * fZ) : sqrt(x * x + y * y + fZ * fZ); 
+    const double path = PData->charge() ? sqrt(arc * arc + fZ * fZ) : sqrt(x * x + y * y + fZ * fZ); 
     // if not pointing this doesn't mean a lot, keep the old way
     const double TimePath = fPointing ? (path / v) : (sqrt(x * x + y * y + fZ * fZ) / v); 
     double timeOffset = fOffsetFirst + (TimePath + ip * fT) * ns * c_light;

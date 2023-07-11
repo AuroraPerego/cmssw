@@ -250,7 +250,6 @@ private:
   std::vector<float> stsSC_boundaryPx;
   std::vector<float> stsSC_boundaryPy;
   std::vector<float> stsSC_boundaryPz;
-  std::vector<float> stsSC_trackIdx;
   std::vector<float> stsSC_track_boundaryX;
   std::vector<float> stsSC_track_boundaryY;
   std::vector<float> stsSC_track_boundaryZ;
@@ -310,7 +309,6 @@ private:
   std::vector<float> stsCP_boundaryPx;
   std::vector<float> stsCP_boundaryPy;
   std::vector<float> stsCP_boundaryPz;
-  std::vector<float> stsCP_trackIdx;
   std::vector<float> stsCP_track_boundaryX;
   std::vector<float> stsCP_track_boundaryY;
   std::vector<float> stsCP_track_boundaryZ;
@@ -591,7 +589,6 @@ void TICLDumper::clearVariables() {
   stsSC_boundaryPx.clear();
   stsSC_boundaryPy.clear();
   stsSC_boundaryPz.clear();
-  stsSC_trackIdx.clear();
   stsSC_track_boundaryX.clear();
   stsSC_track_boundaryY.clear();
   stsSC_track_boundaryZ.clear();
@@ -645,7 +642,6 @@ void TICLDumper::clearVariables() {
   stsCP_boundaryPx.clear();
   stsCP_boundaryPy.clear();
   stsCP_boundaryPz.clear();
-  stsCP_trackIdx.clear();
   stsCP_track_boundaryX.clear();
   stsCP_track_boundaryY.clear();
   stsCP_track_boundaryZ.clear();
@@ -1051,7 +1047,6 @@ void TICLDumper::beginJob() {
   simtrackstersSC_tree_->Branch("boundaryPx", &stsSC_boundaryPx);
   simtrackstersSC_tree_->Branch("boundaryPy", &stsSC_boundaryPy);
   simtrackstersSC_tree_->Branch("boundaryPz", &stsSC_boundaryPz);
-  simtrackstersSC_tree_->Branch("trackIdx", &stsSC_trackIdx);
   simtrackstersSC_tree_->Branch("track_boundaryX", &stsSC_track_boundaryX);
   simtrackstersSC_tree_->Branch("track_boundaryY", &stsSC_track_boundaryY);
   simtrackstersSC_tree_->Branch("track_boundaryZ", &stsSC_track_boundaryZ);
@@ -1118,7 +1113,6 @@ void TICLDumper::beginJob() {
   simtrackstersCP_tree_->Branch("boundaryPx", &stsCP_boundaryPx);
   simtrackstersCP_tree_->Branch("boundaryPy", &stsCP_boundaryPy);
   simtrackstersCP_tree_->Branch("boundaryPz", &stsCP_boundaryPz);
-  simtrackstersCP_tree_->Branch("trackIdx", &stsCP_trackIdx);
   simtrackstersCP_tree_->Branch("track_boundaryX", &stsCP_track_boundaryX);
   simtrackstersCP_tree_->Branch("track_boundaryY", &stsCP_track_boundaryY);
   simtrackstersCP_tree_->Branch("track_boundaryZ", &stsCP_track_boundaryZ);
@@ -1675,7 +1669,6 @@ void TICLDumper::analyze(const edm::Event& event,
       stsSC_boundaryPz.push_back(-999);
     }
     auto const trackIdx = trackster_iterator->trackIdx();
-				stsSC_trackIdx.push_back(trackIdx);
     if (trackIdx != -1) {
       auto track = tracks[trackIdx];
       stsSC_trackIdx.push_back(trackIdx);
@@ -1836,7 +1829,6 @@ void TICLDumper::analyze(const edm::Event& event,
       stsCP_boundaryPz.push_back(-999);
     }
     auto const trackIdx = trackster_iterator->trackIdx();
-				stsCP_trackIdx.push_back(trackIdx);
     if (trackIdx != -1) {
       auto track = tracks[trackIdx];
       stsCP_trackIdx.push_back(trackIdx);
