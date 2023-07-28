@@ -147,24 +147,36 @@ bool LinkingAlgoByDirectionGeometric::timeAndEnergyCompatible(float &total_raw_e
   // compatible if trackster time is within 3sigma of
   // track time; compatible if either: no time assigned
   // to trackster or track time quality is below threshold
-  float tsT = trackster.time();
+
+  const auto& tkRefPoint = track.referencePoint();
+  const auto& barycenter = trackster.barycenter();
+
+  const auto beta = track.beta() ? track.beta() : 1; 
+  const auto timeOffset = std::sqrt((barycenter.x()-tkRefPoint.x())*(barycenter.x()-tkRefPoint.x()) + 
+                                    (barycenter.y()-tkRefPoint.x())*(barycenter.y()-tkRefPoint.y()) +
+                                    (barycenter.z()-tkRefPoint.x())*(barycenter.z()-tkRefPoint.z())) / (beta * 29.9792458);
+
+std::cout << "original trackster time: " << trackster.time() << " bary pos " << barycenter << "\nbeta is " << beta << " and offset is " << timeOffset;
+
+  float tsT = trackster.time() == -99. ? trackster.time() : trackster.time() - timeOffset;
   float tsTErr = trackster.timeError();
+std::cout << "\nnew time is " << tsT << " +/- " << tsTErr << std::endl;
+std::cout << "track time is " << tkT << " +/- " << tkTErr << std::endl;
+
   bool timeCompatible = false;
-  LogDebug("LinkingAlgoByDirectionGeometric") << "tsT = " << tsT << std::endl;
   if (tsT == -99. or tkTimeQual < timing_quality_threshold_)
     timeCompatible = true;
   else {
     timeCompatible = (std::abs(tsT - tkT) < maxDeltaT_ * sqrt(tsTErr * tsTErr + tkTErr * tkTErr));
   }
 
-  if (LinkingAlgoBase::algo_verbosity_ > VerbosityLevel::Advanced) {
+// if (LinkingAlgoBase::algo_verbosity_ > VerbosityLevel::Advanced) {
     if (!(energyCompatible))
-      LogDebug("LinkingAlgoByDirectionGeometric")
+     std::cout 
           << "energy compatibility : track p " << track.p() << " trackster energy " << trackster.raw_energy() << " total_raw_energy " << total_raw_energy << " track.p() + threshold " << track.p() + threshold <<  "\n";
     if (!(timeCompatible))
-      LogDebug("LinkingAlgoByDirectionGeometric") << "time compatibility : track time " << tkT << " +/- " << tkTErr
-                                                  << " trackster time " << tsT << " +/- " << tsTErr << "\n";
-  }
+     std::cout << "time compatibility : delta time " << tkT -tsT << " err " << sqrt(tsTErr * tsTErr + tkTErr * tkTErr) << "\n";
+//  }
     // 
   // return energyCompatible && timeCompatible;
   return energyCompatible;
