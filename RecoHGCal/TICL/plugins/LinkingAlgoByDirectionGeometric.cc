@@ -140,7 +140,9 @@ bool LinkingAlgoByDirectionGeometric::timeAndEnergyCompatible(float &total_raw_e
                                                               const Trackster &trackster,
                                                               const float &tkT,
                                                               const float &tkTErr,
-                                                              const float &tkTimeQual) {
+                                                              const float &tkTimeQual,
+                                                              const float &tkBeta,
+                                                              const GlobalPoint &tkMtdPos) {
 
   float threshold = std::min(0.2f * trackster.raw_energy(), 10.f);
   bool energyCompatible = (total_raw_energy + trackster.raw_energy() < track.p() + threshold);
@@ -148,27 +150,31 @@ bool LinkingAlgoByDirectionGeometric::timeAndEnergyCompatible(float &total_raw_e
   // track time; compatible if either: no time assigned
   // to trackster or track time quality is below threshold
 
-  const auto& tkRefPoint = track.referencePoint();
-  const auto& barycenter = trackster.barycenter();
-
-  const auto beta = track.beta() ? track.beta() : 1; 
-  const auto timeOffset = std::sqrt((barycenter.x()-tkRefPoint.x())*(barycenter.x()-tkRefPoint.x()) + 
-                                    (barycenter.y()-tkRefPoint.x())*(barycenter.y()-tkRefPoint.y()) +
-                                    (barycenter.z()-tkRefPoint.x())*(barycenter.z()-tkRefPoint.z())) / (beta * 29.9792458);
-
-std::cout << "original trackster time: " << trackster.time() << " bary pos " << barycenter << "\nbeta is " << beta << " and offset is " << timeOffset;
-
-  float tsT = trackster.time() == -99. ? trackster.time() : trackster.time() - timeOffset;
+  float tsT = trackster.time();
   float tsTErr = trackster.timeError();
-std::cout << "\nnew time is " << tsT << " +/- " << tsTErr << std::endl;
-std::cout << "track time is " << tkT << " +/- " << tkTErr << std::endl;
 
   bool timeCompatible = false;
-  if (tsT == -99. or tkTimeQual < timing_quality_threshold_)
+  if (tsT == -99. /* or tkTimeQual < timing_quality_threshold_ */ or tkTErr == -1)
     timeCompatible = true;
   else {
-    timeCompatible = (std::abs(tsT - tkT) < maxDeltaT_ * sqrt(tsTErr * tsTErr + tkTErr * tkTErr));
+    const auto& barycenter = trackster.barycenter();
+
+    const auto deltaSoverV = std::sqrt((barycenter.x()-tkMtdPos.x())*(barycenter.x()-tkMtdPos.x()) + 
+                                       (barycenter.y()-tkMtdPos.y())*(barycenter.y()-tkMtdPos.y()) +
+                                       (barycenter.z()-tkMtdPos.z())*(barycenter.z()-tkMtdPos.z())) / (tkBeta * 29.9792458);
+
+    const auto deltaT = tsT - tkT;
+
+    timeCompatible = (std::abs(deltaSoverV - deltaT) < maxDeltaT_ * sqrt(tsTErr * tsTErr + tkTErr * tkTErr)); 
+
+
+std::cout << "trackster time is " << tsT << " +/- " << tsTErr << std::endl;
+std::cout << "track time is " << tkT << " +/- " << tkTErr << std::endl;
+std::cout << "beta is " << tkBeta << ", s/v = " << deltaSoverV << ", deltaT = " << deltaT 
+          << "\ncomparing delta " << std::abs(deltaSoverV - deltaT) << " with thresdhold " <<  maxDeltaT_ * sqrt(tsTErr * tsTErr + tkTErr * tkTErr) << std::endl;
   }
+
+
 
 // if (LinkingAlgoBase::algo_verbosity_ > VerbosityLevel::Advanced) {
     if (!(energyCompatible))
@@ -178,8 +184,8 @@ std::cout << "track time is " << tkT << " +/- " << tkTErr << std::endl;
      std::cout << "time compatibility : delta time " << tkT -tsT << " err " << sqrt(tsTErr * tsTErr + tkTErr * tkTErr) << "\n";
 //  }
     // 
-  // return energyCompatible && timeCompatible;
-  return energyCompatible;
+  return energyCompatible && timeCompatible;
+  // return energyCompatible;
 }
 
 void LinkingAlgoByDirectionGeometric::recordTrackster(const unsigned ts,  //trackster index
@@ -244,6 +250,8 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
                                                      const edm::ValueMap<float> &tkTime,
                                                      const edm::ValueMap<float> &tkTimeErr,
                                                      const edm::ValueMap<float> &tkTimeQual,
+                                                     const edm::ValueMap<float> &tkBeta,
+                                                     const edm::ValueMap<GlobalPoint> &tkMtdPos,
                                                      const std::vector<reco::Muon> &muons,
                                                      const edm::Handle<std::vector<Trackster>> tsH,
                                                      std::vector<TICLCandidate> &resultLinked,
@@ -412,22 +420,24 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
     auto track_time = tkTime[tkRef];
     auto track_timeErr = tkTimeErr[tkRef];
     auto track_timeQual = tkTimeQual[tkRef];
+    auto track_beta = tkBeta[tkRef];
+    auto track_MtdPos = tkMtdPos[tkRef];
 
     for (const unsigned ts3_idx : tsNearTk[i]) {  // tk -> ts
       if (timeAndEnergyCompatible(
-              total_raw_energy, tracks[i], tracksters[ts3_idx], track_time, track_timeErr, track_timeQual)) {
+              total_raw_energy, tracks[i], tracksters[ts3_idx], track_time, track_timeErr, track_timeQual, track_beta, track_MtdPos)) {
         recordTrackster(ts3_idx, tracksters, tsH, chargedMask, total_raw_energy, chargedCandidate);
       }
       for (const unsigned ts2_idx : tsNearAtInt[ts3_idx]) {  // ts_EM -> ts_HAD
         if (timeAndEnergyCompatible(
-                total_raw_energy, tracks[i], tracksters[ts2_idx], track_time, track_timeErr, track_timeQual)) {
+                total_raw_energy, tracks[i], tracksters[ts2_idx], track_time, track_timeErr, track_timeQual, track_beta, track_MtdPos)) {
           recordTrackster(ts2_idx, tracksters, tsH, chargedMask, total_raw_energy, chargedCandidate);
           chargedCandidate.setPdgId(211*tracks[i].charge());
 
         }
         for (const unsigned ts1_idx : tsHadNearAtInt[ts2_idx]) {  // ts_HAD -> ts_HAD
           if (timeAndEnergyCompatible(
-                  total_raw_energy, tracks[i], tracksters[ts1_idx], track_time, track_timeErr, track_timeQual)) {
+                  total_raw_energy, tracks[i], tracksters[ts1_idx], track_time, track_timeErr, track_timeQual, track_beta, track_MtdPos)) {
             recordTrackster(ts1_idx, tracksters, tsH, chargedMask, total_raw_energy, chargedCandidate);
             chargedCandidate.setPdgId(211*tracks[i].charge());
           }
@@ -435,7 +445,7 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
       }
       for (const unsigned ts1_idx : tsHadNearAtInt[ts3_idx]) {  // ts_HAD -> ts_HAD
         if (timeAndEnergyCompatible(
-                total_raw_energy, tracks[i], tracksters[ts1_idx], track_time, track_timeErr, track_timeQual)) {
+                total_raw_energy, tracks[i], tracksters[ts1_idx], track_time, track_timeErr, track_timeQual, track_beta, track_MtdPos)) {
           recordTrackster(ts1_idx, tracksters, tsH, chargedMask, total_raw_energy, chargedCandidate);
           chargedCandidate.setPdgId(211*tracks[i].charge());
 
@@ -444,19 +454,19 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
     }
     for (const unsigned ts4_idx : tsNearTkAtInt[i]) {  // do the same for tk -> ts links at the interface
       if (timeAndEnergyCompatible(
-              total_raw_energy, tracks[i], tracksters[ts4_idx], track_time, track_timeErr, track_timeQual)) {
+              total_raw_energy, tracks[i], tracksters[ts4_idx], track_time, track_timeErr, track_timeQual, track_beta, track_MtdPos)) {
         recordTrackster(ts4_idx, tracksters, tsH, chargedMask, total_raw_energy, chargedCandidate);
       }
       for (const unsigned ts2_idx : tsNearAtInt[ts4_idx]) {
         if (timeAndEnergyCompatible(
-                total_raw_energy, tracks[i], tracksters[ts2_idx], track_time, track_timeErr, track_timeQual)) {
+                total_raw_energy, tracks[i], tracksters[ts2_idx], track_time, track_timeErr, track_timeQual, track_beta, track_MtdPos)) {
           recordTrackster(ts2_idx, tracksters, tsH, chargedMask, total_raw_energy, chargedCandidate);
           chargedCandidate.setPdgId(211*tracks[i].charge());
 
         }
         for (const unsigned ts1_idx : tsHadNearAtInt[ts2_idx]) {
           if (timeAndEnergyCompatible(
-                  total_raw_energy, tracks[i], tracksters[ts1_idx], track_time, track_timeErr, track_timeQual)) {
+                  total_raw_energy, tracks[i], tracksters[ts1_idx], track_time, track_timeErr, track_timeQual, track_beta, track_MtdPos)) {
             recordTrackster(ts1_idx, tracksters, tsH, chargedMask, total_raw_energy, chargedCandidate);
             chargedCandidate.setPdgId(211*tracks[i].charge());
           }
@@ -464,7 +474,7 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
       }
       for (const unsigned ts1_idx : tsHadNearAtInt[ts4_idx]) {
         if (timeAndEnergyCompatible(
-                total_raw_energy, tracks[i], tracksters[ts1_idx], track_time, track_timeErr, track_timeQual)) {
+                total_raw_energy, tracks[i], tracksters[ts1_idx], track_time, track_timeErr, track_timeQual, track_beta, track_MtdPos)) {
           recordTrackster(ts1_idx, tracksters, tsH, chargedMask, total_raw_energy, chargedCandidate);
           chargedCandidate.setPdgId(211*tracks[i].charge());
 

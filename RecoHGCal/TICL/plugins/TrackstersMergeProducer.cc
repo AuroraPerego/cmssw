@@ -88,6 +88,9 @@ private:
   const edm::EDGetTokenT<edm::ValueMap<float>> tracks_time_token_;
   const edm::EDGetTokenT<edm::ValueMap<float>> tracks_time_quality_token_;
   const edm::EDGetTokenT<edm::ValueMap<float>> tracks_time_err_token_;
+  const edm::EDGetTokenT<edm::ValueMap<float>> tracks_beta_token_;
+  const edm::EDGetTokenT<edm::ValueMap<GlobalPoint>> tracks_glob_pos_token_;
+// creati qui e consumati, da fare get token e poi passare al linking
   const edm::EDGetTokenT<std::vector<reco::Muon>> muons_token_;
   const std::string tfDnnLabel_;
   const edm::ESGetToken<TfGraphDefWrapper, TfGraphRecord> tfDnnToken_;
@@ -145,6 +148,8 @@ TrackstersMergeProducer::TrackstersMergeProducer(const edm::ParameterSet &ps)
       tracks_time_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTime"))),
       tracks_time_quality_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTimeQual"))),
       tracks_time_err_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTimeErr"))),
+      tracks_beta_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksBeta"))),
+      tracks_glob_pos_token_(consumes<edm::ValueMap<GlobalPoint>>(ps.getParameter<edm::InputTag>("tracksGlobalPosition"))),
       muons_token_(consumes<std::vector<reco::Muon>>(ps.getParameter<edm::InputTag>("muons"))),
       tfDnnLabel_(ps.getParameter<std::string>("tfDnnLabel")),
       tfDnnToken_(esConsumes(edm::ESInputTag("", tfDnnLabel_))),
@@ -264,10 +269,12 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
   const auto &trackTime = evt.get(tracks_time_token_);
   const auto &trackTimeErr = evt.get(tracks_time_err_token_);
   const auto &trackTimeQual = evt.get(tracks_time_quality_token_);
+  const auto &trackBeta = evt.get(tracks_beta_token_);
+  const auto &trackMtdPos = evt.get(tracks_glob_pos_token_);
 
   // Linking
   linkingAlgo_->linkTracksters(
-      track_h, trackTime, trackTimeErr, trackTimeQual, muons, trackstersclue3d_h, *resultCandidates, *resultFromTracks);
+      track_h, trackTime, trackTimeErr, trackTimeQual, trackBeta, trackMtdPos, muons, trackstersclue3d_h, *resultCandidates, *resultFromTracks);
 
   // Print debug info
   LogDebug("TrackstersMergeProducer") << "Results from the linking step : " << std::endl
@@ -590,9 +597,11 @@ void TrackstersMergeProducer::fillDescriptions(edm::ConfigurationDescriptions &d
   desc.add<edm::InputTag>("layer_clusters", edm::InputTag("hgcalMergeLayerClusters"));
   desc.add<edm::InputTag>("layer_clustersTime", edm::InputTag("hgcalMergeLayerClusters", "timeLayerCluster"));
   desc.add<edm::InputTag>("tracks", edm::InputTag("generalTracks"));
-  desc.add<edm::InputTag>("tracksTime", edm::InputTag("tofPID:t0"));
+  desc.add<edm::InputTag>("tracksTime", edm::InputTag("trackExtenderWithMTD:generalTracktmtd"));
   desc.add<edm::InputTag>("tracksTimeQual", edm::InputTag("mtdTrackQualityMVA:mtdQualMVA"));
-  desc.add<edm::InputTag>("tracksTimeErr", edm::InputTag("tofPID:sigmat0"));
+  desc.add<edm::InputTag>("tracksTimeErr", edm::InputTag("trackExtenderWithMTD:generalTracksigmatmtd"));
+  desc.add<edm::InputTag>("tracksBeta", edm::InputTag("trackExtenderWithMTD:generalTrackBeta"));
+  desc.add<edm::InputTag>("tracksGlobalPosition", edm::InputTag("trackExtenderWithMTD:generalTrackmtdpos"));
   desc.add<edm::InputTag>("muons", edm::InputTag("muons1stStep"));
   desc.add<std::string>("detector", "HGCAL");
   desc.add<std::string>("propagator", "PropagatorWithMaterial");

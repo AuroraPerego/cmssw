@@ -36,6 +36,8 @@ namespace ticl {
                         const edm::ValueMap<float> &,
                         const edm::ValueMap<float> &,
                         const edm::ValueMap<float> &,
+                        const edm::ValueMap<float> &,
+                        const edm::ValueMap<GlobalPoint> &,
                         const std::vector<reco::Muon> &,
                         const edm::Handle<std::vector<Trackster>>,
                         std::vector<TICLCandidate> &,
@@ -64,7 +66,9 @@ namespace ticl {
                                  const Trackster &trackster,
                                  const float &tkTime,
                                  const float &tkTimeErr,
-                                 const float &tkTimeQual);
+                                 const float &tkTimeQual,
+                                 const float &tkBeta,
+                                 const GlobalPoint &tkMtdPos);
 
     void recordTrackster(const unsigned ts,  // trackster index
                          const std::vector<Trackster> &tracksters,
