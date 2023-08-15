@@ -19,6 +19,7 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
+#include "FWCore/Utilities/interface/transform.h"
 
 #include "DataFormats/CaloRecHit/interface/CaloCluster.h"
 #include "DataFormats/HGCalReco/interface/Trackster.h"
@@ -30,8 +31,10 @@
 #include "DataFormats/Math/interface/Point3D.h"
 #include "DataFormats/GeometrySurface/interface/BoundDisk.h"
 #include "DataFormats/HGCalReco/interface/Common.h"
+#include "DataFormats/HGCRecHit/interface/HGCRecHitCollections.h"
 #include "SimDataFormats/CaloAnalysis/interface/CaloParticle.h"
 #include "SimDataFormats/CaloAnalysis/interface/SimCluster.h"
+#include "SimDataFormats/CaloHit/interface/PCaloHit.h"
 
 #include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateTransform.h"
@@ -116,6 +119,10 @@ private:
   const edm::EDGetTokenT<hgcal::SimToRecoCollectionSimTracksters> MergeSimToRecoCP_token_;
   const edm::EDGetTokenT<std::vector<SimCluster>> simclusters_token_;
   const edm::EDGetTokenT<std::vector<CaloParticle>> caloparticles_token_;
+  const std::vector<edm::InputTag> label_rechits;
+  const std::vector<edm::EDGetTokenT<HGCRecHitCollection>> rechits_tokens_;
+  const std::vector<edm::InputTag> label_simhits;
+  const std::vector<edm::EDGetTokenT<std::vector<PCaloHit>>> simhits_tokens_;
 
   const edm::ESGetToken<CaloGeometry, CaloGeometryRecord> geometry_token_;
   const std::string detector_;
@@ -129,6 +136,17 @@ private:
   std::unique_ptr<GeomDet> interfaceDisk_[2];
   edm::ESHandle<MagneticField> bfield_;
   edm::ESHandle<Propagator> propagator_;
+  bool saveLCs_;
+  bool saveCLUE3DTracksters_;
+  bool saveTrackstersMerged_;
+  bool saveSimTrackstersSC_;
+  bool saveSimTrackstersCP_;
+  bool saveTICLCandidate_;
+  bool saveSimTICLCandidate_;
+  bool saveTracks_;
+  bool saveAssociations_;
+  bool saveRecHits_;
+  bool saveSimHits_;
 
   // Output tree
   TTree* tree_;
@@ -383,7 +401,27 @@ private:
   std::vector<std::vector<float>> MergeTracksters_simToReco_CP_score;
   std::vector<std::vector<float>> MergeTracksters_simToReco_CP_sharedE;
 
+  std::vector<std::vector<uint32_t>> MergeTracksters_recoToSim_PU;
+  std::vector<std::vector<float>> MergeTracksters_recoToSim_PU_score;
+  std::vector<std::vector<float>> MergeTracksters_recoToSim_PU_sharedE;
+  std::vector<std::vector<uint32_t>> MergeTracksters_simToReco_PU;
+  std::vector<std::vector<float>> MergeTracksters_simToReco_PU_score;
+  std::vector<std::vector<float>> MergeTracksters_simToReco_PU_sharedE;
+
+  std::vector<uint32_t> rechit_ID;
+  std::vector<float> rechit_energy;
+  std::vector<float> rechit_x;
+  std::vector<float> rechit_y;
+  std::vector<float> rechit_z;
+
+  std::vector<uint32_t> simhit_ID;
+  std::vector<float> simhit_energy;
+  std::vector<float> simhit_x;
+  std::vector<float> simhit_y;
+  std::vector<float> simhit_z;
+
   std::vector<uint32_t> cluster_seedID;
+  std::vector<std::vector<uint32_t>> rechits_inLC;
   std::vector<float> cluster_energy;
   std::vector<float> cluster_correctedEnergy;
   std::vector<float> cluster_correctedEnergyUncertainty;
@@ -430,6 +468,8 @@ private:
   TTree* simtrackstersCP_tree_;
   TTree* tracks_tree_;
   TTree* simTICLCandidate_tree;
+  TTree* rechits_tree_;
+  TTree* simhits_tree_;
 };
 
 void TICLDumper::clearVariables() {
@@ -675,7 +715,20 @@ void TICLDumper::clearVariables() {
 
   nsimTrackstersSC = 0;
 
+  rechit_ID.clear();
+  rechit_energy.clear();
+  rechit_x.clear();
+  rechit_y.clear();
+  rechit_z.clear();
+
+  simhit_ID.clear();
+  simhit_energy.clear();
+  simhit_x.clear();
+  simhit_y.clear();
+  simhit_z.clear();
+
   cluster_seedID.clear();
+  rechits_inLC.clear();
   cluster_energy.clear();
   cluster_correctedEnergy.clear();
   cluster_correctedEnergyUncertainty.clear();
@@ -751,12 +804,29 @@ TICLDumper::TICLDumper(const edm::ParameterSet& ps)
           ps.getParameter<edm::InputTag>("MergesimToRecoAssociatorCP"))),
       simclusters_token_(consumes(ps.getParameter<edm::InputTag>("simclusters"))),
       caloparticles_token_(consumes(ps.getParameter<edm::InputTag>("caloparticles"))),
+      label_rechits(ps.getParameter<std::vector<edm::InputTag>>("label_rechits")),
+      rechits_tokens_{edm::vector_transform(
+          label_rechits, [this](const edm::InputTag& lab) { return consumes<HGCRecHitCollection>(lab); })},
+      label_simhits(ps.getParameter<std::vector<edm::InputTag>>("label_simhits")),
+      simhits_tokens_{edm::vector_transform(
+          label_simhits, [this](const edm::InputTag& lab) { return consumes<std::vector<PCaloHit>>(lab); })},
       geometry_token_(esConsumes<CaloGeometry, CaloGeometryRecord, edm::Transition::BeginRun>()),
       detector_(ps.getParameter<std::string>("detector")),
       propName_(ps.getParameter<std::string>("propagator")),
       bfield_token_(esConsumes<MagneticField, IdealMagneticFieldRecord, edm::Transition::BeginRun>()),
       propagator_token_(
-          esConsumes<Propagator, TrackingComponentsRecord, edm::Transition::BeginRun>(edm::ESInputTag("", propName_))) {
+          esConsumes<Propagator, TrackingComponentsRecord, edm::Transition::BeginRun>(edm::ESInputTag("", propName_))),
+      saveLCs_(ps.getParameter<bool>("saveLCs")),
+      saveCLUE3DTracksters_(ps.getParameter<bool>("saveCLUE3DTracksters")),
+      saveTrackstersMerged_(ps.getParameter<bool>("saveTrackstersMerged")),
+      saveSimTrackstersSC_(ps.getParameter<bool>("saveSimTrackstersSC")),
+      saveSimTrackstersCP_(ps.getParameter<bool>("saveSimTrackstersCP")),
+      saveTICLCandidate_(ps.getParameter<bool>("saveSimTICLCandidate")),
+      saveSimTICLCandidate_(ps.getParameter<bool>("saveSimTICLCandidate")),
+      saveTracks_(ps.getParameter<bool>("saveTracks")),
+      saveAssociations_(ps.getParameter<bool>("saveAssociations")),
+      saveRecHits_(ps.getParameter<bool>("saveRecHits")),
+      saveSimHits_(ps.getParameter<bool>("saveSimHits")) {
   std::string detectorName_ = (detector_ == "HFNose") ? "HGCalHFNoseSensitive" : "HGCalEESensitive";
   hdc_token_ =
       esConsumes<HGCalDDDConstants, IdealGeometryRecord, edm::Transition::BeginRun>(edm::ESInputTag("", detectorName_));
@@ -778,17 +848,142 @@ void TICLDumper::beginRun(edm::Run const&, edm::EventSetup const& es) {
 // Define tree and branches
 void TICLDumper::beginJob() {
   edm::Service<TFileService> fs;
-  trackster_tree_ = fs->make<TTree>("tracksters", "TICL tracksters");
-  cluster_tree_ = fs->make<TTree>("clusters", "TICL tracksters");
-  graph_tree_ = fs->make<TTree>("graph", "TICL graph");
-  candidate_tree_ = fs->make<TTree>("candidates", "TICL candidates");
-  tracksters_merged_tree_ = fs->make<TTree>("trackstersMerged", "TICL tracksters merged");
-  associations_tree_ = fs->make<TTree>("associations", "Associations");
-  simtrackstersSC_tree_ = fs->make<TTree>("simtrackstersSC", "TICL simTracksters SC");
-  simtrackstersCP_tree_ = fs->make<TTree>("simtrackstersCP", "TICL simTracksters CP");
-  tracks_tree_ = fs->make<TTree>("tracks", "Tracks");
-  simTICLCandidate_tree = fs->make<TTree>("simTICLCandidate", "Sim TICL Candidate");
+  if (saveCLUE3DTracksters_) {
+    trackster_tree_ = fs->make<TTree>("tracksters", "TICL tracksters");
+    trackster_tree_->Branch("event", &ev_event_);
+    trackster_tree_->Branch("NClusters", &nclusters_);
+    trackster_tree_->Branch("NTracksters", &ntracksters_);
+    trackster_tree_->Branch("time", &trackster_time);
+    trackster_tree_->Branch("timeError", &trackster_timeError);
+    trackster_tree_->Branch("regressed_energy", &trackster_regressed_energy);
+    trackster_tree_->Branch("raw_energy", &trackster_raw_energy);
+    trackster_tree_->Branch("raw_em_energy", &trackster_raw_em_energy);
+    trackster_tree_->Branch("raw_pt", &trackster_raw_pt);
+    trackster_tree_->Branch("raw_em_pt", &trackster_raw_em_pt);
+    trackster_tree_->Branch("barycenter_x", &trackster_barycenter_x);
+    trackster_tree_->Branch("barycenter_y", &trackster_barycenter_y);
+    trackster_tree_->Branch("barycenter_z", &trackster_barycenter_z);
+    trackster_tree_->Branch("barycenter_eta", &trackster_barycenter_eta);
+    trackster_tree_->Branch("barycenter_phi", &trackster_barycenter_phi);
+    trackster_tree_->Branch("EV1", &trackster_EV1);
+    trackster_tree_->Branch("EV2", &trackster_EV2);
+    trackster_tree_->Branch("EV3", &trackster_EV3);
+    trackster_tree_->Branch("eVector0_x", &trackster_eVector0_x);
+    trackster_tree_->Branch("eVector0_y", &trackster_eVector0_y);
+    trackster_tree_->Branch("eVector0_z", &trackster_eVector0_z);
+    trackster_tree_->Branch("sigmaPCA1", &trackster_sigmaPCA1);
+    trackster_tree_->Branch("sigmaPCA2", &trackster_sigmaPCA2);
+    trackster_tree_->Branch("sigmaPCA3", &trackster_sigmaPCA3);
+    trackster_tree_->Branch("id_probabilities", &trackster_id_probabilities);
+    trackster_tree_->Branch("vertices_indexes", &trackster_vertices_indexes);
+    trackster_tree_->Branch("vertices_x", &trackster_vertices_x);
+    trackster_tree_->Branch("vertices_y", &trackster_vertices_y);
+    trackster_tree_->Branch("vertices_z", &trackster_vertices_z);
+    trackster_tree_->Branch("vertices_time", &trackster_vertices_time);
+    trackster_tree_->Branch("vertices_timeErr", &trackster_vertices_timeErr);
+    trackster_tree_->Branch("vertices_energy", &trackster_vertices_energy);
+    trackster_tree_->Branch("vertices_correctedEnergy", &trackster_vertices_correctedEnergy);
+    trackster_tree_->Branch("vertices_correctedEnergyUncertainty", &trackster_vertices_correctedEnergyUncertainty);
+    trackster_tree_->Branch("vertices_multiplicity", &trackster_vertices_multiplicity);
+  }
+  if (saveRecHits_) {
+    rechits_tree_ = fs->make<TTree>("rechits", "HGCAL rechits");
+    rechits_tree_->Branch("ID", &rechit_ID);
+    rechits_tree_->Branch("energy", &rechit_energy);
+    rechits_tree_->Branch("position_x", &rechit_x);
+    rechits_tree_->Branch("position_y", &rechit_y);
+    rechits_tree_->Branch("position_z", &rechit_z);
+  }
 
+  if (saveSimHits_) {
+    simhits_tree_ = fs->make<TTree>("simhits", "HGCAL simhits");
+    simhits_tree_->Branch("ID", &simhit_ID);
+    simhits_tree_->Branch("energy", &simhit_energy);
+    simhits_tree_->Branch("position_x", &simhit_x);
+    simhits_tree_->Branch("position_y", &simhit_y);
+    simhits_tree_->Branch("position_z", &simhit_z);
+  }
+
+  if (saveLCs_) {
+    cluster_tree_ = fs->make<TTree>("clusters", "TICL tracksters");
+    cluster_tree_->Branch("seedID", &cluster_seedID);
+    cluster_tree_->Branch("rechits", &rechits_inLC);
+    cluster_tree_->Branch("energy", &cluster_energy);
+    cluster_tree_->Branch("correctedEnergy", &cluster_correctedEnergy);
+    cluster_tree_->Branch("correctedEnergyUncertainty", &cluster_correctedEnergyUncertainty);
+    cluster_tree_->Branch("position_x", &cluster_position_x);
+    cluster_tree_->Branch("position_y", &cluster_position_y);
+    cluster_tree_->Branch("position_z", &cluster_position_z);
+    cluster_tree_->Branch("position_eta", &cluster_position_eta);
+    cluster_tree_->Branch("position_phi", &cluster_position_phi);
+    cluster_tree_->Branch("cluster_layer_id", &cluster_layer_id);
+    cluster_tree_->Branch("cluster_type", &cluster_type);
+    cluster_tree_->Branch("cluster_time", &cluster_time);
+    cluster_tree_->Branch("cluster_timeErr", &cluster_timeErr);
+    cluster_tree_->Branch("cluster_number_of_hits", &cluster_number_of_hits);
+  }
+  if (saveTICLCandidate_) {
+    candidate_tree_ = fs->make<TTree>("candidates", "TICL candidates");
+    candidate_tree_->Branch("NCandidates", &nCandidates);
+    candidate_tree_->Branch("candidate_charge", &candidate_charge);
+    candidate_tree_->Branch("candidate_pdgId", &candidate_pdgId);
+    candidate_tree_->Branch("candidate_id_probabilities", &candidate_id_probabilities);
+    candidate_tree_->Branch("candidate_time", &candidate_time);
+    candidate_tree_->Branch("candidate_timeErr", &candidate_time_err);
+    candidate_tree_->Branch("candidate_energy", &candidate_energy);
+    candidate_tree_->Branch("candidate_px", &candidate_px);
+    candidate_tree_->Branch("candidate_py", &candidate_py);
+    candidate_tree_->Branch("candidate_pz", &candidate_pz);
+    candidate_tree_->Branch("track_in_candidate", &track_in_candidate);
+    candidate_tree_->Branch("tracksters_in_candidate", &tracksters_in_candidate);
+  }
+  if (saveTrackstersMerged_) {
+    tracksters_merged_tree_ = fs->make<TTree>("trackstersMerged", "TICL tracksters merged");
+    tracksters_merged_tree_->Branch("event", &ev_event_);
+    tracksters_merged_tree_->Branch("time", &tracksters_merged_time);
+    tracksters_merged_tree_->Branch("timeError", &tracksters_merged_timeError);
+    tracksters_merged_tree_->Branch("regressed_energy", &tracksters_merged_regressed_energy);
+    tracksters_merged_tree_->Branch("raw_energy", &tracksters_merged_raw_energy);
+    tracksters_merged_tree_->Branch("raw_em_energy", &tracksters_merged_raw_em_energy);
+    tracksters_merged_tree_->Branch("raw_pt", &tracksters_merged_raw_pt);
+    tracksters_merged_tree_->Branch("raw_em_pt", &tracksters_merged_raw_em_pt);
+    tracksters_merged_tree_->Branch("NTrackstersMerged", &nTrackstersMerged);
+    tracksters_merged_tree_->Branch("barycenter_x", &tracksters_merged_barycenter_x);
+    tracksters_merged_tree_->Branch("barycenter_y", &tracksters_merged_barycenter_y);
+    tracksters_merged_tree_->Branch("barycenter_z", &tracksters_merged_barycenter_z);
+    tracksters_merged_tree_->Branch("barycenter_eta", &tracksters_merged_barycenter_eta);
+    tracksters_merged_tree_->Branch("barycenter_phi", &tracksters_merged_barycenter_phi);
+    tracksters_merged_tree_->Branch("EV1", &tracksters_merged_EV1);
+    tracksters_merged_tree_->Branch("EV2", &tracksters_merged_EV2);
+    tracksters_merged_tree_->Branch("EV3", &tracksters_merged_EV3);
+    tracksters_merged_tree_->Branch("eVector0_x", &tracksters_merged_eVector0_x);
+    tracksters_merged_tree_->Branch("eVector0_y", &tracksters_merged_eVector0_y);
+    tracksters_merged_tree_->Branch("eVector0_z", &tracksters_merged_eVector0_z);
+    tracksters_merged_tree_->Branch("sigmaPCA1", &tracksters_merged_sigmaPCA1);
+    tracksters_merged_tree_->Branch("sigmaPCA2", &tracksters_merged_sigmaPCA2);
+    tracksters_merged_tree_->Branch("sigmaPCA3", &tracksters_merged_sigmaPCA3);
+    tracksters_merged_tree_->Branch("id_probabilities", &tracksters_merged_id_probabilities);
+    tracksters_merged_tree_->Branch("vertices_indexes", &tracksters_merged_vertices_indexes);
+    tracksters_merged_tree_->Branch("vertices_x", &tracksters_merged_vertices_x);
+    tracksters_merged_tree_->Branch("vertices_y", &tracksters_merged_vertices_y);
+    tracksters_merged_tree_->Branch("vertices_z", &tracksters_merged_vertices_z);
+    tracksters_merged_tree_->Branch("vertices_time", &tracksters_merged_vertices_time);
+    tracksters_merged_tree_->Branch("vertices_timeErr", &tracksters_merged_vertices_timeErr);
+    tracksters_merged_tree_->Branch("vertices_energy", &tracksters_merged_vertices_energy);
+    tracksters_merged_tree_->Branch("vertices_correctedEnergy", &tracksters_merged_vertices_correctedEnergy);
+    tracksters_merged_tree_->Branch("vertices_correctedEnergyUncertainty",
+                                    &tracksters_merged_vertices_correctedEnergyUncertainty);
+    tracksters_merged_tree_->Branch("vertices_multiplicity", &tracksters_merged_vertices_multiplicity);
+  }
+  if (saveAssociations_) {
+    associations_tree_ = fs->make<TTree>("associations", "Associations");
+    associations_tree_->Branch("tsCLUE3D_recoToSim_SC", &trackstersCLUE3D_recoToSim_SC);
+    associations_tree_->Branch("tsCLUE3D_recoToSim_SC_score", &trackstersCLUE3D_recoToSim_SC_score);
+    associations_tree_->Branch("tsCLUE3D_recoToSim_SC_sharedE", &trackstersCLUE3D_recoToSim_SC_sharedE);
+    associations_tree_->Branch("tsCLUE3D_simToReco_SC", &trackstersCLUE3D_simToReco_SC);
+    associations_tree_->Branch("tsCLUE3D_simToReco_SC_score", &trackstersCLUE3D_simToReco_SC_score);
+    associations_tree_->Branch("tsCLUE3D_simToReco_SC_sharedE", &trackstersCLUE3D_simToReco_SC_sharedE);
+  }
   simTICLCandidate_tree->Branch("simTICLCandidate_raw_energy", &simTICLCandidate_raw_energy);
   simTICLCandidate_tree->Branch("simTICLCandidate_regressed_energy", &simTICLCandidate_regressed_energy);
   simTICLCandidate_tree->Branch("simTICLCandidate_simTracksterCPIndex", &simTICLCandidate_simTracksterCPIndex);
@@ -1225,7 +1420,40 @@ void TICLDumper::analyze(const edm::Event& event, const edm::EventSetup& setup) 
   ntracksters_ = tracksters.size();
   nclusters_ = clusters.size();
 
-  int t_id = 0;
+  std::vector<HGCRecHitCollection> rechits_collections;
+  for (auto const& rh_token : rechits_tokens_) {
+    edm::Handle<HGCRecHitCollection> rechit_handle;
+    event.getByToken(rh_token, rechit_handle);
+    rechits_collections.push_back(*rechit_handle);
+  }
+  std::vector<std::vector<PCaloHit>> simhits_collections;
+  for (auto const& sh_token : simhits_tokens_) {
+    edm::Handle<std::vector<PCaloHit>> simhit_handle;
+    event.getByToken(sh_token, simhit_handle);
+    simhits_collections.push_back(*simhit_handle);
+  }
+
+  for (auto const& rhColl : rechits_collections) {
+    for (auto const& rh : rhColl) {
+      rechit_energy.push_back(rh.energy());
+      auto const rhPosition = rhtools_.getPosition(rh.detid());
+      rechit_x.push_back(rhPosition.x());
+      rechit_y.push_back(rhPosition.y());
+      rechit_z.push_back(rhPosition.z());
+      rechit_ID.push_back(rh.detid());
+    }
+  }
+  for (auto const& shColl : simhits_collections) {
+    for (auto const& sh : shColl) {
+      simhit_energy.push_back(sh.energy());
+      auto const shPosition = rhtools_.getPosition(sh.id());
+      simhit_x.push_back(shPosition.x());
+      simhit_y.push_back(shPosition.y());
+      simhit_z.push_back(shPosition.z());
+      simhit_ID.push_back(sh.id());
+    }
+  }
+
   for (auto trackster_iterator = tracksters.begin(); trackster_iterator != tracksters.end(); ++trackster_iterator) {
     //per-trackster analysis
     trackster_time.push_back(trackster_iterator->time());
@@ -1655,6 +1883,11 @@ void TICLDumper::analyze(const edm::Event& event, const edm::EventSetup& setup) 
     cluster_timeErr.push_back(layerClustersTimes.get(c_id).second);
     cluster_time.push_back(layerClustersTimes.get(c_id).first);
     c_id += 1;
+    std::vector<uint32_t> hits_detid;
+    for (auto const& handf : cluster_iterator->hitsAndFractions()) {
+      hits_detid.push_back(handf.first);
+    }
+    rechits_inLC.push_back(hits_detid);
   }
 
   tracksters_in_candidate.resize(ticlcandidates.size());
@@ -1948,29 +2181,28 @@ void TICLDumper::analyze(const edm::Event& event, const edm::EventSetup& setup) 
     }
   }
 
-  node_linked_inners.resize(tracksters.size());
-  node_linked_outers.resize(tracksters.size());
-  isRootTrackster.resize(tracksters.size(), false);
-  for (size_t i = 0; i < tracksters.size(); ++i) {
-    const auto& node = graph.getNode((int)i);
-    auto this_inners = node.getInner();
-    auto this_outers = node.getOuter();
-    node_linked_inners[i].insert(node_linked_inners[i].end(), this_inners.begin(), this_inners.end());
-    node_linked_outers[i].insert(node_linked_outers[i].end(), this_outers.begin(), this_outers.end());
-    if (node.getInner().empty())
-      isRootTrackster[i] = true;
-  }
-
-  trackster_tree_->Fill();
-  cluster_tree_->Fill();
-  graph_tree_->Fill();
-  candidate_tree_->Fill();
-  tracksters_merged_tree_->Fill();
-  associations_tree_->Fill();
-  simtrackstersSC_tree_->Fill();
-  simtrackstersCP_tree_->Fill();
-  tracks_tree_->Fill();
-  simTICLCandidate_tree->Fill();
+  if (saveCLUE3DTracksters_)
+    trackster_tree_->Fill();
+  if (saveRecHits_)
+    rechits_tree_->Fill();
+  if (saveSimHits_)
+    simhits_tree_->Fill();
+  if (saveLCs_)
+    cluster_tree_->Fill();
+  if (saveTICLCandidate_)
+    candidate_tree_->Fill();
+  if (saveTrackstersMerged_)
+    tracksters_merged_tree_->Fill();
+  if (saveAssociations_)
+    associations_tree_->Fill();
+  if (saveSimTrackstersSC_)
+    simtrackstersSC_tree_->Fill();
+  if (saveSimTrackstersCP_)
+    simtrackstersCP_tree_->Fill();
+  if (saveTracks_)
+    tracks_tree_->Fill();
+  if (saveSimTICLCandidate_)
+    simTICLCandidate_tree->Fill();
 }
 
 void TICLDumper::endJob() {}
@@ -1981,6 +2213,14 @@ void TICLDumper::fillDescriptions(edm::ConfigurationDescriptions& descriptions) 
   desc.add<edm::InputTag>("layerClusters", edm::InputTag("hgcalMergeLayerClusters"));
   desc.add<edm::InputTag>("layer_clustersTime", edm::InputTag("hgcalMergeLayerClusters", "timeLayerCluster"));
   desc.add<edm::InputTag>("ticlgraph", edm::InputTag("ticlGraph"));
+  desc.add<std::vector<edm::InputTag>>("label_rechits",
+                                       {edm::InputTag("HGCalRecHit", "HGCEERecHits"),
+                                        edm::InputTag("HGCalRecHit", "HGCHEFRecHits"),
+                                        edm::InputTag("HGCalRecHit", "HGCHEBRecHits")});
+  desc.add<std::vector<edm::InputTag>>("label_simhits",
+                                       {edm::InputTag("g4SimHits", "HGCHitsEE"),
+                                        edm::InputTag("g4SimHits", "HGCHitsHEfront"),
+                                        edm::InputTag("g4SimHits", "HGCHitsHEback")});
   desc.add<edm::InputTag>("ticlcandidates", edm::InputTag("ticlTrackstersMerge"));
   desc.add<edm::InputTag>("tracks", edm::InputTag("generalTracks"));
   desc.add<edm::InputTag>("tracksTime", edm::InputTag("tofPID:t0"));
@@ -2010,6 +2250,18 @@ void TICLDumper::fillDescriptions(edm::ConfigurationDescriptions& descriptions) 
   desc.add<edm::InputTag>("caloparticles", edm::InputTag("mix", "MergedCaloTruth"));
   desc.add<std::string>("detector", "HGCAL");
   desc.add<std::string>("propagator", "PropagatorWithMaterial");
+
+  desc.add<bool>("saveLCs", true);
+  desc.add<bool>("saveCLUE3DTracksters", true);
+  desc.add<bool>("saveTrackstersMerged", true);
+  desc.add<bool>("saveSimTrackstersSC", true);
+  desc.add<bool>("saveSimTrackstersCP", true);
+  desc.add<bool>("saveTICLCandidate", true);
+  desc.add<bool>("saveSimTICLCandidate", true);
+  desc.add<bool>("saveTracks", true);
+  desc.add<bool>("saveAssociations", true);
+  desc.add<bool>("saveRecHits", true);
+  desc.add<bool>("saveSimHits", true);
   descriptions.add("ticlDumper", desc);
 }
 
