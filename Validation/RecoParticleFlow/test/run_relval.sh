@@ -20,16 +20,18 @@ fi
 
 #
 #set default conditions - run3 2021
-CONDITIONS=auto:phase1_2022_realistic ERA=Run3 GEOM=DB.Extended CUSTOM=
+#CONDITIONS=auto:phase1_2022_realistic ERA=Run3 GEOM=DB.Extended CUSTOM=
 #
 #conditions - 2018
 #CONDITIONS=auto:phase1_2018_realistic ERA=Run2_2018 GEOM=DB.Extended CUSTOM=
 #
 #conditions - phase2
-#CONDITIONS=auto:phase2_realistic_T15 ERA=Phase2C9 GEOM=Extended2026D49 CUSTOM="--customise SLHCUpgradeSimulations/Configuration/aging.customise_aging_1000"
+CONDITIONS=auto:phase2_realistic_T25 ERA=Phase2C17I13M9 GEOM=Extended2026D98
 
 #Running with 2 threads allows to use more memory on grid
-NTHREADS=8
+NTHREADS=20
+
+OUTPUT_DIR=root://eosuser.cern.ch//eos/user/a/aperego/cmssw/track_linking/release/CMSSW_13_2_0_pre2/src/Validation/RecoParticleFlow/test/tmp
 
 #Argument parsing
 if [ "$#" -ne 3 ]; then
@@ -43,6 +45,14 @@ NJOB=$(($3 + 1))
 #set CMSSW environment and go to condor work dir
 LAUNCHDIR=`pwd`
 source /cvmfs/cms.cern.ch/cmsset_default.sh
+
+#export SCRAM_ARCH=slc7_amd64_gcc900
+#sleep 5
+#echo "Start preparing environment!"
+#tar -xvf CMSSW_13_2_0_pre2.tgz
+#cd CMSSW_13_2_0_pre2/src
+#scram b ProjectRename #command needed after extracting a tarball to reassing project directory
+#eval `scramv1 runtime -sh` # cmsenv is an alias not on the workers
 
 #this environment variable comes from the condor submit script
 cd $CMSSW_BASE
@@ -132,8 +142,9 @@ if [ $STEP == "RECO" ]; then
 	echo "FILENAME="$FILENAME
 	#Run the actual CMS reco with particle flow.
 	echo "Running step RECO" 
+	#cmsDriver.py step3 --conditions $CONDITIONS -s RAW2DIGI,L1Reco,RECO,RECOSIM,PAT --datatier MINIAODSIM --nThreads $NTHREADS -n -1 --era $ERA --eventcontent MINIAODSIM --geometry=$GEOM --filein filelist:$INPUT_FILELIST --fileout file:step3_inMINIAODSIM.root $CUSTOM | tee step3.log  2>&1
 	cmsDriver.py step3 --conditions $CONDITIONS -s RAW2DIGI,L1Reco,RECO,RECOSIM,PAT --datatier MINIAODSIM --nThreads $NTHREADS -n -1 --era $ERA --eventcontent MINIAODSIM --geometry=$GEOM --filein $FILENAME --fileout file:step3_inMINIAODSIM.root $CUSTOM | tee step3.log  2>&1
-   
+
 	#NanoAOD
 	#On lxplus, this step takes about 1 minute / 1000 events
 	#Can be skipped if doing DQM directly from RECO
@@ -144,7 +155,7 @@ if [ $STEP == "RECO" ]; then
 elif [ $STEP == "DQM" ]; then
     echo "Running step DQM" 
 
-    cd $NAME
+    cd QCDPU_timing_13_2 #$NAME
     
     #get all the filenames and make them into a python-compatible list of strings
     #STEP3FNS=`ls -1 step3*MINIAODSIM*.root | sed 's/^/"file:/;s/$/",/' | tr '\n' ' '`
@@ -157,6 +168,8 @@ elif [ $STEP == "DQM" ]; then
 
     #Harvesting converts the histograms stored in TTrees to be stored in folders by run etc
     cmsDriver.py step6 --conditions $CONDITIONS -s HARVESTING:@pfDQM --era $ERA --filetype DQM --filein file:step5.root --fileout file:step6.root 2>&1 | tee step6.log
+
+    xrdcp DQM_V0001_R000000001__Global__CMSSW_X_Y_Z__RECO.root $OUTPUT_DIR/DQM_V0001_R000000001__Global__CMSSW_X_Y_Z__RECO.root
 fi
 
 #echo "Exit code was $?"
