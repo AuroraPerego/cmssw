@@ -150,7 +150,14 @@ bool LinkingAlgoByDirectionGeometric::timeAndEnergyCompatible(float &total_raw_e
   // track time; compatible if either: no time assigned
   // to trackster or track time quality is below threshold
 
-  float tsT = trackster.time() - 0.072;
+  float tsT = trackster.time();
+
+//correct the time shift
+if (isHadron(trackster))
+  tsT -= 0.068;
+else
+  tsT -= 0.057;
+
   float tsTErr = trackster.timeError();
 
   bool timeCompatible = false;
@@ -208,15 +215,15 @@ void LinkingAlgoByDirectionGeometric::dumpLinksFound(std::vector<std::vector<uns
   if (!(LinkingAlgoBase::algo_verbosity_ > VerbosityLevel::Advanced))
     return;
 
-  LogDebug("LinkingAlgoByDirectionGeometric") << "All links found - " << label << "\n";
-  LogDebug("LinkingAlgoByDirectionGeometric") << "(seed can either be a track or trackster depending on the step)\n";
+  std::cout << "All links found - " << label << "\n";
+  std::cout << "(seed can either be a track or trackster depending on the step)\n";
   for (unsigned i = 0; i < resultCollection.size(); ++i) {
-    LogDebug("LinkingAlgoByDirectionGeometric") << "seed " << i << " - tracksters : ";
+    std::cout << "seed " << i << " - tracksters : ";
     const auto &links = resultCollection[i];
     for (unsigned j = 0; j < links.size(); ++j) {
-      LogDebug("LinkingAlgoByDirectionGeometric") << j;
+      std::cout << j;
     }
-    LogDebug("LinkingAlgoByDirectionGeometric") << "\n";
+    std::cout << "\n";
   }
 #endif  // EDM_ML_DEBUG
 }
@@ -285,8 +292,8 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
     return (std::abs(t.barycenter().Z()) > boundary_z);
   };
 
-  if (LinkingAlgoBase::algo_verbosity_ > VerbosityLevel::Advanced)
-    LogDebug("LinkingAlgoByDirectionGeometric") << "------- Geometric Linking ------- \n";
+  if (!(LinkingAlgoBase::algo_verbosity_ > VerbosityLevel::Advanced))
+    std::cout << "------- Geometric Linking ------- \n";
 
   // Propagate tracks
   std::vector<unsigned> candidateTrackIds;
@@ -298,8 +305,8 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
     // veto tracks associated to muons
     int muId = PFMuonAlgo::muAssocToTrack(trackref, muons);
 
-    if (LinkingAlgoBase::algo_verbosity_ > VerbosityLevel::Advanced)
-      LogDebug("LinkingAlgoByDirectionGeometric")
+    if (!(LinkingAlgoBase::algo_verbosity_ > VerbosityLevel::Advanced))
+      std::cout
           << "track " << i << " - eta " << tk.eta() << " phi " << tk.phi() << " time " << tkTime[reco::TrackRef(tkH, i)]
           << " time qual " << tkTimeQual[reco::TrackRef(tkH, i)] << "  muid " << muId << "\n";
 
@@ -347,8 +354,8 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
 
   for (unsigned i = 0; i < tracksters.size(); ++i) {
     const auto &t = tracksters[i];
-    if (LinkingAlgoBase::algo_verbosity_ > VerbosityLevel::Advanced)
-      LogDebug("LinkingAlgoByDirectionGeometric")
+    if (!(LinkingAlgoBase::algo_verbosity_ > VerbosityLevel::Advanced))
+      std::cout
           << "trackster " << i << " - eta " << t.barycenter().eta() << " phi " << t.barycenter().phi() << " time "
           << t.time() << " energy " << t.raw_energy() << "\n";
 
@@ -408,6 +415,7 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
   std::vector<unsigned int> chargedMask(tracksters.size(), 0);
   for (unsigned &i : candidateTrackIds) {
     if (tsNearTk[i].empty() && tsNearTkAtInt[i].empty()) {  // nothing linked to track, make charged hadrons
+std::cout << "creating empty candidate\n";
       TICLCandidate chargedHad;
       chargedHad.setTrackPtr(edm::Ptr<reco::Track>(tkH, i));
       chargedHadronsFromTk.push_back(chargedHad);
@@ -488,7 +496,9 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
     if (!chargedCandidate.tracksters().empty()) {
       chargedCandidate.setTrackPtr(edm::Ptr<reco::Track>(tkH, i));
       chargedCandidates.push_back(chargedCandidate);
+std::cout << "adding charged candidate " << __LINE__ << std::endl;
     } else {  // create charged hadron
+std::cout << "creating empty candidate\n";
       TICLCandidate chargedHad;
       chargedHad.setTrackPtr(edm::Ptr<reco::Track>(tkH, i));
       chargedHadronsFromTk.push_back(chargedHad);
@@ -507,6 +517,7 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
       neutralCandidate.addTrackster(edm::Ptr<Trackster>(tsH, i));
       neutralMask[i] = 1;
       neutralCandidates.push_back(neutralCandidate);
+std::cout << "adding neutral candidate " << __LINE__ << std::endl;
       continue;
     }
     if (!neutralMask[i]) {
@@ -540,6 +551,7 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
     // filter empty candidates
     if (!neutralCandidate.tracksters().empty()) {
       neutralCandidates.push_back(neutralCandidate);
+std::cout << "adding neutral candidate " << __LINE__ << std::endl;
     }
   }
 
