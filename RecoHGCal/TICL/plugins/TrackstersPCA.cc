@@ -83,7 +83,7 @@ void ticl::assignPCAtoTracksters(std::vector<Trackster> &tracksters,
                          std::sqrt(((barycenter[2] / z - 1) * x) * ((barycenter[2] / z - 1) * x) +
                                    ((barycenter[2] / z - 1) * y) * ((barycenter[2] / z - 1) * y) +
                                    (barycenter[2] - z) * (barycenter[2] - z));
-          time -= (barycenter[2] - z) / std::abs(barycenter[2] - z) * deltaT;
+          time = std::abs(barycenter[2]) < std::abs(z) ? time - deltaT : time + deltaT;
 
           tracksterTime += time * timeE;
           tracksterTimeErr += timeE;
@@ -134,6 +134,7 @@ void ticl::assignPCAtoTracksters(std::vector<Trackster> &tracksters,
 
     // Add trackster attributes
     trackster.setBarycenter(ticl::Trackster::Vector(barycenter));
+
     trackster.setTimeAndError(timeTrackster.first, timeTrackster.second);
 
     trackster.fillPCAVariables(
