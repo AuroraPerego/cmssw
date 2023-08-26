@@ -150,7 +150,7 @@ bool LinkingAlgoByDirectionGeometric::timeAndEnergyCompatible(float &total_raw_e
   // track time; compatible if either: no time assigned
   // to trackster or track time quality is below threshold
 
-  float tsT = trackster.time();
+  float tsT = trackster.time() - 0.072;
   float tsTErr = trackster.timeError();
 
   bool timeCompatible = false;
@@ -165,23 +165,24 @@ bool LinkingAlgoByDirectionGeometric::timeAndEnergyCompatible(float &total_raw_e
 
     const auto deltaT = tsT - tkT;
 
-    timeCompatible = (std::abs(deltaSoverV - deltaT) < maxDeltaT_ * sqrt(tsTErr * tsTErr + tkTErr * tkTErr)); 
+  //  timeCompatible = (std::abs(deltaSoverV - deltaT) < maxDeltaT_ * sqrt(tsTErr * tsTErr + tkTErr * tkTErr)); 
+    // use sqrt(2) * error on the track for the total error, because the time of the trackster is too small
+    timeCompatible = (std::abs(deltaSoverV - deltaT) < maxDeltaT_ * std::sqrt(2)*tkTErr); 
 
-
-std::cout << "trackster time is " << tsT << " +/- " << tsTErr << std::endl;
-std::cout << "track time is " << tkT << " +/- " << tkTErr << std::endl;
-std::cout << "beta is " << tkBeta << ", s/v = " << deltaSoverV << ", deltaT = " << deltaT 
-          << "\ncomparing delta " << std::abs(deltaSoverV - deltaT) << " with thresdhold " <<  maxDeltaT_ * sqrt(tsTErr * tsTErr + tkTErr * tkTErr) << std::endl;
+// std::cout << "trackster time is " << tsT << " +/- " << tsTErr << std::endl;
+// std::cout << "track time is " << tkT << " +/- " << tkTErr << std::endl;
+// std::cout << "beta is " << tkBeta << ", s/v = " << deltaSoverV << ", deltaT = " << deltaT 
+//           << "\ncomparing delta " << std::abs(deltaSoverV - deltaT) << " with thresdhold " <<  maxDeltaT_ * sqrt(tsTErr * tsTErr + tkTErr * tkTErr) << std::endl;
   }
 
 
 
 // if (LinkingAlgoBase::algo_verbosity_ > VerbosityLevel::Advanced) {
-    if (!(energyCompatible))
-     std::cout 
-          << "energy compatibility : track p " << track.p() << " trackster energy " << trackster.raw_energy() << " total_raw_energy " << total_raw_energy << " track.p() + threshold " << track.p() + threshold <<  "\n";
-    if (!(timeCompatible))
-     std::cout << "time compatibility : delta time " << tkT -tsT << " err " << sqrt(tsTErr * tsTErr + tkTErr * tkTErr) << "\n";
+///    if (!(energyCompatible))
+///     std::cout 
+///          << "energy compatibility : track p " << track.p() << " trackster energy " << trackster.raw_energy() << " total_raw_energy " << total_raw_energy << " track.p() + threshold " << track.p() + threshold <<  "\n";
+///    if (!(timeCompatible))
+///     std::cout << "time compatibility : delta time " << tkT -tsT << " err " << std::sqrt(2)*tkTErr << "\n";
 //  }
     // 
   return energyCompatible && timeCompatible;
