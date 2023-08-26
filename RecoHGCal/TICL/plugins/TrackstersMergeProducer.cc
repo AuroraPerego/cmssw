@@ -277,7 +277,7 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
       track_h, trackTime, trackTimeErr, trackTimeQual, trackBeta, trackMtdPos, muons, trackstersclue3d_h, *resultCandidates, *resultFromTracks);
 
   // Print debug info
-  LogDebug("TrackstersMergeProducer") << "Results from the linking step : " << std::endl
+  std::cout << "Results from the linking step : " << std::endl
                                       << "No. of Tracks : " << tracks.size()
                                       << "  No. of Tracksters : " << (*trackstersclue3d_h).size() << std::endl
                                       << "(neutral candidates have track id -1)" << std::endl;
@@ -290,9 +290,9 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
     track_idx = (track_ptr.isNull()) ? -1 : track_idx;
 
 #ifdef EDM_ML_DEBUG
-    LogDebug("TrackstersMergeProducer") << "PDG ID " << cand.pdgId() << " charge " << cand.charge() << " p " << cand.p()
+    std::cout << "PDG ID " << cand.pdgId() << " charge " << cand.charge() << " p " << cand.p()
                                         << std::endl;
-    LogDebug("TrackstersMergeProducer") << "track id (p) : " << track_idx << " ("
+    std::cout << "track id (p) : " << track_idx << " ("
                                         << (track_ptr.isNull() ? -1 : track_ptr->p()) << ") "
                                         << " trackster ids (E) : ";
 #endif
