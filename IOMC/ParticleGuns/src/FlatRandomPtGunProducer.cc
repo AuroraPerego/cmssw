@@ -15,6 +15,8 @@
 #include "FWCore/Utilities/interface/RandomNumberGenerator.h"
 
 #include "CLHEP/Random/RandFlat.h"
+#include "CLHEP/Units/GlobalSystemOfUnits.h"
+#include "CLHEP/Units/GlobalPhysicalConstants.h"
 
 using namespace edm;
 using namespace std;
@@ -54,12 +56,13 @@ void FlatRandomPtGunProducer::produce(Event& e, const EventSetup& es) {
   //
   // 1st, primary vertex
   //
-  HepMC::GenVertex* Vtx = new HepMC::GenVertex(HepMC::FourVector(0., 0., 0.));
 
   // loop over particles
   //
   int barcode = 1;
   for (unsigned int ip = 0; ip < fPartIDs.size(); ++ip) {
+    // auto time = CLHEP::RandFlat::shoot(engine, 0., 0.200);
+    HepMC::GenVertex* Vtx = new HepMC::GenVertex(HepMC::FourVector(0., 0., 0., ip*0.1 * ns * c_light));
     double pt = CLHEP::RandFlat::shoot(engine, fMinPt, fMaxPt);
     double eta = CLHEP::RandFlat::shoot(engine, fMinEta, fMaxEta);
     double phi = CLHEP::RandFlat::shoot(engine, fMinPhi, fMaxPhi);
@@ -90,9 +93,9 @@ void FlatRandomPtGunProducer::produce(Event& e, const EventSetup& es) {
       barcode++;
       Vtx->add_particle_out(APart);
     }
+  fEvt->add_vertex(Vtx);
   }
 
-  fEvt->add_vertex(Vtx);
   fEvt->set_event_number(e.id().event());
   fEvt->set_signal_process_id(20);
 
