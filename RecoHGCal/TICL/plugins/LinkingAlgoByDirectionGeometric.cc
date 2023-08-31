@@ -150,13 +150,18 @@ bool LinkingAlgoByDirectionGeometric::timeAndEnergyCompatible(float &total_raw_e
   // track time; compatible if either: no time assigned
   // to trackster or track time quality is below threshold
 
-  float tsT = trackster.time();
-
+  float tsT = trackster.time() - 0.07;
+  // linking : trackster is hadronic if its barycenter is in CE-H
+//    auto isHadron = [&](const Trackster &t) -> bool {
+//        auto boundary_z = rhtools_.getPositionLayer(rhtools_.lastLayerEE()).z();
+//           return (std::abs(t.barycenter().Z()) > boundary_z);
+//            };
+               
 //correct the time shift
-if (isHadron(trackster))
-  tsT -= 0.068;
-else
-  tsT -= 0.057;
+//if (isHadron(trackster))
+//  tsT -= 0.068;
+//else
+//  tsT -= 0.057;
 
   float tsTErr = trackster.timeError();
 
