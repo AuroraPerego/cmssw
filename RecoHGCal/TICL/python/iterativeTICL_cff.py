@@ -8,6 +8,7 @@ from RecoHGCal.TICL.TrkEMStep_cff import *
 from RecoHGCal.TICL.TrkStep_cff import *
 from RecoHGCal.TICL.EMStep_cff import *
 from RecoHGCal.TICL.HADStep_cff import *
+from RecoHGCal.TICL.SimTracksters_cff import *
 
 from RecoHGCal.TICL.ticlLayerTileProducer_cfi import ticlLayerTileProducer
 from RecoHGCal.TICL.pfTICLProducer_cfi import pfTICLProducer as _pfTICLProducer
@@ -20,7 +21,9 @@ ticlLayerTileTask = cms.Task(ticlLayerTileProducer)
 ticlTrackstersMerge = _trackstersMergeProducer.clone()
 ticlTrackstersMergeV3 = _trackstersMergeProducerV3.clone()
 
-pfTICL = _pfTICLProducer.clone()
+pfTICL = _pfTICLProducer.clone(
+#  ticlCandidateSrc = 'ticlSimTracksters'
+)
 ticlPFTask = cms.Task(pfTICL)
 
 ticlIterationsTask = cms.Task(
@@ -48,7 +51,12 @@ ticl_v3.toModify(pfTICL, ticlCandidateSrc = "ticlTrackstersMergeV3")
 mergeTICLTask = cms.Task(ticlLayerTileTask
     ,ticlIterationsTask
     ,ticlTracksterMergeTask
+    #,ticlPFTask
 )
+
+from Configuration.ProcessModifiers.ticl_sim_cff import ticl_sim
+ticl_sim.toModify(mergeTICLTask, func=lambda x : x.add(ticlSimTrackstersTask))
+ticl_sim.toModify(pfTICL, ticlCandidateSrc = "ticlSimTracksters")
 
 ticl_v3.toModify(mergeTICLTask, func=lambda x : x.add(ticlTracksterMergeTaskV3))
 ticlIterLabelsMerge = ticlIterLabels + ["Merge"]
