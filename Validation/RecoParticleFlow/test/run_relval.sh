@@ -114,7 +114,7 @@ if [ $STEP == "RECO" ]; then
 	FILENAME=`sed -n "${NJOB}p" $INPUT_FILELIST`
 	echo "FILENAME="$FILENAME
 
-	cmsDriver.py step3 --conditions $CONDITIONS -s RAW2DIGI,L1Reco,RECO,RECOSIM,PAT --datatier MINIAODSIM --nThreads $NTHREADS -n -1 --era $ERA --eventcontent MINIAODSIM --geometry=$GEOM --filein step2.root --fileout file:step3_inMINIAODSIM.root --no_exec --python_filename=step3.py $CUSTOM
+	cmsDriver.py step3 --conditions $CONDITIONS --procModifiers ticl_sim -s RAW2DIGI,L1Reco,RECO,RECOSIM,PAT --datatier MINIAODSIM --nThreads $NTHREADS -n -1 --era $ERA --eventcontent MINIAODSIM --geometry=$GEOM --filein step2.root --fileout file:step3_inMINIAODSIM.root --no_exec --python_filename=step3.py $CUSTOM
 	
     else
 	
@@ -133,7 +133,7 @@ if [ $STEP == "RECO" ]; then
 	echo "FILENAME="$FILENAME
 	#Run the actual CMS reco with particle flow.
 	echo "Running step RECO" 
-	cmsDriver.py step3 --conditions $CONDITIONS -s RAW2DIGI,L1Reco,RECO,RECOSIM,PAT --datatier MINIAODSIM --nThreads $NTHREADS -n -1 --era $ERA --eventcontent MINIAODSIM --geometry=$GEOM  --procModifiers ticl_sim --filein $FILENAME --fileout file:step3_inMINIAODSIM.root $CUSTOM | tee step3.log  2>&1
+	cmsDriver.py step3 --conditions $CONDITIONS --procModifiers ticl_sim -s RAW2DIGI,L1Reco,RECO,RECOSIM,PAT --datatier MINIAODSIM --nThreads $NTHREADS -n -1 --era $ERA --eventcontent MINIAODSIM --geometry=$GEOM  --procModifiers ticl_sim --filein $FILENAME --fileout file:step3_inMINIAODSIM.root $CUSTOM | tee step3.log  2>&1
    
 	#NanoAOD
 	#On lxplus, this step takes about 1 minute / 1000 events
