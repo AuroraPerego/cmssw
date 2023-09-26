@@ -9,7 +9,8 @@ if __name__ == "__main__":
     # define options
     parser = argparse.ArgumentParser(description="Harvest track validation plots")
     parser.add_argument("files", metavar="file", type=str, nargs="+",
-                        help="files to be harvested (convert edm DQM format to plain ROOT format")
+                        help="files to be harvested (convert edm DQM format to plain ROOT format):\n"
+                             "either pass directly the files or pass a 'filelist.txt' with all the names")
     parser.add_argument("-o", "--outputFile", type=str, default="harvest.root",
                         help="output file (default: 'harvest.root')")
 
@@ -19,12 +20,18 @@ if __name__ == "__main__":
     outputFile = os.path.abspath(opts.outputFile)
 
     # check the input files
-    for f in opts.files:
+    if 'filelist.txt' in opts.files:
+        f = open('filelist.txt', "r")
+        files = list(f.read().splitlines())
+    else:
+        files = opts.files
+
+    for f in files:
         if not os.path.exists(f):
             parser.error("DQM file %s does not exist" % f)
 
     # compile a file list for cmsDriver
-    filelist = ",".join(["file:{0}".format(os.path.abspath(_file)) for _file in opts.files])
+    filelist = ",".join(["file:{0}".format(os.path.abspath(_file)) for _file in files])
 
     # go to a temporary directory
     _cwd = os.getcwd()
