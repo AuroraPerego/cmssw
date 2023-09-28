@@ -167,7 +167,7 @@ void TracksterLinksProducer::produce(edm::Event &evt, const edm::EventSetup &es)
   }
 
   assignPCAtoTracksters(
-      *resultTracksters, layerClusters, layerClustersTimes, rhtools_.getPositionLayer(rhtools_.lastLayerEE()).z());
+      *resultTracksters, layerClusters, layerClustersTimes, rhtools_.getPositionLayer(rhtools_.lastLayerEE()).z(), true);
 
   evt.put(std::move(linkedResultTracksters));
   evt.put(std::move(resultMask));
