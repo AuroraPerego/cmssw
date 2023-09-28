@@ -22,6 +22,10 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
+#include "DataFormats/FTLRecHit/interface/FTLCluster.h"
+#include "DataFormats/FTLRecHit/interface/FTLRecHitCollections.h"
+#include "DataFormats/TrackerRecHit2D/interface/MTDTrackingRecHit.h"
+#include "DataFormats/ForwardDetId/interface/MTDDetId.h"
 #include "DataFormats/CaloRecHit/interface/CaloCluster.h"
 #include "DataFormats/HGCRecHit/interface/HGCRecHitCollections.h"
 #include "DataFormats/HGCalReco/interface/Trackster.h"
@@ -199,6 +203,12 @@ private:
 
   std::vector<float> stsSC_trackster_time;
   std::vector<float> stsSC_trackster_timeError;
+  std::vector<float> stsSC_trackster_t0Mtd;
+  std::vector<float> stsSC_trackster_t0MtdError;
+  std::vector<float> stsSC_trackster_tMtd;
+  std::vector<float> stsSC_trackster_tMtdError;
+  std::vector<float> stsSC_trackster_betaMtd;
+  std::vector<GlobalPoint> stsSC_trackster_tMtdPos;
   std::vector<float> stsSC_trackster_regressed_energy;
   std::vector<float> stsSC_trackster_regressed_pt;
   std::vector<float> stsSC_trackster_raw_energy;
@@ -251,6 +261,12 @@ private:
   std::vector<std::vector<float>> stsSC_trackster_vertices_multiplicity;
   std::vector<float> stsCP_trackster_time;
   std::vector<float> stsCP_trackster_timeError;
+  std::vector<float> stsCP_trackster_t0Mtd;
+  std::vector<float> stsCP_trackster_t0MtdError;
+  std::vector<float> stsCP_trackster_tMtd;
+  std::vector<float> stsCP_trackster_tMtdError;
+  std::vector<float> stsCP_trackster_betaMtd;
+  std::vector<GlobalPoint> stsCP_trackster_tMtdPos;
   std::vector<float> stsCP_trackster_regressed_energy;
   std::vector<float> stsCP_trackster_regressed_pt;
   std::vector<float> stsCP_trackster_raw_energy;
@@ -336,6 +352,12 @@ private:
   size_t nTrackstersMerged;
   std::vector<float> tracksters_merged_time;
   std::vector<float> tracksters_merged_timeError;
+  std::vector<float> tracksters_merged_t0Mtd;
+  std::vector<float> tracksters_merged_t0MtdError;
+  std::vector<float> tracksters_merged_tMtd;
+  std::vector<float> tracksters_merged_tMtdError;
+  std::vector<float> tracksters_merged_betaMtd;
+  std::vector<GlobalPoint> tracksters_merged_tMtdPos;
   std::vector<float> tracksters_merged_regressed_energy;
   std::vector<float> tracksters_merged_raw_energy;
   std::vector<float> tracksters_merged_raw_em_energy;
@@ -509,6 +531,12 @@ void TICLDumper::clearVariables() {
 
   stsSC_trackster_time.clear();
   stsSC_trackster_timeError.clear();
+  stsSC_trackster_t0Mtd.clear();
+  stsSC_trackster_t0MtdError.clear();
+  stsSC_trackster_tMtd.clear();
+  stsSC_trackster_tMtdError.clear();
+  stsSC_trackster_betaMtd.clear();
+  stsSC_trackster_tMtdPos.clear();
   stsSC_trackster_regressed_energy.clear();
   stsSC_trackster_regressed_pt.clear();
   stsSC_trackster_raw_energy.clear();
@@ -562,6 +590,12 @@ void TICLDumper::clearVariables() {
 
   stsCP_trackster_time.clear();
   stsCP_trackster_timeError.clear();
+  stsCP_trackster_t0Mtd.clear();
+  stsCP_trackster_t0MtdError.clear();
+  stsCP_trackster_tMtd.clear();
+  stsCP_trackster_tMtdError.clear();
+  stsCP_trackster_betaMtd.clear();
+  stsCP_trackster_tMtdPos.clear();
   stsCP_trackster_regressed_energy.clear();
   stsCP_trackster_regressed_pt.clear();
   stsCP_trackster_raw_energy.clear();
@@ -639,6 +673,12 @@ void TICLDumper::clearVariables() {
   nTrackstersMerged = 0;
   tracksters_merged_time.clear();
   tracksters_merged_timeError.clear();
+  tracksters_merged_t0Mtd.clear();
+  tracksters_merged_t0MtdError.clear();
+  tracksters_merged_tMtd.clear();
+  tracksters_merged_tMtdError.clear();
+  tracksters_merged_betaMtd.clear();
+  tracksters_merged_tMtdPos.clear();
   tracksters_merged_regressed_energy.clear();
   tracksters_merged_raw_energy.clear();
   tracksters_merged_raw_em_energy.clear();
@@ -659,8 +699,6 @@ void TICLDumper::clearVariables() {
   tracksters_merged_sigmaPCA2.clear();
   tracksters_merged_sigmaPCA3.clear();
   tracksters_merged_id_probabilities.clear();
-  tracksters_merged_time.clear();
-  tracksters_merged_timeError.clear();
   tracksters_merged_regressed_energy.clear();
   tracksters_merged_raw_energy.clear();
   tracksters_merged_raw_em_energy.clear();
@@ -957,6 +995,12 @@ void TICLDumper::beginJob() {
     tracksters_merged_tree_->Branch("event", &ev_event_);
     tracksters_merged_tree_->Branch("time", &tracksters_merged_time);
     tracksters_merged_tree_->Branch("timeError", &tracksters_merged_timeError);
+    tracksters_merged_tree_->Branch("t0Mtd", &tracksters_merged_t0Mtd);
+    tracksters_merged_tree_->Branch("t0MtdError", &tracksters_merged_t0MtdError);
+    tracksters_merged_tree_->Branch("tMtd", &tracksters_merged_tMtd);
+    tracksters_merged_tree_->Branch("tMtdError", &tracksters_merged_tMtdError);
+    tracksters_merged_tree_->Branch("betaMtd", &tracksters_merged_betaMtd);
+    tracksters_merged_tree_->Branch("tMtdPos", &tracksters_merged_tMtdPos);
     tracksters_merged_tree_->Branch("regressed_energy", &tracksters_merged_regressed_energy);
     tracksters_merged_tree_->Branch("raw_energy", &tracksters_merged_raw_energy);
     tracksters_merged_tree_->Branch("raw_em_energy", &tracksters_merged_raw_em_energy);
@@ -991,7 +1035,7 @@ void TICLDumper::beginJob() {
     tracksters_merged_tree_->Branch("vertices_multiplicity", &tracksters_merged_vertices_multiplicity);
   }
 
-if (saveAssociations_) {
+  if (saveAssociations_) {
     associations_tree_ = fs->make<TTree>("associations", "Associations");
     associations_tree_->Branch("tsCLUE3D_recoToSim_SC", &trackstersCLUE3D_recoToSim_SC);
     associations_tree_->Branch("tsCLUE3D_recoToSim_SC_score", &trackstersCLUE3D_recoToSim_SC_score);
@@ -1035,6 +1079,12 @@ if (saveAssociations_) {
     simtrackstersSC_tree_->Branch("NTracksters", &stsSC_ntracksters_);
     simtrackstersSC_tree_->Branch("time", &stsSC_trackster_time);
     simtrackstersSC_tree_->Branch("timeError", &stsSC_trackster_timeError);
+    simtrackstersSC_tree_->Branch("t0Mtd", &stsSC_trackster_t0Mtd);
+    simtrackstersSC_tree_->Branch("t0MtdError", &stsSC_trackster_t0MtdError);
+    simtrackstersSC_tree_->Branch("tMtd", &stsSC_trackster_tMtd);
+    simtrackstersSC_tree_->Branch("tMtdError", &stsSC_trackster_tMtdError);
+    simtrackstersSC_tree_->Branch("betaMtd", &stsSC_trackster_betaMtd);
+    simtrackstersSC_tree_->Branch("tMtdPos", &stsSC_trackster_tMtdPos);
     simtrackstersSC_tree_->Branch("regressed_energy", &stsSC_trackster_regressed_energy);
     simtrackstersSC_tree_->Branch("regressed_pt", &stsSC_trackster_regressed_pt);
     simtrackstersSC_tree_->Branch("raw_energy", &stsSC_trackster_raw_energy);
@@ -1094,6 +1144,12 @@ if (saveAssociations_) {
     simtrackstersCP_tree_->Branch("NTracksters", &stsCP_ntracksters_);
     simtrackstersCP_tree_->Branch("time", &stsCP_trackster_time);
     simtrackstersCP_tree_->Branch("timeError", &stsCP_trackster_timeError);
+    simtrackstersCP_tree_->Branch("t0Mtd", &stsCP_trackster_t0Mtd);
+    simtrackstersCP_tree_->Branch("t0MtdError", &stsCP_trackster_t0MtdError);
+    simtrackstersCP_tree_->Branch("tMtd", &stsCP_trackster_tMtd);
+    simtrackstersCP_tree_->Branch("tMtdError", &stsCP_trackster_tMtdError);
+    simtrackstersCP_tree_->Branch("betaMtd", &stsCP_trackster_betaMtd);
+    simtrackstersCP_tree_->Branch("tMtdPos", &stsCP_trackster_tMtdPos);
     simtrackstersCP_tree_->Branch("regressed_energy", &stsCP_trackster_regressed_energy);
     simtrackstersCP_tree_->Branch("regressed_pt", &stsCP_trackster_regressed_pt);
     simtrackstersCP_tree_->Branch("raw_energy", &stsCP_trackster_raw_energy);
@@ -1189,7 +1245,6 @@ if (saveAssociations_) {
     simTICLCandidate_tree->Branch("simTICLCandidate_charge", &simTICLCandidate_charge);
     simTICLCandidate_tree->Branch("simTICLCandidate_track_in_candidate", &simTICLCandidate_track_in_candidate);
   }
-
 }
 
 void TICLDumper::buildLayers() {
@@ -1480,6 +1535,12 @@ void TICLDumper::analyze(const edm::Event& event, const edm::EventSetup& setup) 
     //per-trackster analysis
     stsSC_trackster_time.push_back(trackster_iterator->time());
     stsSC_trackster_timeError.push_back(trackster_iterator->timeError());
+    stsSC_trackster_t0Mtd.push_back(trackster_iterator->t0Mtd());
+    stsSC_trackster_t0MtdError.push_back(trackster_iterator->t0MtdError());
+    stsSC_trackster_tMtd.push_back(trackster_iterator->tMtd());
+    stsSC_trackster_tMtdError.push_back(trackster_iterator->tMtdError());
+    stsSC_trackster_betaMtd.push_back(trackster_iterator->betaMtd());
+    stsSC_trackster_tMtdPos.push_back(trackster_iterator->tMtdPos());
     stsSC_trackster_regressed_energy.push_back(trackster_iterator->regressed_energy());
     stsSC_trackster_raw_energy.push_back(trackster_iterator->raw_energy());
     stsSC_trackster_raw_em_energy.push_back(trackster_iterator->raw_em_energy());
@@ -1625,6 +1686,12 @@ void TICLDumper::analyze(const edm::Event& event, const edm::EventSetup& setup) 
     //per-trackster analysis
     stsCP_trackster_time.push_back(trackster_iterator->time());
     stsCP_trackster_timeError.push_back(trackster_iterator->timeError());
+    stsCP_trackster_t0Mtd.push_back(trackster_iterator->t0Mtd());
+    stsCP_trackster_t0MtdError.push_back(trackster_iterator->t0MtdError());
+    stsCP_trackster_tMtd.push_back(trackster_iterator->tMtd());
+    stsCP_trackster_tMtdError.push_back(trackster_iterator->tMtdError());
+    stsCP_trackster_betaMtd.push_back(trackster_iterator->betaMtd());
+    stsCP_trackster_tMtdPos.push_back(trackster_iterator->tMtdPos());
     stsCP_trackster_regressed_energy.push_back(trackster_iterator->regressed_energy());
     stsCP_trackster_raw_energy.push_back(trackster_iterator->raw_energy());
     stsCP_trackster_raw_em_energy.push_back(trackster_iterator->raw_em_energy());
@@ -1881,6 +1948,12 @@ void TICLDumper::analyze(const edm::Event& event, const edm::EventSetup& setup) 
        ++trackster_iterator) {
     tracksters_merged_time.push_back(trackster_iterator->time());
     tracksters_merged_timeError.push_back(trackster_iterator->timeError());
+    tracksters_merged_t0Mtd.push_back(trackster_iterator->t0Mtd());
+    tracksters_merged_t0MtdError.push_back(trackster_iterator->t0MtdError());
+    tracksters_merged_tMtd.push_back(trackster_iterator->tMtd());
+    tracksters_merged_tMtdError.push_back(trackster_iterator->tMtdError());
+    tracksters_merged_betaMtd.push_back(trackster_iterator->betaMtd());
+    tracksters_merged_tMtdPos.push_back(trackster_iterator->tMtdPos());
     tracksters_merged_regressed_energy.push_back(trackster_iterator->regressed_energy());
     tracksters_merged_raw_energy.push_back(trackster_iterator->raw_energy());
     tracksters_merged_raw_em_energy.push_back(trackster_iterator->raw_em_energy());

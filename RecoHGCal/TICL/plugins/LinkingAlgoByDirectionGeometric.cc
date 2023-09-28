@@ -186,9 +186,7 @@ bool LinkingAlgoByDirectionGeometric::timeAndEnergyCompatible(float &total_raw_e
     if (!(timeCompatible))
       LogDebug("LinkingAlgoByDirectionGeometric")
           << "time incompatible : track time " << tkT << " +/- " << tkTErr << " trackster time " << tsT << " +/- "
-          << tsTErr << "\n"
-          << "                    delta " << std::abs(deltaSoverV - deltaT) << " greater than threshold "
-          << maxDeltaT_ * std::sqrt(2) * tkTErr << "\n";
+          << tsTErr << "\n";
   }
 
   return energyCompatible && timeCompatible;
@@ -256,8 +254,8 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
                                                      const edm::Handle<edm::ValueMap<float>> tkTime_h,
                                                      const edm::Handle<edm::ValueMap<float>> tkTimeErr_h,
                                                      const edm::Handle<edm::ValueMap<float>> tkTimeQual_h,
-                                                     const edm::Handle<edm::ValueMap<float>> tkBeta,
-                                                     const edm::Handle<edm::ValueMap<GlobalPoint>> tkMtdPos,
+                                                     const edm::Handle<edm::ValueMap<float>> tkBeta_h,
+                                                     const edm::Handle<edm::ValueMap<GlobalPoint>> tkMtdPos_h,
                                                      const std::vector<reco::Muon> &muons,
                                                      const edm::Handle<std::vector<Trackster>> tsH,
                                                      const bool useMTDTiming,
@@ -441,8 +439,8 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
       track_time = (*tkTime_h)[tkRef];
       track_timeErr = (*tkTimeErr_h)[tkRef];
       track_timeQual = (*tkTimeQual_h)[tkRef];
-      track_beta = tkBeta[tkRef];
-      track_MtdPos = tkMtdPos[tkRef];
+      track_beta = (*tkBeta_h)[tkRef];
+      track_MtdPos = (*tkMtdPos_h)[tkRef];
     }
 
     for (const unsigned ts3_idx : tsNearTk[i]) {  // tk -> ts

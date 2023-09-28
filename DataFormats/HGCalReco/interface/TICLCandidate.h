@@ -4,6 +4,7 @@
 #include "DataFormats/Candidate/interface/LeafCandidate.h"
 #include "DataFormats/Common/interface/Ref.h"
 #include "DataFormats/HGCalReco/interface/Trackster.h"
+#include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 #include "DataFormats/Math/interface/Point3D.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
@@ -15,23 +16,50 @@ public:
   typedef ticl::Trackster::ParticleType ParticleType;
 
   TICLCandidate(Charge q, const LorentzVector& p4)
-      : LeafCandidate(q, p4), time_(0.f), timeError_(-1.f), rawEnergy_(0.f), idProbabilities_{} {}
+      : LeafCandidate(q, p4), CALOtime_(0.f), CALOtimeError_(-1.f), t0Mtd_(0.f), t0MtdError_(-1.f), tMtd_(0.f), tMtdError_(-1.f), betaMtd_(0.f), tMtdPos_{0.f, 0.f, 0.f}, rawEnergy_(0.f), idProbabilities_{} {}
 
-  TICLCandidate() : LeafCandidate(), time_(0.f), timeError_(-1.f), rawEnergy_(0.f), idProbabilities_{} {}
+  TICLCandidate() : LeafCandidate(), CALOtime_(0.f), CALOtimeError_(-1.f), t0Mtd_(0.f), t0MtdError_(-1.f), tMtd_(0.f), tMtdError_(-1.f), betaMtd_(0.f), tMtdPos_{0.f, 0.f, 0.f}, rawEnergy_(0.f), idProbabilities_{} {}
 
   TICLCandidate(const edm::Ptr<ticl::Trackster>& trackster)
       : LeafCandidate(),
-        time_(trackster->time()),
-        timeError_(trackster->timeError()),
+        CALOtime_(trackster->time()),
+        CALOtimeError_(trackster->timeError()),
+        t0Mtd_(trackster->t0Mtd()),
+        t0MtdError_(trackster->t0MtdError()),
+        tMtd_(trackster->tMtd()),
+        tMtdError_(trackster->tMtdError()),
+        betaMtd_(trackster->betaMtd()),
+        tMtdPos_(trackster->tMtdPos()),
         rawEnergy_(0.f),
         tracksters_({trackster}),
         idProbabilities_{} {}
 
-  inline float time() const { return time_; }
-  inline float timeError() const { return timeError_; }
+  inline const float time() const { return CALOtime_; }
+  inline const float timeError() const { return CALOtimeError_; }
+  inline const float t0Mtd() const { return t0Mtd_; }
+  inline const float t0MtdError() const { return t0MtdError_; }
+  inline const float tMtd() const { return tMtd_; }
+  inline const float tMtdError() const { return tMtdError_; }
+  inline const float betaMtd() const { return betaMtd_; }
+  inline const GlobalPoint tMtdPos() const { return tMtdPos_; }
 
-  void setTime(float time) { time_ = time; };
-  void setTimeError(float timeError) { timeError_ = timeError; }
+  void setTime(float time) { CALOtime_ = time; };
+  void setTimeError(float timeError) { CALOtimeError_ = timeError; }
+
+  inline void sett0MtdTimeAndError(float t, float tError) {
+    t0Mtd_ = t;
+    t0MtdError_ = tError;
+  }
+  inline void settMtdTimeAndError(float t, float tError) {
+    tMtd_ = t;
+    tMtdError_ = tError;
+  }
+  inline void setBetaMtd(float b) {
+    betaMtd_ = b;
+  }
+  inline void settMtdPos(GlobalPoint pos) {
+    tMtdPos_ = pos;
+  }
 
   inline const edm::Ptr<reco::Track> trackPtr() const { return trackPtr_; }
   void setTrackPtr(const edm::Ptr<reco::Track>& trackPtr) { trackPtr_ = trackPtr; }
@@ -44,8 +72,8 @@ public:
   void setTracksters(const std::vector<edm::Ptr<ticl::Trackster> >& tracksters) { tracksters_ = tracksters; }
   void addTrackster(const edm::Ptr<ticl::Trackster>& trackster) {
     tracksters_.push_back(trackster);
-    time_ = trackster->time();
-    timeError_ = trackster->timeError();
+    CALOtime_ = trackster->time();
+    CALOtimeError_ = trackster->timeError();
   }
   // convenience method to return the ID probability for a certain particle type
   inline float id_probability(ParticleType type) const {
@@ -65,8 +93,16 @@ public:
   inline void setIdProbability(ParticleType type, float value) { idProbabilities_[int(type)] = value; }
 
 private:
-  float time_;
-  float timeError_;
+  float CALOtime_;
+  float CALOtimeError_;
+  // MTD time
+  float t0Mtd_;
+  float t0MtdError_;
+  float tMtd_;
+  float tMtdError_;
+  float betaMtd_;
+  GlobalPoint tMtdPos_;  
+
   edm::Ptr<reco::Track> trackPtr_;
 
   float rawEnergy_;

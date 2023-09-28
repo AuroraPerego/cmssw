@@ -8,6 +8,7 @@
 #include <vector>
 #include "DataFormats/Provenance/interface/ProductID.h"
 #include "DataFormats/Math/interface/Vector3D.h"
+#include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 
 #include <Eigen/Core>
 
@@ -40,12 +41,18 @@ namespace ticl {
         : barycenter_({0.f, 0.f, 0.f}),
           regressed_energy_(0.f),
           raw_energy_(0.f),
-          time_(0.f),
-          timeError_(-1.f),
           raw_em_energy_(0.f),
           id_probabilities_{},
           raw_pt_(0.f),
           raw_em_pt_(0.f),
+          CALOtime_(0.f),
+          CALOtimeError_(-1.f),
+          t0Mtd_(0.f),
+          t0MtdError_(-1.f),
+          tMtd_(0.f),
+          tMtdError_(-1.f),
+          betaMtd_(0.f),
+          tMtdPos_{},
           seedIndex_(-1),
           eigenvalues_{},
           sigmas_{},
@@ -61,8 +68,22 @@ namespace ticl {
       seedIndex_ = index;
     }
     inline void setTimeAndError(float t, float tError) {
-      time_ = t;
-      timeError_ = tError;
+      CALOtime_ = t;
+      CALOtimeError_ = tError;
+    }
+    inline void sett0MtdTimeAndError(float t, float tError) {
+      t0Mtd_ = t;
+      t0MtdError_ = tError;
+    }
+    inline void settMtdTimeAndError(float t, float tError) {
+      tMtd_ = t;
+      tMtdError_ = tError;
+    }
+    inline void setBetaMtd(float b) {
+      betaMtd_ = b;
+    }
+    inline void settMtdPos(GlobalPoint pos) {
+      tMtdPos_ = pos;
     }
     inline void setRegressedEnergy(float value) { regressed_energy_ = value; }
     inline void setRawEnergy(float value) { raw_energy_ = value; }
@@ -126,8 +147,14 @@ namespace ticl {
     inline const std::vector<std::array<unsigned int, 2> > &edges() const { return edges_; }
     inline const edm::ProductID &seedID() const { return seedID_; }
     inline const int seedIndex() const { return seedIndex_; }
-    inline const float time() const { return time_; }
-    inline const float timeError() const { return timeError_; }
+    inline const float time() const { return CALOtime_; }
+    inline const float timeError() const { return CALOtimeError_; }
+    inline const float t0Mtd() const { return t0Mtd_; }
+    inline const float t0MtdError() const { return t0MtdError_; }
+    inline const float tMtd() const { return tMtd_; }
+    inline const float tMtdError() const { return tMtdError_; }
+    inline const float betaMtd() const { return betaMtd_; }
+    inline const GlobalPoint tMtdPos() const { return tMtdPos_; }
     inline const float regressed_energy() const { return regressed_energy_; }
     inline const float raw_energy() const { return raw_energy_; }
     inline const float raw_em_energy() const { return raw_em_energy_; }
@@ -152,9 +179,6 @@ namespace ticl {
     Vector barycenter_;
     float regressed_energy_;
     float raw_energy_;
-    // -99, -1 if not available. ns units otherwise
-    float time_;
-    float timeError_;
     float raw_em_energy_;
 
     // trackster ID probabilities
@@ -166,6 +190,18 @@ namespace ticl {
     std::vector<float> vertex_multiplicity_;
     float raw_pt_;
     float raw_em_pt_;
+
+    // -99, -1 if not available. ns units otherwise
+    float CALOtime_;
+    float CALOtimeError_;
+   
+    // MTD time
+    float t0Mtd_;
+    float t0MtdError_;
+    float tMtd_;
+    float tMtdError_;
+    float betaMtd_; 
+    GlobalPoint tMtdPos_;
 
     // Product ID of the seeding collection used to create the Trackster.
     // For GlobalSeeding the ProductID is set to 0. For track-based seeding
