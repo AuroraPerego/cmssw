@@ -142,6 +142,8 @@ bool LinkingAlgoByDirectionGeometric::timeAndEnergyCompatible(float &total_raw_e
                                                               const float &tkT,
                                                               const float &tkTErr,
                                                               const float &tkTimeQual,
+                                                              const float &tkBeta,
+                                                              const GlobalPoint &tkMtdPos,
                                                               bool useMTDTiming) {
   float threshold = std::min(0.2 * trackster.raw_energy(), 10.0);
   bool energyCompatible = (total_raw_energy + trackster.raw_energy() < track.p() + threshold);
@@ -152,26 +154,44 @@ bool LinkingAlgoByDirectionGeometric::timeAndEnergyCompatible(float &total_raw_e
   // compatible if trackster time is within 3sigma of
   // track time; compatible if either: no time assigned
   // to trackster or track time quality is below threshold
-  float tsT = trackster.time();
+
+  // FIXME shift observed in the residual, once corrected remove here
+  float tsT = trackster.time() - 0.078;
   float tsTErr = trackster.timeError();
+
   bool timeCompatible = false;
-  LogDebug("LinkingAlgoByDirectionGeometric") << "tsT = " << tsT << std::endl;
-  if (tsT == -99. or tkTimeQual < timing_quality_threshold_)
+  if (tsT == -99. or tkTErr == -1)
     timeCompatible = true;
   else {
-    timeCompatible = (std::abs(tsT - tkT) < maxDeltaT_ * sqrt(tsTErr * tsTErr + tkTErr * tkTErr));
+    const auto &barycenter = trackster.barycenter();
+
+    const auto deltaSoverV = std::sqrt((barycenter.x() - tkMtdPos.x()) * (barycenter.x() - tkMtdPos.x()) +
+                                       (barycenter.y() - tkMtdPos.y()) * (barycenter.y() - tkMtdPos.y()) +
+                                       (barycenter.z() - tkMtdPos.z()) * (barycenter.z() - tkMtdPos.z())) /
+                             (tkBeta * 29.9792458);
+
+    const auto deltaT = tsT - tkT;
+
+    //  timeCompatible = (std::abs(deltaSoverV - deltaT) < maxDeltaT_ * sqrt(tsTErr * tsTErr + tkTErr * tkTErr));
+    // use sqrt(2) * error on the track for the total error, because the time of the trackster is too small
+    timeCompatible = (std::abs(deltaSoverV - deltaT) < maxDeltaT_ * std::sqrt(2) * tkTErr);
   }
 
   if (LinkingAlgoBase::algo_verbosity_ > VerbosityLevel::Advanced) {
     if (!(energyCompatible))
       LogDebug("LinkingAlgoByDirectionGeometric")
-          << "energy compatibility : track p " << track.p() << " trackster energy " << trackster.raw_energy() << " total_raw_energy " << total_raw_energy << " track.p() + threshold " << track.p() + threshold <<  "\n";
+          << "energy incompatible : track p " << track.p() << " trackster energy " << trackster.raw_energy() << "\n"
+          << "                      total_raw_energy " << total_raw_energy << " greater than track p + threshold "
+          << track.p() + threshold << "\n";
     if (!(timeCompatible))
-      LogDebug("LinkingAlgoByDirectionGeometric") << "time compatibility : track time " << tkT << " +/- " << tkTErr
-                                                  << " trackster time " << tsT << " +/- " << tsTErr << "\n";
-    // 
-  // return energyCompatible && timeCompatible;
-  return energyCompatible;
+      LogDebug("LinkingAlgoByDirectionGeometric")
+          << "time incompatible : track time " << tkT << " +/- " << tkTErr << " trackster time " << tsT << " +/- "
+          << tsTErr << "\n"
+          << "                    delta " << std::abs(deltaSoverV - deltaT) << " greater than threshold "
+          << maxDeltaT_ * std::sqrt(2) * tkTErr << "\n";
+  }
+
+  return energyCompatible && timeCompatible;
 }
 
 void LinkingAlgoByDirectionGeometric::recordTrackster(const unsigned ts,  //trackster index
@@ -236,6 +256,8 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
                                                      const edm::Handle<edm::ValueMap<float>> tkTime_h,
                                                      const edm::Handle<edm::ValueMap<float>> tkTimeErr_h,
                                                      const edm::Handle<edm::ValueMap<float>> tkTimeQual_h,
+                                                     const edm::Handle<edm::ValueMap<float>> tkBeta,
+                                                     const edm::Handle<edm::ValueMap<GlobalPoint>> tkMtdPos,
                                                      const std::vector<reco::Muon> &muons,
                                                      const edm::Handle<std::vector<Trackster>> tsH,
                                                      const bool useMTDTiming,
@@ -296,7 +318,6 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
 
     if (!cutTk_((tk)) or muId != -1)
       continue;
-
 
     // FP: disable track energy cut for the moment
     // // don't consider tracks below 2 GeV for linking
@@ -367,11 +388,13 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
   // step 3: tracks -> all tracksters, at layer 1
 
   std::vector<std::vector<unsigned>> tsNearTk(tracks.size());
-  findTrackstersInWindow(tracksters, trackPColl, tracksterPropTiles, tsAllProp, del_tk_ts_layer1_, tracksters.size(), tsNearTk);
+  findTrackstersInWindow(
+      tracksters, trackPColl, tracksterPropTiles, tsAllProp, del_tk_ts_layer1_, tracksters.size(), tsNearTk);
   // step 4: tracks -> all tracksters, at lastLayerEE
 
   std::vector<std::vector<unsigned>> tsNearTkAtInt(tracks.size());
-  findTrackstersInWindow(tracksters, tkPropIntColl, tsPropIntTiles, tsAllPropInt, del_tk_ts_int_, tracksters.size(), tsNearTkAtInt);
+  findTrackstersInWindow(
+      tracksters, tkPropIntColl, tsPropIntTiles, tsAllPropInt, del_tk_ts_int_, tracksters.size(), tsNearTkAtInt);
 
   // Trackster - Trackster link finding
   // step 2: tracksters EM -> HAD, at lastLayerEE
@@ -412,10 +435,14 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
     float track_time = 0.f;
     float track_timeErr = 0.f;
     float track_timeQual = 0.f;
+    float track_beta = 0.f;
+    GlobalPoint track_MtdPos{0.f, 0.f, 0.f};
     if (useMTDTiming) {
       track_time = (*tkTime_h)[tkRef];
       track_timeErr = (*tkTimeErr_h)[tkRef];
       track_timeQual = (*tkTimeQual_h)[tkRef];
+      track_beta = tkBeta[tkRef];
+      track_MtdPos = tkMtdPos[tkRef];
     }
 
     for (const unsigned ts3_idx : tsNearTk[i]) {  // tk -> ts
@@ -425,6 +452,8 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
                                   track_time,
                                   track_timeErr,
                                   track_timeQual,
+                                  track_beta,
+                                  track_MtdPos,
                                   useMTDTiming)) {
         recordTrackster(ts3_idx, tracksters, tsH, chargedMask, total_raw_energy, chargedCandidate);
       }
@@ -435,10 +464,11 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
                                     track_time,
                                     track_timeErr,
                                     track_timeQual,
+                                    track_beta,
+                                    track_MtdPos,
                                     useMTDTiming)) {
           recordTrackster(ts2_idx, tracksters, tsH, chargedMask, total_raw_energy, chargedCandidate);
-          chargedCandidate.setPdgId(211*tracks[i].charge());
-
+          chargedCandidate.setPdgId(211 * tracks[i].charge());
         }
         for (const unsigned ts1_idx : tsHadNearAtInt[ts2_idx]) {  // ts_HAD -> ts_HAD
           if (timeAndEnergyCompatible(total_raw_energy,
@@ -447,9 +477,11 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
                                       track_time,
                                       track_timeErr,
                                       track_timeQual,
+                                      track_beta,
+                                      track_MtdPos,
                                       useMTDTiming)) {
             recordTrackster(ts1_idx, tracksters, tsH, chargedMask, total_raw_energy, chargedCandidate);
-            chargedCandidate.setPdgId(211*tracks[i].charge());
+            chargedCandidate.setPdgId(211 * tracks[i].charge());
           }
         }
       }
@@ -460,10 +492,11 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
                                     track_time,
                                     track_timeErr,
                                     track_timeQual,
+                                    track_beta,
+                                    track_MtdPos,
                                     useMTDTiming)) {
           recordTrackster(ts1_idx, tracksters, tsH, chargedMask, total_raw_energy, chargedCandidate);
-          chargedCandidate.setPdgId(211*tracks[i].charge());
-
+          chargedCandidate.setPdgId(211 * tracks[i].charge());
         }
       }
     }
@@ -474,6 +507,8 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
                                   track_time,
                                   track_timeErr,
                                   track_timeQual,
+                                  track_beta,
+                                  track_MtdPos,
                                   useMTDTiming)) {
         recordTrackster(ts4_idx, tracksters, tsH, chargedMask, total_raw_energy, chargedCandidate);
       }
@@ -484,10 +519,11 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
                                     track_time,
                                     track_timeErr,
                                     track_timeQual,
+                                    track_beta,
+                                    track_MtdPos,
                                     useMTDTiming)) {
           recordTrackster(ts2_idx, tracksters, tsH, chargedMask, total_raw_energy, chargedCandidate);
-          chargedCandidate.setPdgId(211*tracks[i].charge());
-
+          chargedCandidate.setPdgId(211 * tracks[i].charge());
         }
         for (const unsigned ts1_idx : tsHadNearAtInt[ts2_idx]) {
           if (timeAndEnergyCompatible(total_raw_energy,
@@ -496,9 +532,11 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
                                       track_time,
                                       track_timeErr,
                                       track_timeQual,
+                                      track_beta,
+                                      track_MtdPos,
                                       useMTDTiming)) {
             recordTrackster(ts1_idx, tracksters, tsH, chargedMask, total_raw_energy, chargedCandidate);
-            chargedCandidate.setPdgId(211*tracks[i].charge());
+            chargedCandidate.setPdgId(211 * tracks[i].charge());
           }
         }
       }
@@ -509,10 +547,11 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
                                     track_time,
                                     track_timeErr,
                                     track_timeQual,
+                                    track_beta,
+                                    track_MtdPos,
                                     useMTDTiming)) {
           recordTrackster(ts1_idx, tracksters, tsH, chargedMask, total_raw_energy, chargedCandidate);
-          chargedCandidate.setPdgId(211*tracks[i].charge());
-
+          chargedCandidate.setPdgId(211 * tracks[i].charge());
         }
       }
     }
