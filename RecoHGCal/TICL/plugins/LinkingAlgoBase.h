@@ -7,6 +7,7 @@
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "DataFormats/HGCalReco/interface/Trackster.h"
 #include "DataFormats/HGCalReco/interface/TICLCandidate.h"
+#include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
@@ -36,6 +37,8 @@ namespace ticl {
                                 const edm::Handle<edm::ValueMap<float>> tkTime_h,
                                 const edm::Handle<edm::ValueMap<float>> tkTimeErr_h,
                                 const edm::Handle<edm::ValueMap<float>> tkTimeQual_h,
+                                const edm::Handle<edm::ValueMap<float>> tkBeta,
+                                const edm::Handle<edm::ValueMap<GlobalPoint>> tkMtdPos,
                                 const std::vector<reco::Muon>& muons,
                                 const edm::Handle<std::vector<Trackster>> tsH,
                                 const bool useMTDTiming,
