@@ -79,12 +79,8 @@ namespace ticl {
       tMtd_ = t;
       tMtdError_ = tError;
     }
-    inline void setBetaMtd(float b) {
-      betaMtd_ = b;
-    }
-    inline void settMtdPos(GlobalPoint pos) {
-      tMtdPos_ = pos;
-    }
+    inline void setBetaMtd(float b) { betaMtd_ = b; }
+    inline void settMtdPos(GlobalPoint pos) { tMtdPos_ = pos; }
     inline void setRegressedEnergy(float value) { regressed_energy_ = value; }
     inline void setRawEnergy(float value) { raw_energy_ = value; }
     inline void addToRawEnergy(float value) { raw_energy_ += value; }
@@ -194,13 +190,13 @@ namespace ticl {
     // -99, -1 if not available. ns units otherwise
     float CALOtime_;
     float CALOtimeError_;
-   
+
     // MTD time
     float t0Mtd_;
     float t0MtdError_;
     float tMtd_;
     float tMtdError_;
-    float betaMtd_; 
+    float betaMtd_;
     GlobalPoint tMtdPos_;
 
     // Product ID of the seeding collection used to create the Trackster.

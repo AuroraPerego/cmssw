@@ -421,7 +421,7 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
 
   // map between simTrack and Mtd SimTracksters to loop on them only one
   std::unordered_map<unsigned int, const MtdSimTrackster*> SimTrackToMtdST;
-  for (unsigned int i = 0; i < MTDSimTracksters_h->size(); ++i){
+  for (unsigned int i = 0; i < MTDSimTracksters_h->size(); ++i) {
     const auto& simTrack = (*MTDSimTracksters_h)[i].g4Tracks()[0];
     SimTrackToMtdST[simTrack.trackId()] = &((*MTDSimTracksters_h)[i]);
   }
@@ -443,13 +443,12 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
       simTrackstersFromCP[i].settMtdTimeAndError(
           (*tMtd_h)[edm::Ref<std::vector<reco::Track>>(recoTracks_h, trackIndex)],
           (*tMtdError_h)[edm::Ref<std::vector<reco::Track>>(recoTracks_h, trackIndex)]);
-      simTrackstersFromCP[i].setBetaMtd(
-          (*betaMtd_h)[edm::Ref<std::vector<reco::Track>>(recoTracks_h, trackIndex)]);
+      simTrackstersFromCP[i].setBetaMtd((*betaMtd_h)[edm::Ref<std::vector<reco::Track>>(recoTracks_h, trackIndex)]);
       auto pos = SimTrackToMtdST.find(simTrack.trackId());
-      if (pos != SimTrackToMtdST.end()) { 
+      if (pos != SimTrackToMtdST.end()) {
         auto MTDst = pos->second;
         // simTrackstersFromCP[i].setMTDSimTime(MTDst->time());
-	simTrackstersFromCP[i].settMtdPos(MTDst->position());
+        simTrackstersFromCP[i].settMtdPos(MTDst->position());
       }
     }
   }
@@ -472,13 +471,12 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
       simTracksters[i].settMtdTimeAndError(
           (*tMtd_h)[edm::Ref<std::vector<reco::Track>>(recoTracks_h, trackIndex)],
           (*tMtdError_h)[edm::Ref<std::vector<reco::Track>>(recoTracks_h, trackIndex)]);
-      simTracksters[i].setBetaMtd(
-          (*betaMtd_h)[edm::Ref<std::vector<reco::Track>>(recoTracks_h, trackIndex)]);
+      simTracksters[i].setBetaMtd((*betaMtd_h)[edm::Ref<std::vector<reco::Track>>(recoTracks_h, trackIndex)]);
       auto pos = SimTrackToMtdST.find(simTrack.trackId());
       if (pos != SimTrackToMtdST.end()) {
         auto MTDst = pos->second;
         // simTracksters[i].setMTDSimTime(MTDst->time());
-	simTracksters[i].settMtdPos(MTDst->position());
+        simTracksters[i].settMtdPos(MTDst->position());
       }
     }
   }

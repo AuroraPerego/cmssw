@@ -16,9 +16,30 @@ public:
   typedef ticl::Trackster::ParticleType ParticleType;
 
   TICLCandidate(Charge q, const LorentzVector& p4)
-      : LeafCandidate(q, p4), CALOtime_(0.f), CALOtimeError_(-1.f), t0Mtd_(0.f), t0MtdError_(-1.f), tMtd_(0.f), tMtdError_(-1.f), betaMtd_(0.f), tMtdPos_{0.f, 0.f, 0.f}, rawEnergy_(0.f), idProbabilities_{} {}
+      : LeafCandidate(q, p4),
+        CALOtime_(0.f),
+        CALOtimeError_(-1.f),
+        t0Mtd_(0.f),
+        t0MtdError_(-1.f),
+        tMtd_(0.f),
+        tMtdError_(-1.f),
+        betaMtd_(0.f),
+        tMtdPos_{},
+        rawEnergy_(0.f),
+        idProbabilities_{} {}
 
-  TICLCandidate() : LeafCandidate(), CALOtime_(0.f), CALOtimeError_(-1.f), t0Mtd_(0.f), t0MtdError_(-1.f), tMtd_(0.f), tMtdError_(-1.f), betaMtd_(0.f), tMtdPos_{0.f, 0.f, 0.f}, rawEnergy_(0.f), idProbabilities_{} {}
+  TICLCandidate()
+      : LeafCandidate(),
+        CALOtime_(0.f),
+        CALOtimeError_(-1.f),
+        t0Mtd_(0.f),
+        t0MtdError_(-1.f),
+        tMtd_(0.f),
+        tMtdError_(-1.f),
+        betaMtd_(0.f),
+        tMtdPos_{},
+        rawEnergy_(0.f),
+        idProbabilities_{} {}
 
   TICLCandidate(const edm::Ptr<ticl::Trackster>& trackster)
       : LeafCandidate(),
@@ -54,12 +75,8 @@ public:
     tMtd_ = t;
     tMtdError_ = tError;
   }
-  inline void setBetaMtd(float b) {
-    betaMtd_ = b;
-  }
-  inline void settMtdPos(GlobalPoint pos) {
-    tMtdPos_ = pos;
-  }
+  inline void setBetaMtd(float b) { betaMtd_ = b; }
+  inline void settMtdPos(GlobalPoint pos) { tMtdPos_ = pos; }
 
   inline const edm::Ptr<reco::Track> trackPtr() const { return trackPtr_; }
   void setTrackPtr(const edm::Ptr<reco::Track>& trackPtr) { trackPtr_ = trackPtr; }
@@ -101,7 +118,7 @@ private:
   float tMtd_;
   float tMtdError_;
   float betaMtd_;
-  GlobalPoint tMtdPos_;  
+  GlobalPoint tMtdPos_;
 
   edm::Ptr<reco::Track> trackPtr_;
 
