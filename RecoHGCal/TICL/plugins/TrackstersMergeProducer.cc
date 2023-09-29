@@ -582,19 +582,26 @@ void TrackstersMergeProducer::energyRegressionAndID(const std::vector<reco::Calo
 
 void TrackstersMergeProducer::assignTimeToCandidates(std::vector<TICLCandidate> &resultCandidates) const {
   for (auto &cand : resultCandidates) {
+    // TODO: time at the end should be at the vertex. With track and mtd info use cand.tMtdPos() to have a reference, 
+    // then pathLength+beta (generalTrackPathLength) to go to the vertex
+    // w/o mtd go directly at the vertex (0,0,0 .. like neutral) and maybe use pid/energy for beta (?)
     if (cand.tracksters().size() > 1) {  // For single-trackster candidates the timing is already set
+      const float beta = (useMTDTiming_ and cand.betaMtd()) ? cand.betaMtd() : 1;
       float time = 0.f;
       float invTimeErr = 0.f;
+
       for (const auto &tr : cand.tracksters()) {
         if (tr->timeError() > 0) {
           auto invTimeESq = pow(tr->timeError(), -2);
-          time += tr->time() * invTimeESq;
+          // this is what happens w/o track info (beta = 1 and x, y, z are bary coord)
+          time += (tr->time() - std::sqrt(x*x+y*y+z*z)/(beta*29.9792458) ) * invTimeESq;
           invTimeErr += invTimeESq;
         }
       }
       if (invTimeErr > 0) {
         cand.setTime(time / invTimeErr);
         cand.setTimeError(sqrt(1.f / invTimeErr));
+std::cout << " time : " << time / invTimeErr << " +/- " << sqrt(1.f / invTimeErr) << std::endl;
       }
     }
   }

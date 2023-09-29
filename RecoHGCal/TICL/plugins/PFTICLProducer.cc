@@ -162,7 +162,8 @@ void PFTICLProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
         const auto timeEHGC = timeE;
         const auto timeMTD = (*trackTimeH)[candidate.trackRef()];
         const auto timeEMTD = (*trackTimeErrH)[candidate.trackRef()];
-
+std::cout << " old: " << timeMTD  << "+/-" << timeEMTD << " new: " << candidate.t0Mtd() << "+/-" << candidate.t0MtdError() << std::endl;
+std::cout << " cand: " << timeHGC  << "+/-" << timeEHGC << std::endl;
         if (useTimingAverage_ && (timeEMTD > 0 && timeEHGC > 0)) {
           // Compute weighted average between HGCAL and MTD timing
           const auto invTimeESqHGC = pow(timeEHGC, -2);
