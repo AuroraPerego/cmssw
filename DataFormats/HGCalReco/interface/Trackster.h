@@ -90,12 +90,8 @@ namespace ticl {
     inline void setPathMtd(float p) {
       pathMtd_ = p;
     }
-    inline void setBetaMtd(float b) {
-      betaMtd_ = b;
-    }
-    inline void settMtdPos(GlobalPoint pos) {
-      tMtdPos_ = pos;
-    }
+    inline void setBetaMtd(float b) { betaMtd_ = b; }
+    inline void settMtdPos(GlobalPoint pos) { tMtdPos_ = pos; }
     inline void setRegressedEnergy(float value) { regressed_energy_ = value; }
     inline void setRawEnergy(float value) { raw_energy_ = value; }
     inline void addToRawEnergy(float value) { raw_energy_ += value; }

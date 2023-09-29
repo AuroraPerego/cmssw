@@ -437,7 +437,7 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
 
   // map between simTrack and Mtd SimTracksters to loop on them only one
   std::unordered_map<unsigned int, const MtdSimTrackster*> SimTrackToMtdST;
-  for (unsigned int i = 0; i < MTDSimTracksters_h->size(); ++i){
+  for (unsigned int i = 0; i < MTDSimTracksters_h->size(); ++i) {
     const auto& simTrack = (*MTDSimTracksters_h)[i].g4Tracks()[0];
     SimTrackToMtdST[simTrack.trackId()] = &((*MTDSimTracksters_h)[i]);
   }
@@ -469,7 +469,7 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
 //          (*betaMtd_h)[edm::Ref<std::vector<reco::Track>>(recoTracks_h, trackIndex)]);
       // MTD info added only if there is a reco track!
       auto pos = SimTrackToMtdST.find(simTrack.trackId());
-      if (pos != SimTrackToMtdST.end()) { 
+      if (pos != SimTrackToMtdST.end()) {
         auto MTDst = pos->second;
         simTrackstersFromCP[i].settMtdTimeAndError(MTDst->time(), 0);
 	simTrackstersFromCP[i].settMtdPos(MTDst->position());

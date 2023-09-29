@@ -183,9 +183,8 @@ bool LinkingAlgoByDirectionGeometric::timeAndEnergyCompatible(float &total_raw_e
           << "                      total_raw_energy " << total_raw_energy << " greater than track p + threshold "
           << track.p() + threshold << "\n";
     if (!(timeCompatible))
-      LogDebug("LinkingAlgoByDirectionGeometric")
-          << "time incompatible : track time " << tkT << " +/- " << tkTErr << " trackster time " << tsT << " +/- "
-          << tsTErr << "\n";
+      LogDebug("LinkingAlgoByDirectionGeometric") << "time incompatible : track time " << tkT << " +/- " << tkTErr
+                                                  << " trackster time " << tsT << " +/- " << tsTErr << "\n";
   }
 
   return energyCompatible && timeCompatible;
@@ -562,7 +561,6 @@ void LinkingAlgoByDirectionGeometric::linkTracksters(const edm::Handle<std::vect
       TICLCandidate chargedHad;
       chargedHad.setTrackPtr(edm::Ptr<reco::Track>(tkH, i));
       chargedHadronsFromTk.push_back(chargedHad);
-
     }
   }
 
