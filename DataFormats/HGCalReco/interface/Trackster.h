@@ -8,12 +8,18 @@
 #include <vector>
 #include "DataFormats/Provenance/interface/ProductID.h"
 #include "DataFormats/Math/interface/Vector3D.h"
+#include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 
 #include <Eigen/Core>
 
 // A Trackster is a Direct Acyclic Graph created when
 // pattern recognition algorithms connect hits or
 // layer clusters together in a 3D object.
+
+struct Time {
+float time = -99;
+float timeErr = -1;
+};
 
 namespace ticl {
   class Trackster {
@@ -40,12 +46,18 @@ namespace ticl {
         : barycenter_({0.f, 0.f, 0.f}),
           regressed_energy_(0.f),
           raw_energy_(0.f),
-          time_(0.f),
-          timeError_(-1.f),
           raw_em_energy_(0.f),
           id_probabilities_{},
           raw_pt_(0.f),
           raw_em_pt_(0.f),
+          VertexTime_{},
+          BoundaryTime_{},
+          CALOtime_{},
+          t0Mtd_{},
+          tMtd_{},
+          pathMtd_(0.f),
+          betaMtd_(0.f),
+          tMtdPos_{},
           seedIndex_(-1),
           eigenvalues_{},
           sigmas_{},
@@ -60,9 +72,29 @@ namespace ticl {
       seedID_ = pid;
       seedIndex_ = index;
     }
+    inline void setBoundaryTimeAndError(float t, float tError) {
+      BoundaryTime_ = Time{t,tError};
+    }
+    inline void setVertexTimeAndError(float t, float tError) {
+      VertexTime_ = Time{t,tError};
+    }
     inline void setTimeAndError(float t, float tError) {
-      time_ = t;
-      timeError_ = tError;
+      CALOtime_ = Time{t,tError};
+    }
+    inline void sett0MtdTimeAndError(float t, float tError) {
+      t0Mtd_ = Time{t,tError};
+    }
+    inline void settMtdTimeAndError(float t, float tError) {
+      tMtd_ = Time{t, tError};
+    }
+    inline void setPathMtd(float p) {
+      pathMtd_ = p;
+    }
+    inline void setBetaMtd(float b) {
+      betaMtd_ = b;
+    }
+    inline void settMtdPos(GlobalPoint pos) {
+      tMtdPos_ = pos;
     }
     inline void setRegressedEnergy(float value) { regressed_energy_ = value; }
     inline void setRawEnergy(float value) { raw_energy_ = value; }
@@ -126,8 +158,24 @@ namespace ticl {
     inline const std::vector<std::array<unsigned int, 2> > &edges() const { return edges_; }
     inline const edm::ProductID &seedID() const { return seedID_; }
     inline const int seedIndex() const { return seedIndex_; }
-    inline const float time() const { return time_; }
-    inline const float timeError() const { return timeError_; }
+    inline const float BoundaryTime() const { return BoundaryTime_.time; }
+    inline const float BoundaryTimeError() const { return BoundaryTime_.timeErr; }
+    inline const Time BoundaryTimeAndErr() const { return BoundaryTime_; }
+    inline const float VertexTime() const { return VertexTime_.time; }
+    inline const float VertexTimeError() const { return VertexTime_.timeErr; }
+    inline const Time VertexTimeAndErr() const { return VertexTime_; }
+    inline const float time() const { return CALOtime_.time; }
+    inline const float timeError() const { return CALOtime_.timeErr; }
+    inline const Time timeAndErr() const { return CALOtime_; }
+    inline const float t0Mtd() const { return t0Mtd_.time; }
+    inline const float t0MtdError() const { return t0Mtd_.timeErr; }
+    inline const Time t0MtdAndErr() const { return t0Mtd_; }
+    inline const float tMtd() const { return tMtd_.time; }
+    inline const float tMtdError() const { return tMtd_.timeErr; }
+    inline const Time tMtdAndErr() const { return tMtd_; }
+    inline const float betaMtd() const { return betaMtd_; }
+    inline const float pathMtd() const { return pathMtd_; }
+    inline const GlobalPoint tMtdPos() const { return tMtdPos_; }
     inline const float regressed_energy() const { return regressed_energy_; }
     inline const float raw_energy() const { return raw_energy_; }
     inline const float raw_em_energy() const { return raw_em_energy_; }
@@ -152,9 +200,6 @@ namespace ticl {
     Vector barycenter_;
     float regressed_energy_;
     float raw_energy_;
-    // -99, -1 if not available. ns units otherwise
-    float time_;
-    float timeError_;
     float raw_em_energy_;
 
     // trackster ID probabilities
@@ -166,6 +211,20 @@ namespace ticl {
     std::vector<float> vertex_multiplicity_;
     float raw_pt_;
     float raw_em_pt_;
+
+    // -99, -1 if not available. ns units otherwise
+    // sim
+    Time VertexTime_;
+    Time BoundaryTime_;
+    // reco
+    Time CALOtime_;
+    // mixed
+    Time t0Mtd_;
+    Time tMtd_;
+    // MTTD
+    float pathMtd_;
+    float betaMtd_; 
+    GlobalPoint tMtdPos_;
 
     // Product ID of the seeding collection used to create the Trackster.
     // For GlobalSeeding the ProductID is set to 0. For track-based seeding

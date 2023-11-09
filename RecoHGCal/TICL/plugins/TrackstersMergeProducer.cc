@@ -149,7 +149,8 @@ TrackstersMergeProducer::TrackstersMergeProducer(const edm::ParameterSet &ps)
       tracks_time_quality_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTimeQual"))),
       tracks_time_err_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTimeErr"))),
       tracks_beta_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksBeta"))),
-      tracks_glob_pos_token_(consumes<edm::ValueMap<GlobalPoint>>(ps.getParameter<edm::InputTag>("tracksGlobalPosition"))),
+      tracks_glob_pos_token_(
+          consumes<edm::ValueMap<GlobalPoint>>(ps.getParameter<edm::InputTag>("tracksGlobalPosition"))),
       muons_token_(consumes<std::vector<reco::Muon>>(ps.getParameter<edm::InputTag>("muons"))),
       tfDnnLabel_(ps.getParameter<std::string>("tfDnnLabel")),
       tfDnnToken_(esConsumes(edm::ESInputTag("", tfDnnLabel_))),
@@ -361,11 +362,21 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
     }
 
     outTrackster.zeroProbabilities();
+    if (!track_ptr.isNull()) {
+      auto const trackIndex = track_ptr.get() - (edm::Ptr<reco::Track>(track_h, 0)).get();
+      outTrackster.setSeed(track_h.id(), trackIndex);
+      if (useMTDTiming_) {
+        outTrackster.settMtdTimeAndError((*trackTime_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)],
+                                         (*trackTimeErr_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
+        outTrackster.settMtdPos((*trackMtdPos_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
+        outTrackster.setBetaMtd((*trackBeta_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
+       // outTrackster.setPathMtd((*pathBeta_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
+      }
+    }
     if (!outTrackster.vertices().empty()) {
       resultTrackstersMerged->push_back(outTrackster);
     }
   }
-
   assignPCAtoTracksters(*resultTrackstersMerged,
                         layerClusters,
                         layerClustersTimes,
@@ -377,8 +388,9 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
 
   auto isHad = [](const Trackster &tracksterMerge) {
     return tracksterMerge.id_probability(Trackster::ParticleType::photon) +
-               tracksterMerge.id_probability(Trackster::ParticleType::electron) <
-           0.5f or tracksterMerge.raw_em_energy() < 0.85f * tracksterMerge.raw_energy();
+                   tracksterMerge.id_probability(Trackster::ParticleType::electron) <
+               0.5f or
+           tracksterMerge.raw_em_energy() < 0.85f * tracksterMerge.raw_energy();
   };
   for (size_t i = 0; i < resultTrackstersMerged->size(); i++) {
     auto const &tm = (*resultTrackstersMerged)[i];
@@ -389,10 +401,17 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
     if (!cand.trackPtr().isNull()) {
       auto pdgId = isHad(tm) ? 211 : 11;
       auto const &tk = cand.trackPtr().get();
-      if(cand.pdgId() == 0)
+      if (cand.pdgId() == 0)
         cand.setPdgId(pdgId * tk->charge());
       cand.setCharge(tk->charge());
       cand.setRawEnergy(tm.raw_energy());
+      auto const trackIndex = tk - (edm::Ptr<reco::Track>(track_h, 0)).get();
+      if (useMTDTiming_) {
+        cand.settMtdTimeAndError((*trackTime_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)],
+                                 (*trackTimeErr_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
+       // cand.settMtdPos((*trackMtdPos_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
+       // cand.setBetaMtd((*trackBeta_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
+      }
       auto const &regrE = tm.regressed_energy();
       math::XYZTLorentzVector p4(regrE * tk->momentum().unit().x(),
                                  regrE * tk->momentum().unit().y(),
@@ -416,6 +435,13 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
     auto const &tk = cand.trackPtr().get();
     cand.setPdgId(211 * tk->charge());
     cand.setCharge(tk->charge());
+    auto const trackIndex = tk - (edm::Ptr<reco::Track>(track_h, 0)).get();
+    if (useMTDTiming_) {
+      cand.settMtdTimeAndError((*trackTime_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)],
+                               (*trackTimeErr_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
+     // cand.settMtdPos((*trackMtdPos_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
+     // cand.setBetaMtd((*trackBeta_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
+    }
     const float energy = std::sqrt(tk->p() * tk->p() + ticl::mpion2);
     cand.setRawEnergy(energy);
     math::PtEtaPhiMLorentzVector p4Polar(tk->pt(), tk->eta(), tk->phi(), ticl::mpion);
