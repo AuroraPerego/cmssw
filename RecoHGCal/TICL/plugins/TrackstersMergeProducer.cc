@@ -86,9 +86,12 @@ private:
   const edm::EDGetTokenT<edm::ValueMap<std::pair<float, float>>> clustersTime_token_;
   const edm::EDGetTokenT<std::vector<reco::Track>> tracks_token_;
   const edm::EDGetTokenT<edm::ValueMap<float>> tracks_time_token_;
-  const edm::EDGetTokenT<edm::ValueMap<float>> tracks_time_quality_token_;
   const edm::EDGetTokenT<edm::ValueMap<float>> tracks_time_err_token_;
+  const edm::EDGetTokenT<edm::ValueMap<float>> tracks_time0_token_;
+  const edm::EDGetTokenT<edm::ValueMap<float>> tracks_time0_err_token_;
+  const edm::EDGetTokenT<edm::ValueMap<float>> tracks_time_quality_token_;
   const edm::EDGetTokenT<edm::ValueMap<float>> tracks_beta_token_;
+  const edm::EDGetTokenT<edm::ValueMap<float>> tracks_path_length_token_;
   const edm::EDGetTokenT<edm::ValueMap<GlobalPoint>> tracks_glob_pos_token_;
   const edm::EDGetTokenT<std::vector<reco::Muon>> muons_token_;
   const std::string tfDnnLabel_;
@@ -146,9 +149,13 @@ TrackstersMergeProducer::TrackstersMergeProducer(const edm::ParameterSet &ps)
           consumes<edm::ValueMap<std::pair<float, float>>>(ps.getParameter<edm::InputTag>("layer_clustersTime"))),
       tracks_token_(consumes<std::vector<reco::Track>>(ps.getParameter<edm::InputTag>("tracks"))),
       tracks_time_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTime"))),
-      tracks_time_quality_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTimeQual"))),
       tracks_time_err_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTimeErr"))),
+      tracks_time0_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTime0"))),
+      tracks_time0_err_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTime0Err"))),
+      tracks_time_quality_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTimeQual"))),
       tracks_beta_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksBeta"))),
+      tracks_path_length_token_(
+          consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksPathLength"))),
       tracks_glob_pos_token_(
           consumes<edm::ValueMap<GlobalPoint>>(ps.getParameter<edm::InputTag>("tracksGlobalPosition"))),
       muons_token_(consumes<std::vector<reco::Muon>>(ps.getParameter<edm::InputTag>("muons"))),
@@ -270,14 +277,20 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
   const auto &muons = evt.get(muons_token_);
   edm::Handle<edm::ValueMap<float>> trackTime_h;
   edm::Handle<edm::ValueMap<float>> trackTimeErr_h;
+  edm::Handle<edm::ValueMap<float>> trackTime0_h;
+  edm::Handle<edm::ValueMap<float>> trackTime0Err_h;
   edm::Handle<edm::ValueMap<float>> trackTimeQual_h;
   edm::Handle<edm::ValueMap<float>> trackBeta_h;
+  edm::Handle<edm::ValueMap<float>> trackPath_h;
   edm::Handle<edm::ValueMap<GlobalPoint>> trackMtdPos_h;
   if (useMTDTiming_) {
     evt.getByToken(tracks_time_token_, trackTime_h);
     evt.getByToken(tracks_time_err_token_, trackTimeErr_h);
+    evt.getByToken(tracks_time0_token_, trackTime0_h);
+    evt.getByToken(tracks_time0_err_token_, trackTime0Err_h);
     evt.getByToken(tracks_time_quality_token_, trackTimeQual_h);
     evt.getByToken(tracks_beta_token_, trackBeta_h);
+    evt.getByToken(tracks_path_length_token_, trackPath_h);
     evt.getByToken(tracks_glob_pos_token_, trackMtdPos_h);
   }
 
@@ -295,10 +308,11 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
                                *resultFromTracks);
 
   // Print debug info
-  LogDebug("TrackstersMergeProducer") << "Results from the linking step : " << std::endl
-                                      << "No. of Tracks : " << tracks.size()
-                                      << "  No. of Tracksters : " << (*trackstersclue3d_h).size() << std::endl
-                                      << "(neutral candidates have track id -1)" << std::endl;
+  //LogDebug("TrackstersMergeProducer")
+//   std::cout    << "Results from the linking step : " << std::endl
+//                                       << "No. of Tracks : " << tracks.size()
+//                                       << "  No. of Tracksters : " << (*trackstersclue3d_h).size() << std::endl
+//                                       << "(neutral candidates have track id -1)" << std::endl;
 
   std::vector<TICLCandidate> &candidates = *resultCandidates;
   for (const auto &cand : candidates) {
@@ -307,13 +321,13 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
     auto track_idx = track_ptr.get() - (edm::Ptr<reco::Track>(track_h, 0)).get();
     track_idx = (track_ptr.isNull()) ? -1 : track_idx;
 
-#ifdef EDM_ML_DEBUG
-    LogDebug("TrackstersMergeProducer") << "PDG ID " << cand.pdgId() << " charge " << cand.charge() << " p " << cand.p()
-                                        << std::endl;
-    LogDebug("TrackstersMergeProducer") << "track id (p) : " << track_idx << " ("
-                                        << (track_ptr.isNull() ? -1 : track_ptr->p()) << ") "
-                                        << " trackster ids (E) : ";
-#endif
+//#ifdef EDM_ML_DEBUG
+//    std::cout  << "PDG ID " << cand.pdgId() << " charge " << cand.charge() << " p " << cand.p()
+//               << std::endl;
+//    std::cout  << "track id (p) : " << track_idx << " ("
+//                                        << (track_ptr.isNull() ? -1 : track_ptr->p()) << ") "
+//                                        << " trackster ids (E) : ";
+//#endif
 
     // Merge included tracksters
     ticl::Trackster outTrackster;
@@ -323,7 +337,7 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
     for (const auto &ts_ptr : trackster_ptrs) {
 #ifdef EDM_ML_DEBUG
       auto ts_idx = ts_ptr.get() - (edm::Ptr<ticl::Trackster>(trackstersclue3d_h, 0)).get();
-      LogDebug("TrackstersMergeProducer") << ts_idx << " (" << ts_ptr->raw_energy() << ") ";
+      std::cout << ts_idx << " (" << ts_ptr->raw_energy() << ") ";
 #endif
 
       auto &thisTrackster = *ts_ptr;
@@ -368,9 +382,11 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
       if (useMTDTiming_) {
         outTrackster.settMtdTimeAndError((*trackTime_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)],
                                          (*trackTimeErr_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
+        outTrackster.sett0MtdTimeAndError((*trackTime0_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)],
+                                         (*trackTime0Err_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
         outTrackster.settMtdPos((*trackMtdPos_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
         outTrackster.setBetaMtd((*trackBeta_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
-       // outTrackster.setPathMtd((*pathBeta_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
+        outTrackster.setPathMtd((*trackPath_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
       }
     }
     if (!outTrackster.vertices().empty()) {
@@ -409,8 +425,11 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
       if (useMTDTiming_) {
         cand.settMtdTimeAndError((*trackTime_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)],
                                  (*trackTimeErr_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
-       // cand.settMtdPos((*trackMtdPos_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
-       // cand.setBetaMtd((*trackBeta_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
+        cand.sett0MtdTimeAndError((*trackTime0_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)],
+                                 (*trackTime0Err_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
+        cand.settMtdPos((*trackMtdPos_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
+        cand.setBetaMtd((*trackBeta_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
+        cand.setPathMtd((*trackPath_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
       }
       auto const &regrE = tm.regressed_energy();
       math::XYZTLorentzVector p4(regrE * tk->momentum().unit().x(),
@@ -437,10 +456,13 @@ void TrackstersMergeProducer::produce(edm::Event &evt, const edm::EventSetup &es
     cand.setCharge(tk->charge());
     auto const trackIndex = tk - (edm::Ptr<reco::Track>(track_h, 0)).get();
     if (useMTDTiming_) {
+      cand.sett0MtdTimeAndError((*trackTime0_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)],
+                               (*trackTime0Err_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
       cand.settMtdTimeAndError((*trackTime_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)],
                                (*trackTimeErr_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
-     // cand.settMtdPos((*trackMtdPos_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
-     // cand.setBetaMtd((*trackBeta_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
+      cand.settMtdPos((*trackMtdPos_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
+      cand.setBetaMtd((*trackBeta_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
+      cand.setPathMtd((*trackPath_h)[edm::Ref<std::vector<reco::Track>>(track_h, trackIndex)]);
     }
     const float energy = std::sqrt(tk->p() * tk->p() + ticl::mpion2);
     cand.setRawEnergy(energy);
@@ -583,21 +605,49 @@ void TrackstersMergeProducer::energyRegressionAndID(const std::vector<reco::Calo
 
 void TrackstersMergeProducer::assignTimeToCandidates(std::vector<TICLCandidate> &resultCandidates) const {
   for (auto &cand : resultCandidates) {
-    if (cand.tracksters().size() > 1) {  // For single-trackster candidates the timing is already set
+    // TODO: time at the end should be at the vertex. With track and mtd info use cand.tMtdPos() to have a reference, 
+    // then pathLength+beta (generalTrackPathLength) to go to the vertex
+    // w/o mtd go directly at the vertex (0,0,0 .. like neutral) and maybe use pid/energy for beta (?)
+   // if (cand.tracksters().size() > 1) {  // For single-trackster candidates the timing is already set
+//  if (cand.trackPtr().get() != nullptr)
+//   std::cout << "track " << cand.trackPtr().get() - (edm::Ptr<reco::Track>(tkH, 0)).get() << "\n";
+//  else
+//   std::cout << "no track \n";
+      const float beta = (useMTDTiming_ and cand.betaMtd()) ? cand.betaMtd() : 1;
       float time = 0.f;
       float invTimeErr = 0.f;
+
       for (const auto &tr : cand.tracksters()) {
         if (tr->timeError() > 0) {
-          auto invTimeESq = pow(tr->timeError(), -2);
-          time += tr->time() * invTimeESq;
+          const auto invTimeESq = pow(tr->timeError(), -2);
+          // this is what happens w/o track info (beta = 1 and x, y, z are bary coord)
+          const auto x = tr->barycenter().X();
+          const auto y = tr->barycenter().Y();
+          const auto z = tr->barycenter().Z();
+          auto path = std::sqrt(x*x+y*y+z*z);
+          // pathMtd() is either -1 or positive --> 1 + it is False when there is no valid value
+          if (useMTDTiming_ and 1+cand.pathMtd()) {
+            const auto xMtd = cand.tMtdPos().x();
+            const auto yMtd = cand.tMtdPos().y();
+            const auto zMtd = cand.tMtdPos().z();
+            path = std::sqrt((x-xMtd)*(x-xMtd) + (y-yMtd)*(y-yMtd) + (z-zMtd)*(z-zMtd)) + cand.pathMtd();
+std::cout << "-------\n beta: " << beta << " ts time " << tr->time()
+          << "\n path w/o mtd " << std::sqrt(x*x+y*y+z*z) << " time w/o mtd " << (tr->time() - std::sqrt(x*x+y*y+z*z)/29.9792458)
+          << "\n path         " << path <<                   " prop time    " << (tr->time() - path / (beta*29.9792458) )
+          << "\n mtd time 0: " << cand.t0Mtd() << " +/- " << cand.t0MtdError()
+          << "\n mtd time :  " << cand.tMtd() <<  " +/- " << cand.tMtdError() << "\n";
+          }
+
+          time += (tr->time() - path / (beta*29.9792458) ) * invTimeESq;
           invTimeErr += invTimeESq;
         }
       }
       if (invTimeErr > 0) {
         cand.setTime(time / invTimeErr);
         cand.setTimeError(sqrt(1.f / invTimeErr));
+std::cout << " CAND time : " << time / invTimeErr << " +/- " << sqrt(1.f / invTimeErr) << std::endl;
       }
-    }
+  //  }
   }
 }
 
@@ -639,10 +689,13 @@ void TrackstersMergeProducer::fillDescriptions(edm::ConfigurationDescriptions &d
   desc.add<edm::InputTag>("layer_clustersTime", edm::InputTag("hgcalMergeLayerClusters", "timeLayerCluster"));
   desc.add<edm::InputTag>("tracks", edm::InputTag("generalTracks"));
   desc.add<edm::InputTag>("tracksTime", edm::InputTag("trackExtenderWithMTD:generalTracktmtd"));
-  desc.add<edm::InputTag>("tracksTimeQual", edm::InputTag("mtdTrackQualityMVA:mtdQualMVA"));
   desc.add<edm::InputTag>("tracksTimeErr", edm::InputTag("trackExtenderWithMTD:generalTracksigmatmtd"));
+  desc.add<edm::InputTag>("tracksTime0", edm::InputTag("trackExtenderWithMTD:generalTrackt0"));
+  desc.add<edm::InputTag>("tracksTime0Err", edm::InputTag("trackExtenderWithMTD:generalTracksigmat0"));
+  desc.add<edm::InputTag>("tracksTimeQual", edm::InputTag("mtdTrackQualityMVA:mtdQualMVA"));
   desc.add<edm::InputTag>("tracksBeta", edm::InputTag("trackExtenderWithMTD:generalTrackBeta"));
   desc.add<edm::InputTag>("tracksGlobalPosition", edm::InputTag("trackExtenderWithMTD:generalTrackmtdpos"));
+  desc.add<edm::InputTag>("tracksPathLength", edm::InputTag("trackExtenderWithMTD:generalTrackPathLength"));
   desc.add<edm::InputTag>("muons", edm::InputTag("muons1stStep"));
   desc.add<std::string>("detector", "HGCAL");
   desc.add<std::string>("propagator", "PropagatorWithMaterial");

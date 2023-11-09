@@ -64,7 +64,7 @@ void PFTICLProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptio
   desc.add<bool>("energyFromRegression", true);
   desc.add<double>("timingQualityThreshold", 0.5);
   desc.add<bool>("useMTDTiming", true);
-  desc.add<bool>("useTimingAverage", false);
+  desc.add<bool>("useTimingAverage", true);
   // For PFMuonAlgo
   desc.add<edm::InputTag>("muonSrc", edm::InputTag("muons1stStep"));
   edm::ParameterSetDescription psd_PFMuonAlgo;
@@ -152,9 +152,9 @@ void PFTICLProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
     auto timeE = ticl_cand.timeError();
 
     if (useMTDTiming_ and candidate.charge()) {
-      // Ignore HGCAL timing until it will be TOF corrected
-      time = -99.;
-      timeE = -1.;
+//      // Ignore HGCAL timing until it will be TOF corrected
+//      time = -99.;
+//      timeE = -1.;
       // Check MTD timing availability
       const bool assocQuality = (*trackTimeQualH)[candidate.trackRef()] > timingQualityThreshold_;
       if (assocQuality) {
@@ -162,7 +162,8 @@ void PFTICLProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
         const auto timeEHGC = timeE;
         const auto timeMTD = (*trackTimeH)[candidate.trackRef()];
         const auto timeEMTD = (*trackTimeErrH)[candidate.trackRef()];
-
+std::cout << " old: " << timeMTD  << "+/-" << timeEMTD << " new: " << ticl_cand.t0Mtd() << "+/-" << ticl_cand.t0MtdError() << std::endl;
+std::cout << " cand: " << ticl_cand.time() << "+/-" << ticl_cand.timeError() << std::endl;
         if (useTimingAverage_ && (timeEMTD > 0 && timeEHGC > 0)) {
           // Compute weighted average between HGCAL and MTD timing
           const auto invTimeESqHGC = pow(timeEHGC, -2);
@@ -173,10 +174,15 @@ void PFTICLProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
         } else if (timeEMTD > 0) {  // Ignore HGCal timing until it will be TOF corrected
           time = timeMTD;
           timeE = timeEMTD;
+        } else if (timeEHGC > 0) {
+          time = timeHGC;
+          timeE = timeEHGC;
         }
       }
     }
     candidate.setTime(time, timeE);
+if (timeE > 0)
+  std::cout << " PF cand: " << time << " +/- " << timeE << "\n";
   }
 
   evt.put(std::move(candidates));
