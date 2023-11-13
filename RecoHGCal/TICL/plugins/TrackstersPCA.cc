@@ -64,6 +64,33 @@ void ticl::assignPCAtoTracksters(std::vector<Trackster> &tracksters,
     if (energyWeight && trackster.raw_energy())
       barycenter /= trackster.raw_energy();
 
+    auto project_lc_to_pca = [](const std::vector<double> &point, const std::vector<double> &segment_end) {
+      double dot_product = 0.0;
+      double segment_dot = 0.0;
+
+      for (int i = 0; i < 3; ++i) {
+        dot_product += point[i] * segment_end[i];
+        segment_dot += segment_end[i] * segment_end[i];
+      }
+
+      double projection = 0.0;
+      if (segment_dot != 0.0) {
+        projection = dot_product / segment_dot;
+      }
+
+      std::vector<double> closest_point(3);
+      for (int i = 0; i < 3; ++i) {
+        closest_point[i] = projection * segment_end[i];
+      }
+
+      double distance = 0.0;
+      for (int i = 0; i < 3; ++i) {
+        distance += std::pow(point[i] - closest_point[i], 2);
+      }
+
+      return std::sqrt(distance);
+    };
+
     // Compute the Covariance Matrix and the sum of the squared weights, used
     // to compute the correct normalization.
     // The barycenter has to be known.
@@ -79,14 +106,16 @@ void ticl::assignPCAtoTracksters(std::vector<Trackster> &tracksters,
           float y = layerClusters[trackster.vertices(i)].y();
           float z = layerClusters[trackster.vertices(i)].z();
 
-          float deltaT = 1 / c *
-                         std::sqrt(((barycenter[2] / z - 1) * x) * ((barycenter[2] / z - 1) * x) +
-                                   ((barycenter[2] / z - 1) * y) * ((barycenter[2] / z - 1) * y) +
-                                   (barycenter[2] - z) * (barycenter[2] - z));
-          time = std::abs(barycenter[2]) < std::abs(z) ? time - deltaT : time + deltaT;
+          if (project_lc_to_pca({x, y, z}, {barycenter[0], barycenter[1], barycenter[2]}) < 3) {  // set MR to 3
+            float deltaT = 1 / c *
+                           std::sqrt(((barycenter[2] / z - 1) * x) * ((barycenter[2] / z - 1) * x) +
+                                     ((barycenter[2] / z - 1) * y) * ((barycenter[2] / z - 1) * y) +
+                                     (barycenter[2] - z) * (barycenter[2] - z));
+            time = std::abs(barycenter[2]) < std::abs(z) ? time - deltaT : time + deltaT;
 
-          tracksterTime += time * timeE;
-          tracksterTimeErr += timeE;
+            tracksterTime += time * timeE;
+            tracksterTimeErr += timeE;
+          }
         }
       }
 
