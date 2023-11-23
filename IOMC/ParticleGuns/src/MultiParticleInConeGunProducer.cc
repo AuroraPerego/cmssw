@@ -14,6 +14,7 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/Utilities/interface/RandomNumberGenerator.h"
 
+#include "CLHEP/Units/PhysicalConstants.h"
 #include "CLHEP/Random/RandFlat.h"
 
 using namespace edm;
@@ -67,12 +68,14 @@ void MultiParticleInConeGunProducer::produce(Event& e, const EventSetup& es) {
   // 1st, primary vertex
   //
   //HepMC::GenVertex* Vtx = new HepMC::GenVertex(CLHEP::HepLorentzVector(0.,0.,0.));
-  HepMC::GenVertex* Vtx = new HepMC::GenVertex(HepMC::FourVector(0., 0., 0.));
 
   // loop over particles
   //
   int barcode = 1;
   for (unsigned int ip = 0; ip < fPartIDs.size(); ++ip) {
+    double shift = pow(-1,ip)*ip; // mm
+    double shiftt = pow(-1,ip)*0.5*ip*CLHEP::c_light; // ns * c (mm/ns)
+    HepMC::GenVertex* Vtx = new HepMC::GenVertex(HepMC::FourVector(0.+shift, 0.+shift, 0.+shift, 0.+shiftt));
     double pt = CLHEP::RandFlat::shoot(engine, fMinPt, fMaxPt);
     double eta = CLHEP::RandFlat::shoot(engine, fMinEta, fMaxEta);
     double phi = CLHEP::RandFlat::shoot(engine, fMinPhi, fMaxPhi);
@@ -99,6 +102,10 @@ void MultiParticleInConeGunProducer::produce(Event& e, const EventSetup& es) {
     // now add the particles in the cone
     for (unsigned iPic = 0; iPic != fInConeIds.size(); iPic++) {
       unsigned int nTry = 0;
+      double shift2 = (iPic+1)*0.1*pow(-1,iPic); // mm
+      double shift2t = (iPic+1)*0.1*pow(-1,iPic)*CLHEP::c_light; // ns * c (mm/ns)
+
+      HepMC::GenVertex* Vtx2 = new HepMC::GenVertex(HepMC::FourVector(0.+shift2, 0.+shift2, 0.+shift2, 0.+shift2t));
       while (true) {
         //shoot flat Deltar
         double dR = CLHEP::RandFlat::shoot(engine, fMinDeltaR, fMaxDeltaR);
@@ -162,13 +169,14 @@ void MultiParticleInConeGunProducer::produce(Event& e, const EventSetup& es) {
         HepMC::GenParticle* PartIc = new HepMC::GenParticle(pIc, PartIDIc, 1);
         PartIc->suggest_barcode(barcode);
         barcode++;
-        Vtx->add_particle_out(PartIc);
+        Vtx2->add_particle_out(PartIc);
         break;
       }  //try many times while not in acceptance
+      fEvt->add_vertex(Vtx2);
     }    //loop over the particle Ids in the cone
+    fEvt->add_vertex(Vtx);
   }
 
-  fEvt->add_vertex(Vtx);
   fEvt->set_event_number(e.id().event());
   fEvt->set_signal_process_id(20);
 
