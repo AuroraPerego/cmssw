@@ -32,7 +32,7 @@ private:
   const bool energy_from_regression_;
   // inputs
   const edm::EDGetTokenT<edm::View<TICLCandidate>> ticl_candidates_;
-  const edm::EDGetTokenT<edm::ValueMap<float>> srcTrackTime_, srcTrackTimeError_, srcTrackTimeQuality_;
+  const edm::EDGetTokenT<edm::ValueMap<float>> srcTrackTimeQuality_;
   const edm::EDGetTokenT<reco::MuonCollection> muons_;
   // For PFMuonAlgo
   std::unique_ptr<PFMuonAlgo> pfmu_;
@@ -46,8 +46,6 @@ PFTICLProducer::PFTICLProducer(const edm::ParameterSet& conf)
       timingQualityThreshold_(conf.getParameter<double>("timingQualityThreshold")),
       energy_from_regression_(conf.getParameter<bool>("energyFromRegression")),
       ticl_candidates_(consumes<edm::View<TICLCandidate>>(conf.getParameter<edm::InputTag>("ticlCandidateSrc"))),
-      srcTrackTime_(consumes<edm::ValueMap<float>>(conf.getParameter<edm::InputTag>("trackTimeValueMap"))),
-      srcTrackTimeError_(consumes<edm::ValueMap<float>>(conf.getParameter<edm::InputTag>("trackTimeErrorMap"))),
       srcTrackTimeQuality_(consumes<edm::ValueMap<float>>(conf.getParameter<edm::InputTag>("trackTimeQualityMap"))),
       muons_(consumes<reco::MuonCollection>(conf.getParameter<edm::InputTag>("muonSrc"))),
       pfmu_(std::make_unique<PFMuonAlgo>(conf.getParameterSet("pfMuonAlgoParameters"),
@@ -58,8 +56,6 @@ PFTICLProducer::PFTICLProducer(const edm::ParameterSet& conf)
 void PFTICLProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   desc.add<edm::InputTag>("ticlCandidateSrc", edm::InputTag("ticlTrackstersMerge"));
-  desc.add<edm::InputTag>("trackTimeValueMap", edm::InputTag("tofPID:t0"));
-  desc.add<edm::InputTag>("trackTimeErrorMap", edm::InputTag("tofPID:sigmat0"));
   desc.add<edm::InputTag>("trackTimeQualityMap", edm::InputTag("mtdTrackQualityMVA:mtdQualMVA"));
   desc.add<bool>("energyFromRegression", true);
   desc.add<double>("timingQualityThreshold", 0.5);
@@ -79,9 +75,7 @@ void PFTICLProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
   edm::Handle<edm::View<TICLCandidate>> ticl_cand_h;
   evt.getByToken(ticl_candidates_, ticl_cand_h);
   const auto ticl_candidates = *ticl_cand_h;
-  edm::Handle<edm::ValueMap<float>> trackTimeH, trackTimeErrH, trackTimeQualH;
-  evt.getByToken(srcTrackTime_, trackTimeH);
-  evt.getByToken(srcTrackTimeError_, trackTimeErrH);
+  edm::Handle<edm::ValueMap<float>> trackTimeQualH;
   evt.getByToken(srcTrackTimeQuality_, trackTimeQualH);
   const auto muonH = evt.getHandle(muons_);
   const auto& muons = *muonH;
@@ -152,37 +146,27 @@ void PFTICLProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
     auto timeE = ticl_cand.timeError();
 
     if (useMTDTiming_ and candidate.charge()) {
-//      // Ignore HGCAL timing until it will be TOF corrected
-//      time = -99.;
-//      timeE = -1.;
       // Check MTD timing availability
       const bool assocQuality = (*trackTimeQualH)[candidate.trackRef()] > timingQualityThreshold_;
       if (assocQuality) {
         const auto timeHGC = time;
         const auto timeEHGC = timeE;
-        const auto timeMTD = (*trackTimeH)[candidate.trackRef()];
-        const auto timeEMTD = (*trackTimeErrH)[candidate.trackRef()];
-std::cout << " old: " << timeMTD  << "+/-" << timeEMTD << " new: " << ticl_cand.t0Mtd() << "+/-" << ticl_cand.t0MtdError() << std::endl;
-std::cout << " cand: " << ticl_cand.time() << "+/-" << ticl_cand.timeError() << std::endl;
+        const auto timeMTD = ticl_cand.t0Mtd();
+        const auto timeEMTD = ticl_cand.t0MtdError();
         if (useTimingAverage_ && (timeEMTD > 0 && timeEHGC > 0)) {
           // Compute weighted average between HGCAL and MTD timing
           const auto invTimeESqHGC = pow(timeEHGC, -2);
           const auto invTimeESqMTD = pow(timeEMTD, -2);
-          timeE = (invTimeESqHGC * invTimeESqMTD) / (invTimeESqHGC + invTimeESqMTD);
+          timeE = 1 / (invTimeESqHGC + invTimeESqMTD);
           time = (timeHGC * invTimeESqHGC + timeMTD * invTimeESqMTD) * timeE;
           timeE = sqrt(timeE);
         } else if (timeEMTD > 0) {  // Ignore HGCal timing until it will be TOF corrected
           time = timeMTD;
           timeE = timeEMTD;
-        } else if (timeEHGC > 0) {
-          time = timeHGC;
-          timeE = timeEHGC;
         }
       }
     }
     candidate.setTime(time, timeE);
-if (timeE > 0)
-  std::cout << " PF cand: " << time << " +/- " << timeE << "\n";
   }
 
   evt.put(std::move(candidates));

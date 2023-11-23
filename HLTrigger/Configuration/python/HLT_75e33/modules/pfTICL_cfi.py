@@ -27,9 +27,9 @@ pfTICL = cms.EDProducer("PFTICLProducer",
     ),
     ticlCandidateSrc = cms.InputTag("ticlTrackstersMerge"),
     timingQualityThreshold = cms.double(0.5),
-    trackTimeErrorMap = cms.InputTag("tofPID","sigmat0"),
+#    trackTimeErrorMap = cms.InputTag("tofPID","sigmat0"),
     trackTimeQualityMap = cms.InputTag("mtdTrackQualityMVA","mtdQualMVA"),
-    trackTimeValueMap = cms.InputTag("tofPID","t0"),
+#    trackTimeValueMap = cms.InputTag("tofPID","t0"),
     useMTDTiming = cms.bool(False),
     useTimingAverage = cms.bool(False)
 )
