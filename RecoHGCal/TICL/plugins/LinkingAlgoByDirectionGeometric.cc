@@ -173,7 +173,7 @@ bool LinkingAlgoByDirectionGeometric::timeAndEnergyCompatible(float &total_raw_e
 
     //  timeCompatible = (std::abs(deltaSoverV - deltaT) < maxDeltaT_ * sqrt(tsTErr * tsTErr + tkTErr * tkTErr));
     // use sqrt(2) * error on the track for the total error, because the time of the trackster is too small
-    timeCompatible = (std::abs(deltaSoverV - deltaT) < maxDeltaT_ * std::sqrt(2) * tkTErr);
+    timeCompatible = std::abs(deltaSoverV - deltaT) < maxDeltaT_ * std::sqrt(tsTErr*tsTErr + tkTErr*tkTErr);
   }
 
   if (LinkingAlgoBase::algo_verbosity_ > VerbosityLevel::Advanced) {

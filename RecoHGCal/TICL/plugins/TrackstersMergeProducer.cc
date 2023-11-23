@@ -642,12 +642,15 @@ std::cout << "-------\n beta: " << beta << " ts time " << tr->time()
           invTimeErr += invTimeESq;
         }
       }
-      if (invTimeErr > 0) {
-        cand.setTime(time / invTimeErr);
-        cand.setTimeError(sqrt(1.f / invTimeErr));
-std::cout << " CAND time : " << time / invTimeErr << " +/- " << sqrt(1.f / invTimeErr) << std::endl;
-      }
-  //  }
+    }
+    if (invTimeErr > 0) {
+      cand.setTime(time / invTimeErr);
+      // FIXME_ set a liminf of 0.02 ns on the ts error (based on residuals)
+      auto timeErr = sqrt(1.f / invTimeErr) > 0.02 ? sqrt(1.f / invTimeErr) : 0.02;
+      cand.setTimeError(timeErr);
+      // std::cout << " --> final CAND time : " << time / invTimeErr << " +/- " << timeErr << std::endl;
+    }
+    //  }
   }
 }
 
