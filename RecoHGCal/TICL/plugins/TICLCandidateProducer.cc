@@ -136,6 +136,8 @@ private:
   const StringCutObjectSelector<reco::Track> cutTk_;
   static constexpr int eidNFeatures_ = 3;
   edm::ESGetToken<HGCalDDDConstants, IdealGeometryRecord> hdc_token_;
+  edm::ESHandle<MagneticField> bfield_;
+  edm::ESHandle<Propagator> propagator_;
 };
 
 TICLCandidateProducer::TICLCandidateProducer(const edm::ParameterSet &ps)
@@ -230,9 +232,9 @@ void TICLCandidateProducer::beginRun(edm::Run const &iEvent, edm::EventSetup con
   edm::ESHandle<CaloGeometry> geom = es.getHandle(geometry_token_);
   rhtools_.setGeometry(*geom);
 
-  edm::ESHandle<MagneticField> bfield = es.getHandle(bfield_token_);
-  edm::ESHandle<Propagator> propagator = es.getHandle(propagator_token_);
-  generalInterpretationAlgo_->initialize(hgcons_, rhtools_, bfield, propagator);
+  bfield_ = es.getHandle(bfield_token_);
+  propagator_  = es.getHandle(propagator_token_);
+  generalInterpretationAlgo_->initialize(hgcons_, rhtools_, bfield_, propagator_);
 };
 
 void filterTracks(edm::Handle<std::vector<reco::Track>> tkH,
@@ -296,11 +298,8 @@ void TICLCandidateProducer::produce(edm::Event &evt, const edm::EventSetup &es) 
 
   const auto &bs = evt.get(bsToken_);
 
-  edm::ESHandle<MagneticField> bfieldH = es.getHandle(bfieldProduce_token_);
-  const auto &bFieldProd = bfieldH.product();
-
-  auto propH = es.getTransientHandle(propagatorProduce_token_);
-  const Propagator *propagator = propH.product();
+  auto const bFieldProd = bfield_.product();
+  const Propagator *propagator = propagator_.product();
 
   // loop over the original_masks_tokens_ and get the original masks collections and multiply them
   // to get the global mask
