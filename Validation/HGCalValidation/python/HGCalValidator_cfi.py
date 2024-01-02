@@ -140,7 +140,7 @@ hgcalValidatorv5 = DQMEDAnalyzer(
     doCandidatesPlots = cms.untracked.bool(True),
     ticlCandidates = cms.InputTag("ticlCandidate"),
 
-    ticlTrackstersMerge = cms.InputTag("ticlTrackstersMerge"),
+    ticlTrackstersMerge = cms.InputTag("ticlCandidate"),
     simTiclCandidates = cms.InputTag("ticlSimTracksters"),
     recoTracks = cms.InputTag("generalTracks"),
     trackstersclue3d = cms.InputTag("ticlCandidate"),
