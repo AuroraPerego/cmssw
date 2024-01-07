@@ -19,6 +19,10 @@ TracksterLinkingbySkeletons::TracksterLinkingbySkeletons(const edm::ParameterSet
       angle_first_cone_(conf.getParameter<double>("angle0")),
       angle_second_cone_(conf.getParameter<double>("angle1")),
       angle_third_cone_(conf.getParameter<double>("angle2")),
+      pcaQ_(conf.getParameter<double>("pcaQuality")),
+      pcaQLCSize_(conf.getParameter<unsigned int>("pcaQualityLCSize")),
+      dotCut_(conf.getParameter<double>("dotProdCut")),
+      maxDistSkeletonsSq_(conf.getParameter<double>("maxDistSkeletonsSq")),
       max_height_cone_(conf.getParameter<double>("maxConeHeight")){}
 
 void TracksterLinkingbySkeletons::buildLayers() {
@@ -221,6 +225,7 @@ void TracksterLinkingbySkeletons::linkTracksters(const Inputs& input, std::vecto
     auto const normalized_e2 = e2 / sum;
     return normalized_e0; 
   };
+
   const float halfAngle0 = angle_first_cone_;
   const float halfAngle1 = angle_second_cone_;
   const float halfAngle2 = angle_third_cone_;
@@ -241,8 +246,9 @@ void TracksterLinkingbySkeletons::linkTracksters(const Inputs& input, std::vecto
     auto pcaQ = pcaQuality(trackster);
     LogDebug("TracksterLinkingbySkeletons") << "DEBUG Trackster " << it  <<  " energy " << trackster.raw_energy() << " Num verties "
                                    << trackster.vertices().size() << " PCA Quality " << pcaQ << std::endl; 
-  
-    if (pcaQ >= 0.975f && trackster.vertices().size() > 5) {
+    const float pcaQTh = pcaQ_; 
+    const unsigned int pcaQLCSize = pcaQLCSize_;
+    if (pcaQ >= pcaQTh && trackster.vertices().size() > pcaQLCSize) {
         auto const skeletons = returnSkeletons(trackster);
         LogDebug("TracksterLinkingbySkeletons") << "Trackster " << it  <<  " energy " << trackster.raw_energy() << " Num verties "
                                    << trackster.vertices().size() << " PCA Quality " << pcaQ << " Skeletons " << skeletons[0] <<  std::endl;
@@ -274,14 +280,14 @@ void TracksterLinkingbySkeletons::linkTracksters(const Inputs& input, std::vecto
                 auto const skeletonDist2 = (skeletons[2] - skeletons_out[0]).Mag2();
                 auto const pcaQOuter = pcaQuality(trackster_out);
               //              auto const dotProd  = ((skeletons[0]-skeletons[2]).Unit()).Dot((skeletons_out[0] - skeletons_out[2]).Unit());
-              bool isGoodPCA = (pcaQOuter >= 3.f) && (trackster_out.vertices().size() > 5);
+                bool isGoodPCA = (pcaQOuter >= pcaQTh) && (trackster_out.vertices().size() > pcaQLCSize);
                 auto const maxHeightSmallCone = std::sqrt((skeletons[2] - skeletons[0]).Mag2());
                 bool isInSmallCone = isPointInCone(skeletons[0], directionOrigin, halfAngle0, maxHeightSmallCone, skeletons_out[0], "Small Cone" );
                 bool isInCone = isPointInCone(skeletons[1], directionOrigin, halfAngle1, maxHeightCone, skeletons_out[0], "BigCone ");
                 bool isInLastCone = isPointInCone(skeletons[2], directionOrigin, halfAngle2, maxHeightCone, skeletons_out[0], "LastCone");
                 bool dotProd =
                       isGoodPCA 
-                      ? ((skeletons[0] - skeletons[2]).Unit()).Dot((skeletons_out[0] - skeletons_out[2]).Unit()) >= 0.97
+                      ? ((skeletons[0] - skeletons[2]).Unit()).Dot((skeletons_out[0] - skeletons_out[2]).Unit()) >= dotCut_ 
                       : true;
   
               LogDebug("TracksterLinkingbySkeletons") <<  "\tTrying to Link Trackster " << n << " energy " << tracksters[n].raw_energy() << " LCs " << tracksters[n].vertices().size() << " skeletons " << skeletons_out[0] << " Dist " << skeletonDist2 << " dot Prod " << ((skeletons[0] - skeletons[2]).Unit()).Dot((skeletons_out[0] - skeletons_out[2]).Unit()) << " isGoodDotProd " << dotProd << " isPointInBigCone " << isInCone << " isPointInSmallCone " << isInSmallCone << " isPointInLastCone " << isInLastCone << std::endl; 
@@ -294,7 +300,7 @@ void TracksterLinkingbySkeletons::linkTracksters(const Inputs& input, std::vecto
                   isRootTracksters[n] = 0;
                 }
               if (isInCone &&
-                  skeletonDist2 <= 2500.f && dotProd) {
+                  skeletonDist2 <= maxDistSkeletonsSq_ && dotProd) {
                 LogDebug("TracksterLinkingbySkeletons") << "\t==== LINK: Trackster " << it << " Linked with Trackster " << n << " LCs " << tracksters[n].vertices().size() << std::endl;
                 LogDebug("TracksterLinkingbySkeletons")
                     << "\t\tSkeleton origin " << skeletons[2] << " Skeleton out " << skeletons_out[0] << std::endl;
