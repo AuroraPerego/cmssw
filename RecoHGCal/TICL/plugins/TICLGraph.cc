@@ -19,7 +19,7 @@ std::vector<std::vector<unsigned int>> TICLGraph::findSubComponents() {
   for (auto const& node : nodes_) {
     auto const id = node.getId();
     if (isRootNode_[id]) {
-      LogDebug("TICLGraph") << "DFS Starting From " << id << std::endl;
+      //LogDebug("TICLGraph") << "DFS Starting From " << id << std::endl;
       std::string tabs = "\t";
       std::vector<unsigned int> tmpSubComponents;
       nodes_[id].findSubComponents(nodes_, tmpSubComponents, tabs);
