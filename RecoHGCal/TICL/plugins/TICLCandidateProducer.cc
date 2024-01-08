@@ -113,11 +113,9 @@ private:
   const edm::ESGetToken<CaloGeometry, CaloGeometryRecord> geometry_token_;
 
   const edm::ESGetToken<MagneticField, IdealMagneticFieldRecord> bfield_token_;
-  const edm::ESGetToken<MagneticField, IdealMagneticFieldRecord> bfieldProduce_token_;
   const std::string detector_;
   const std::string propName_;
   const edm::ESGetToken<Propagator, TrackingComponentsRecord> propagator_token_;
-  const edm::ESGetToken<Propagator, TrackingComponentsRecord> propagatorProduce_token_;
   const edm::EDGetTokenT<reco::BeamSpot> bsToken_;
 
   const std::string tfDnnLabel_;
@@ -138,6 +136,8 @@ private:
   const StringCutObjectSelector<reco::Track> cutTk_;
   static constexpr int eidNFeatures_ = 3;
   edm::ESGetToken<HGCalDDDConstants, IdealGeometryRecord> hdc_token_;
+  edm::ESHandle<MagneticField> bfield_;
+  edm::ESHandle<Propagator> propagator_;
 };
 
 TICLCandidateProducer::TICLCandidateProducer(const edm::ParameterSet &ps)
@@ -150,12 +150,10 @@ TICLCandidateProducer::TICLCandidateProducer(const edm::ParameterSet &ps)
       useMTDTiming_(ps.getParameter<bool>("useMTDTiming")),
       geometry_token_(esConsumes<CaloGeometry, CaloGeometryRecord, edm::Transition::BeginRun>()),
       bfield_token_(esConsumes<MagneticField, IdealMagneticFieldRecord, edm::Transition::BeginRun>()),
-      bfieldProduce_token_(esConsumes<MagneticField, IdealMagneticFieldRecord>()),
       detector_(ps.getParameter<std::string>("detector")),
       propName_(ps.getParameter<std::string>("propagator")),
       propagator_token_(
           esConsumes<Propagator, TrackingComponentsRecord, edm::Transition::BeginRun>(edm::ESInputTag("", propName_))),
-      propagatorProduce_token_(esConsumes<Propagator, TrackingComponentsRecord>(edm::ESInputTag("", propName_))),
       bsToken_(consumes<reco::BeamSpot>(ps.getParameter<edm::InputTag>("beamspot"))),
       tfDnnLabel_(ps.getParameter<std::string>("tfDnnLabel")),
       tfDnnToken_(esConsumes(edm::ESInputTag("", tfDnnLabel_))),
@@ -234,9 +232,9 @@ void TICLCandidateProducer::beginRun(edm::Run const &iEvent, edm::EventSetup con
   edm::ESHandle<CaloGeometry> geom = es.getHandle(geometry_token_);
   rhtools_.setGeometry(*geom);
 
-  edm::ESHandle<MagneticField> bfield = es.getHandle(bfield_token_);
-  edm::ESHandle<Propagator> propagator = es.getHandle(propagator_token_);
-  generalInterpretationAlgo_->initialize(hgcons_, rhtools_, bfield, propagator);
+  bfield_ = es.getHandle(bfield_token_);
+  propagator_  = es.getHandle(propagator_token_);
+  generalInterpretationAlgo_->initialize(hgcons_, rhtools_, bfield_, propagator_);
 };
 
 void filterTracks(edm::Handle<std::vector<reco::Track>> tkH,
@@ -293,18 +291,15 @@ void TICLCandidateProducer::produce(edm::Event &evt, const edm::EventSetup &es) 
     evt.getByToken(tracks_time_token_, trackTime_h);
     evt.getByToken(tracks_time_err_token_, trackTimeErr_h);
     evt.getByToken(tracks_time_quality_token_, trackTimeQual_h);
-    evt.getByToken(tracks_beta_token_, trackTimeBeta_h);
+    evt.getByToken(tracks_time_err_token_, trackTimeBeta_h);
     evt.getByToken(tracks_path_length_token_, trackPathToMTD_h);
     evt.getByToken(tracks_glob_pos_token_, trackTimeGlobalPosition_h);
   }
 
   const auto &bs = evt.get(bsToken_);
 
-  edm::ESHandle<MagneticField> bfieldH = es.getHandle(bfieldProduce_token_);
-  const auto &bFieldProd = bfieldH.product();
-
-  auto propH = es.getTransientHandle(propagatorProduce_token_);
-  const Propagator *propagator = propH.product();
+  auto const bFieldProd = bfield_.product();
+  const Propagator *propagator = propagator_.product();
 
   // loop over the original_masks_tokens_ and get the original masks collections and multiply them
   // to get the global mask
