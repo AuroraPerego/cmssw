@@ -117,17 +117,15 @@ public:
   inline void setIdProbability(ParticleType type, float value) { idProbabilities_[int(type)] = value; }
 
 private:
+  // Since it contains multiple tracksters, duplicate the probability interface
   std::array<float, 8> idProbabilities_;
+  // vector of Ptr so Tracksters can come from different collections
+  // and there can be derived classes
   std::vector<edm::Ptr<ticl::Trackster> > tracksters_;
   edm::Ptr<reco::Track> trackPtr_;
 
   float time_;
   float timeError_;
   float rawEnergy_;
-
-  // vector of Ptr so Tracksters can come from different collections
-  // and there can be derived classes
-
-  // Since it contains multiple tracksters, duplicate the probability interface
 };
 #endif

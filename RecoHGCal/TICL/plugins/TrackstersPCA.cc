@@ -192,7 +192,8 @@ std::pair<float, float> ticl::computeLocalTracksterTime(const Trackster &trackst
         float y = layerClusters[trackster.vertices(i)].y();
         float z = layerClusters[trackster.vertices(i)].z();
 
-        if (project_lc_to_pca({x, y, z}, {barycenter[0], barycenter[1], barycenter[2]}) < 3) {  // set MR to 3
+        // restrict to 1 Moliere Radius (3 cm)
+        if (project_lc_to_pca({x, y, z}, {barycenter[0], barycenter[1], barycenter[2]}) < 3) {
           float deltaT = 1 / c *
                          std::sqrt(((barycenter[2] / z - 1) * x) * ((barycenter[2] / z - 1) * x) +
                                    ((barycenter[2] / z - 1) * y) * ((barycenter[2] / z - 1) * y) +
