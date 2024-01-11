@@ -600,7 +600,7 @@ void MtdTruthAccumulator::accumulateEvent(const T &event,
   DecayChain decay;
 
   for (uint32_t i = 0; i < vertices.size(); i++) {
-    vertex_time_map[i] = vertices[i].position().t() * 1e9 + event.bunchCrossing() * bunchSpacing_;
+    vertex_time_map[i] = vertices[i].position().t() * 1e9 + event.bunchCrossing() * static_cast<int>(bunchSpacing_);
   }
 
   IfLogDebug(DEBUG, messageCategory_) << " TRACKS" << std::endl;
