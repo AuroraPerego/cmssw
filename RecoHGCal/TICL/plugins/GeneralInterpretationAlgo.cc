@@ -157,8 +157,8 @@ bool GeneralInterpretationAlgo::timeAndEnergyCompatible(float &total_raw_energy,
                                                         const float &tkBeta,
                                                         const GlobalPoint &tkMtdPos,
                                                         bool useMTDTiming) {
-  float threshold = std::min(0.2 * trackster.raw_energy(), 10.0);
-  bool energyCompatible = (total_raw_energy + trackster.raw_energy() < track.p() + threshold);
+  float threshold = track.p() * 0.1;
+  bool energyCompatible = total_raw_energy + trackster.raw_energy() < track.p() + threshold;
 
   if (!useMTDTiming)
     return energyCompatible;
