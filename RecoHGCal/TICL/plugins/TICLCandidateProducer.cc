@@ -237,8 +237,10 @@ void filterTracks(edm::Handle<std::vector<reco::Track>> tkH,
                   const float tkEnergyCut_,
                   std::vector<bool> &maskTracks) {
   auto const &tracks = *tkH;
+  std::cout << "There are " << tracks.size() << " tracks in the event" << std::endl;
   for (unsigned i = 0; i < tracks.size(); ++i) {
     const auto &tk = tracks[i];
+    std::cout << " track " << i << " ";
     reco::TrackRef trackref = reco::TrackRef(tkH, i);
 
     // veto tracks associated to muons
@@ -247,15 +249,21 @@ void filterTracks(edm::Handle<std::vector<reco::Track>> tkH,
 
     if (!cutTk_((tk)) or (muId != -1 and PFMuonAlgo::isMuon(muonref) and not (*muons_h)[muId].isTrackerMuon())) {
       maskTracks[i] = false;
+      std::cout << "does not pass cuts (pt "<< tk.pt() << ", miss out " << tk.missingOuterHits() << ", quality " << tk.quality(reco::TrackBase::highPurity) <<") ";
+      if (muId != -1)
+        std::cout << "or is muon (muId " << muId << " isMuon " << PFMuonAlgo::isMuon(muonref) << " isTrackerMuon " << (*muons_h)[muId].isTrackerMuon() << ")";
+std::cout << "\n";
       continue;
     }
 
     // don't consider tracks below 2 GeV for linking
     if (std::sqrt(tk.p() * tk.p() + ticl::mpion2) < tkEnergyCut_) {
       maskTracks[i] = false;
+      std::cout << "is below 2 GeV\n";
       continue;
     }
 
+    std::cout << "is good\n";
     // record tracks that can be used to make a ticlcandidate
     maskTracks[i] = true;
   }
@@ -371,6 +379,7 @@ void TICLCandidateProducer::produce(edm::Event &evt, const edm::EventSetup &es) 
       if (muonRef.isNonnull() and muonRef->isGlobalMuon()) {
         // create muon candidate
         chargedCandidate.setPdgId(13 * trackPtr.get()->charge());
+        std::cout << "CREATING MUON CANDIDATE" << std::endl;
       }
       resultCandidates->push_back(chargedCandidate);
     }

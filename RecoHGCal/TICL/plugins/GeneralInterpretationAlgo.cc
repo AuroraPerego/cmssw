@@ -102,12 +102,13 @@ void GeneralInterpretationAlgo::findTrackstersInWindow(const MultiVectorManager<
   for (auto &i : seedingCollection) {
     float seed_eta = i.first.Eta();
     float seed_phi = i.first.Phi();
+    std::cout << "track eta " << seed_eta << " and phi" << seed_phi << std::endl;
     unsigned seedId = i.second;
     auto sideZ = seed_eta > 0;  //forward or backward region
     const TICLLayerTile &tile = tracksterTiles[sideZ];
     float eta_min = std::max(std::fabs(seed_eta) - delta, (float)TileConstants::minEta);
     float eta_max = std::min(std::fabs(seed_eta) + delta, (float)TileConstants::maxEta);
-
+    std::cout << "min eta " << eta_min << " max eta " << eta_max << " min phi " << (seed_phi - delta) << " max phi " << (seed_phi + delta) << std::endl;
     // get range of bins touched by delta
     std::array<int, 4> search_box = tile.searchBoxEtaPhi(eta_min, eta_max, seed_phi - delta, seed_phi + delta);
 
@@ -118,9 +119,11 @@ void GeneralInterpretationAlgo::findTrackstersInWindow(const MultiVectorManager<
       for (int phi_i = search_box[2]; phi_i <= search_box[3]; ++phi_i) {
         const auto &in_tile = tile[tile.globalBin(eta_i, (phi_i % TileConstants::nPhiBins))];
         for (const unsigned &t_i : in_tile) {
+          std::cout << "trackster eta " << tracksterPropPoints[t_i].Eta() << " and phi" << tracksterPropPoints[t_i].Phi() << std::endl;
           // calculate actual distances of tracksters to the seed for a more accurate cut
           auto sep2 = (tracksterPropPoints[t_i].Eta() - seed_eta) * (tracksterPropPoints[t_i].Eta() - seed_eta) +
                       (tracksterPropPoints[t_i].Phi() - seed_phi) * (tracksterPropPoints[t_i].Phi() - seed_phi);
+          std::cout << " is in window " << (sep2 < delta2) << std::endl;
           if (sep2 < delta2) {
             in_delta.push_back(t_i);
             // distances2.push_back(sep2);
@@ -163,6 +166,7 @@ bool GeneralInterpretationAlgo::timeAndEnergyCompatible(float &total_raw_energy,
   if (!useMTDTiming)
     return energyCompatible;
 
+  std::cout << "track energy: " << track.p() << "+ threshold: " << threshold << "> ts energy: " << trackster.raw_energy() << "+ total energy: " << total_raw_energy << " = compatible: " << energyCompatible << std::endl;
   // compatible if trackster time is within 3sigma of
   // track time; compatible if either: no time assigned
   // to trackster or track
@@ -186,6 +190,7 @@ bool GeneralInterpretationAlgo::timeAndEnergyCompatible(float &total_raw_energy,
     //  timeCompatible = (std::abs(deltaSoverV - deltaT) < maxDeltaT_ * sqrt(tsTErr * tsTErr + tkTErr * tkTErr));
     // use sqrt(2) * error on the track for the total error, because the time of the trackster is too small
     timeCompatible = std::abs(deltaSoverV - deltaT) < maxDeltaT_ * std::sqrt(tsTErr * tsTErr + tkTErr * tkTErr);
+    std::cout << "time compatible: " << timeCompatible << " delta time: " << std::abs(deltaSoverV - deltaT) << " < threshold: " << (maxDeltaT_ * std::sqrt(tsTErr * tsTErr + tkTErr * tkTErr)) << std::endl;
   }
 
   if (TICLInterpretationAlgoBase::algo_verbosity_ > VerbosityLevel::Advanced) {
@@ -331,8 +336,11 @@ void GeneralInterpretationAlgo::makeCandidates(const Inputs &input,
       track_beta = inputTimingView.beta()[i];
       track_MtdPos = {inputTimingView.posInMTD_x()[i], inputTimingView.posInMTD_y()[i], inputTimingView.posInMTD_z()[i]};
     }
+    std::cout << "considering track " << i  << std::endl;
 
+    std::cout << "try link with trackster:\n";
     for (auto const tsIdx : tsNearTk[i]) {
+      std::cout << tsIdx <<", available: " << chargedMask[tsIdx] << "\n";
       if (chargedMask[tsIdx] && timeAndEnergyCompatible(total_raw_energy,
                                                         tracks[i],
                                                         tracksters[tsIdx],
@@ -346,7 +354,9 @@ void GeneralInterpretationAlgo::makeCandidates(const Inputs &input,
         chargedMask[tsIdx] = false;
       }
     }
+    std::cout << "\ntry link with trackster at interface:\n";
     for (const unsigned tsIdx : tsNearTkAtInt[i]) {  // do the same for tk -> ts links at the interface
+      std::cout << tsIdx << ", available: " << chargedMask[tsIdx] << "\n";
       if (chargedMask[tsIdx] && timeAndEnergyCompatible(total_raw_energy,
                                                         tracks[i],
                                                         tracksters[tsIdx],
