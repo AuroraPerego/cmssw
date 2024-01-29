@@ -2568,7 +2568,7 @@ void HGVHistoProducerAlgo::tracksters_to_SimTracksters(
                     const edm::ProductID& cPHandle_id,
                     const std::map<unsigned int, std::vector<unsigned int>>& cpToSc_SimTrackstersMap,
                     const ticl::TracksterCollection& simTSs_fromCP) {
-    unsigned int cpId = -1;
+    int cpId = -1;
 
     const auto productID = simTS.seedID();
     if (productID == cPHandle_id) {

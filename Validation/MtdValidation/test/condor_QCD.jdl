@@ -1,0 +1,36 @@
+#This condor submission file runs the RECO step in N jobs on a single RelVal file
+Universe = vanilla
+
+Executable = $ENV(CMSSW_BASE)/src/Validation/RecoParticleFlow/test/run_relval.sh
+Arguments = "Zee reco $(Process)"
+
+Log = log/test.$(Cluster).log
+Output = log/test.out.$(Cluster).$(Process)
+Error = log/test.err.$(Cluster).$(Process)
+Environment = "CMSSW_BASE=$ENV(CMSSW_BASE)"
+
+RequestMemory = 20000
+RequestCpus = 4
+ 
+#8h runtume
++MaxRuntime = 24*3600
++JobFlavour = "tomorrow"
+
+#choose job environment using singularity
+#+RunAsOwner = True
+#+SleepSlot = True
+#+InteractiveUser = true
+#+SingularityImage = "/cvmfs/singularity.opensciencegrid.org/bbockelm/cms:rhel7"
+#+SingularityBindCVMFS = True
+#run_as_owner = True
+
+use_x509userproxy = True
+x509userproxy = /afs/cern.ch/user/a/aperego/public/CMSSW_13_0_0_pre2/src/Validation/RecoParticleFlow/test/x509up_u144911
+
+#transfer section
+transfer_output_files = Zee/step3.log,Zee/step3_inMINIAODSIM.root
+transfer_output_remaps = "step3.log=/afs/cern.ch/user/a/aperego/public/.../test/tmp/Zee/step3.$(Cluster).$(Process).log;step3_inMINIAODSIM.root=/afs/.../step3_inMINIAODSIM.$(Cluster).$(Process).root"
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+
+Queue 10

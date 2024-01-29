@@ -1,4 +1,5 @@
 #include <ostream>
+#include <cmath>
 
 #include "IOMC/ParticleGuns/interface/CloseByParticleGunProducer.h"
 
@@ -162,15 +163,11 @@ void CloseByParticleGunProducer::produce(Event& e, const EventSetup& es) {
     double py = 0.;
     double pz = mom;
     double energy = fEn;
-    
+
     // Compute Vertex Position
     double x = fR * cos(phi);
     double y = fR * sin(phi);
-    constexpr double c = 2.99792458e+1;  // cm/ns
-    double timeOffset = fOffsetFirst + (sqrt(x * x + y * y + fZ * fZ) / (pz / energy) + ip * fT) * ns * c_light;
-    // ns = 1, cm = 10, c_light is in mm/ns
-    HepMC::GenVertex* Vtx = new HepMC::GenVertex(HepMC::FourVector(x * cm, y * cm, fZ * cm, timeOffset));
-    HepMC::FourVector p(px, py, pz, energy);
+    
     // If we are requested to be pointing to (0,0,0), correct the momentum direction
     if (fPointing) {
       math::XYZVector direction(x, y, fZ);
@@ -179,6 +176,19 @@ void CloseByParticleGunProducer::produce(Event& e, const EventSetup& es) {
       p.setY(momentum.y());
       p.setZ(momentum.z());
     }
+
+    // compute correct path considering magnetic field 
+    const double v = pz / energy;
+    const double radius = sqrt(px * px + py * py) * 87.78f;  // cm (1 GeV track has 1 GeV/c / (e * 3.8T) ~ 87 cm radius in a 3.8T field)
+    const double path = 2 * asin(sqrt(y * y + fZ * fZ)/(2 * radius)) * radius;
+    // if not pointing this doesn't mean a lot, keep the old way
+    const double TimePath = fPointing ? (path / v) : (sqrt(x * x + y * y + fZ * fZ) / v); 
+    double timeOffset = fOffsetFirst + (TimePath + ip * fT) * ns * c_light;
+    // ns = 1, cm = 10, c_light is in mm/ns
+    
+    HepMC::GenVertex* Vtx = new HepMC::GenVertex(HepMC::FourVector(x * cm, y * cm, fZ * cm, timeOffset));
+    HepMC::FourVector p(px, py, pz, energy);
+
     HepMC::GenParticle* Part = new HepMC::GenParticle(p, PartID, 1);
     Part->suggest_barcode(barcode);
     barcode++;
