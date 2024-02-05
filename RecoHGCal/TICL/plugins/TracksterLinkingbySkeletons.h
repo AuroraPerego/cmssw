@@ -45,9 +45,9 @@ namespace ticl {
     static void fillPSetDescription(edm::ParameterSetDescription& iDesc) {
       iDesc.add<double>("track_time_quality_threshold", 0.5);
       iDesc.add<double>("wind", 1.5);
-      iDesc.add<double>("angle0", 1.523599);
-      iDesc.add<double>("angle1", 1.349006);
-      iDesc.add<double>("angle2", 1.174532);
+      iDesc.add<double>("angle0", 0.523599);
+      iDesc.add<double>("angle1", 0.349066);
+      iDesc.add<double>("angle2", 0.261800);
       iDesc.add<double>("maxConeHeight", 500.);
       iDesc.add<double>("pcaQuality", 0.97);
       iDesc.add<unsigned int>("pcaQualityLCSize", 5);
