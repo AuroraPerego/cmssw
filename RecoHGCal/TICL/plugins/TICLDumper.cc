@@ -464,7 +464,7 @@ private:
   std::vector<float> track_beta;
   std::vector<float> track_time_mtd;
   std::vector<float> track_time_mtd_err;
-  //std::vector<GlobalPoint> track_pos_mtd;
+  std::vector<GlobalPoint> track_pos_mtd;
   std::vector<int> track_nhits;
   std::vector<int> track_isMuon;
   std::vector<int> track_isTrackerMuon;
@@ -785,7 +785,7 @@ void TICLDumper::clearVariables() {
   track_beta.clear();
   track_time_mtd.clear();
   track_time_mtd_err.clear();
-  //track_pos_mtd.clear();
+  track_pos_mtd.clear();
   track_nhits.clear();
   track_isMuon.clear();
   track_isTrackerMuon.clear();
@@ -804,7 +804,7 @@ TICLDumper::TICLDumper(const edm::ParameterSet& ps)
       tracks_beta_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksBeta"))),
       tracks_time_mtd_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTimeMtd"))),
       tracks_time_mtd_err_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTimeMtdErr"))),
-      //tracks_pos_mtd_token_(consumes<edm::ValueMap<GlobalPoint>>(ps.getParameter<edm::InputTag>("tracksPosMtd"))),
+      tracks_pos_mtd_token_(consumes<edm::ValueMap<GlobalPoint>>(ps.getParameter<edm::InputTag>("tracksPosMtd"))),
       tracksters_merged_token_(
           consumes<std::vector<ticl::Trackster>>(ps.getParameter<edm::InputTag>("trackstersmerged"))),
       muons_token_(consumes<std::vector<reco::Muon>>(ps.getParameter<edm::InputTag>("muons"))),
@@ -1199,7 +1199,7 @@ void TICLDumper::beginJob() {
     tracks_tree_->Branch("track_beta", &track_beta);
     tracks_tree_->Branch("track_time_mtd", &track_time_mtd);
     tracks_tree_->Branch("track_time_mtd_err", &track_time_mtd_err);
-    //tracks_tree_->Branch("track_pos_mtd", &track_pos_mtd);
+    tracks_tree_->Branch("track_pos_mtd", &track_pos_mtd);
     tracks_tree_->Branch("track_nhits", &track_nhits);
     tracks_tree_->Branch("track_isMuon", &track_isMuon);
     tracks_tree_->Branch("track_isTrackerMuon", &track_isTrackerMuon);
@@ -1317,9 +1317,9 @@ void TICLDumper::analyze(const edm::Event& event, const edm::EventSetup& setup) 
   event.getByToken(tracks_time_mtd_err_token_, trackTimeMtdErr_h);
   const auto& trackTimeMtdErr = *trackTimeMtdErr_h;
 
-//  edm::Handle<edm::ValueMap<GlobalPoint>> trackPosMtd_h;
-//  event.getByToken(tracks_pos_mtd_token_, trackPosMtd_h);
-//  const auto& trackPosMtd = *trackPosMtd_h;
+  edm::Handle<edm::ValueMap<GlobalPoint>> trackPosMtd_h;
+  event.getByToken(tracks_pos_mtd_token_, trackPosMtd_h);
+  const auto& trackPosMtd = *trackPosMtd_h;
 
   //Tracksters merged
   edm::Handle<std::vector<ticl::Trackster>> tracksters_merged_h;
@@ -2231,16 +2231,16 @@ void TICLDumper::analyze(const edm::Event& event, const edm::EventSetup& setup) 
       track_beta.push_back(trackBeta[trackref]);
       track_time_mtd.push_back(trackTimeMtd[trackref]);
       track_time_mtd_err.push_back(trackTimeMtdErr[trackref]);
-      //track_pos_mtd.push_back(trackPosMtd[trackref]);
+      track_pos_mtd.push_back(trackPosMtd[trackref]);
       track_nhits.push_back(tracks[i].recHitsSize());
       int muId = PFMuonAlgo::muAssocToTrack(trackref, *muons_h);
-      if (muId != -1 ) {
-      const reco::MuonRef muonref = reco::MuonRef(muons_h, muId);
-      track_isMuon.push_back(PFMuonAlgo::isMuon(muonref));
-      track_isTrackerMuon.push_back(muons[muId].isTrackerMuon());
+      if (muId != -1) {
+        const reco::MuonRef muonref = reco::MuonRef(muons_h, muId);
+        track_isMuon.push_back(PFMuonAlgo::isMuon(muonref));
+        track_isTrackerMuon.push_back(muons[muId].isTrackerMuon());
       } else {
-      track_isMuon.push_back(-1);
-      track_isTrackerMuon.push_back(-1);
+        track_isMuon.push_back(-1);
+        track_isTrackerMuon.push_back(-1);
       }
     }
   }
