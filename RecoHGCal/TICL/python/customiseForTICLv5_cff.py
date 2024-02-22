@@ -17,7 +17,7 @@ from RecoHGCal.TICL.ticlDumper_cfi import ticlDumper
 from RecoHGCal.TICL.mergedTrackstersProducer_cfi import mergedTrackstersProducer as _mergedTrackstersProducer
 from SimCalorimetry.HGCalAssociatorProducers.TSToSimTSAssociation_cfi import tracksterSimTracksterAssociationLinkingbyCLUE3D as _tracksterSimTracksterAssociationLinkingbyCLUE3D
 from SimCalorimetry.HGCalAssociatorProducers.TSToSimTSAssociation_cfi import tracksterSimTracksterAssociationPRbyCLUE3D  as _tracksterSimTracksterAssociationPRbyCLUE3D 
-from Validation.HGCalValidation.HGCalValidator_cff import hgcalValidatorv5 
+from Validation.HGCalValidation.HGCalValidator_cff import hgcalValidator
 from RecoLocalCalo.HGCalRecProducers.HGCalUncalibRecHit_cfi import HGCalUncalibRecHit
 from RecoHGCal.TICL.SimTracksters_cff import ticlSimTracksters
 
@@ -107,8 +107,8 @@ def customiseForTICLv5(process, enableDumper = False):
     process.tracksterSimTracksterAssociationLinking.label_tst = cms.InputTag("ticlCandidate")
     process.tracksterSimTracksterAssociationPR.label_tst = cms.InputTag("ticlCandidate")
 
-    process.tracksterSimTracksterAssociationLinkingPU.label_tst = cms.InputTag("ticlTracksterLinks")
-    process.tracksterSimTracksterAssociationPRPU.label_tst = cms.InputTag("ticlTracksterLinks")
+    process.tracksterSimTracksterAssociationLinkingPU.label_tst = cms.InputTag("ticlCandidate")
+    process.tracksterSimTracksterAssociationPRPU.label_tst = cms.InputTag("ticlCandidate")
     process.mergeTICLTask = cms.Task()
     process.pfTICL = _pfTICLProducerV5.clone()
     process.hgcalAssociators = cms.Task(process.mergedTrackstersProducer, process.lcAssocByEnergyScoreProducer, process.layerClusterCaloParticleAssociationProducer,
@@ -122,10 +122,17 @@ def customiseForTICLv5(process, enableDumper = False):
                             process.tracksterSimTracksterAssociationLinkingPU, process.tracksterSimTracksterAssociationPRPU
                             )
 
-    process.hgcalValidatorv5 = hgcalValidatorv5.clone(
+
+    labelTst = ["ticlTrackstersCLUE3DEM", "ticlTrackstersCLUE3DHAD", "ticlTracksterLinks"]
+    labelTst.extend([cms.InputTag("ticlSimTracksters", "fromCPs"), cms.InputTag("ticlSimTracksters")])
+    lcInputMask  = ["ticlTrackstersCLUE3DEM", "ticlTrackstersCLUE3DHAD", "ticlTracksterLinks"]
+    lcInputMask.extend([cms.InputTag("ticlSimTracksters", "fromCPs"), cms.InputTag("ticlSimTracksters")])
+    process.hgcalValidator = hgcalValidator.clone(
+        label_tst = cms.VInputTag(labelTst),
+        LayerClustersInputMask = cms.VInputTag(lcInputMask),
         ticlTrackstersMerge = cms.InputTag("ticlCandidate"),
-        trackstersclue3d = cms.InputTag("mergedTrackstersProducer")
     )
+
     process.hgcalValidatorSequence = cms.Sequence(process.hgcalValidatorv5)
     process.hgcalValidation = cms.Sequence(process.hgcalSimHitValidationEE+process.hgcalSimHitValidationHEF+process.hgcalSimHitValidationHEB+process.hgcalDigiValidationEE+process.hgcalDigiValidationHEF+process.hgcalDigiValidationHEB+process.hgcalRecHitValidationEE+process.hgcalRecHitValidationHEF+process.hgcalRecHitValidationHEB+process.hgcalHitValidationSequence+process.hgcalValidatorSequence+process.hgcalTiclPFValidation+process.hgcalPFJetValidation)
     process.globalValidationHGCal = cms.Sequence(process.hgcalValidation)

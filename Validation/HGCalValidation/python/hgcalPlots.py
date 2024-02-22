@@ -1763,6 +1763,67 @@ _trackster_xyz_plots.extend([Plot("trackster_z", **_common)])
 _trackster_xyz = PlotGroup("XYZ", _trackster_xyz_plots, ncols=3)
 
 #--------------------------------------------------------------------------------------------
+# CANDIDATES
+#--------------------------------------------------------------------------------------------
+
+# all candidates
+cand_plots_names = ["N of tracksters in candidate", "Candidates PDG Id", "Candidates charge", "Candidates type"]
+_candidate_nts_plots = []
+for name in cand_plots_names:
+    _candidate_nts_plots.extend([Plot(name, **_common)])
+_candidatesPlots1 = PlotGroup("General_plots_pid_type", _candidate_nts_plots, ncols=2)
+
+cand_plots_names = ["Candidates pT", "Candidates raw energy", "Candidates regressed energy"]
+_candidate_nts_plots = []
+for name in cand_plots_names:
+    _candidate_nts_plots.extend([Plot(name, **_common)])
+_candidatesPlots2 = PlotGroup("General_plots_pt_energy", _candidate_nts_plots, ncols=3)
+
+_candidatesPlots = [_candidatesPlots1, _candidatesPlots2]
+
+# divided by candidate's type
+cand_type = ["charged_hadrons", "electrons", "muons", "neutral_hadrons", "neutral_pions", "photons"]
+cand_plots_names = [" candidates PDG Id", " candidates charge", " candidates type"] 
+cand_plots_names_den = ["den_fake_cand_vs_energy_", "den_fake_cand_vs_eta_", "den_fake_cand_vs_phi_", "den_fake_cand_vs_pt_"]
+
+_all_cand_type_plots = []
+for ct in cand_type:
+    cand_type_plots = [Plot("N of tracksters in candidate for "+ct, title="N of tracksters in candidate for "+ct.replace("_", " "), **_common)]
+    for name in cand_plots_names:
+        cand_type_plots.extend([Plot(ct+name, title=ct.replace("_", " ")+name, **_common)])
+    _all_cand_type_plots.append(cand_type_plots)
+
+_all_cand_ene_plots = []
+for ct in cand_type:
+    name = "candidates regressed energy"
+    cand_type_plots = [Plot(ct+name, title=ct.replace("_", " ")+" "+name, **_common)]
+    for name in cand_plots_names_den:
+        cand_type_plots.extend([Plot(name+ct, title=ct.replace("_", " ")+" candidates "+name.replace("den_fake_cand_vs_", "").replace("_", ""), **_common)])
+    _all_cand_ene_plots.append(cand_type_plots)
+
+#efficiency and fake
+_common_eff_fake = {"stat": False, "legend": False, "xbinlabelsize": 14, "xtitle": "Default", "xbinlabeloption": "d", "ymin": 0.0, "ymax": 1.1}
+_all_cand_eff_plots = []
+for ct in cand_type:
+    cand_eff_plots = []
+    for var in ["pt", "energy", "eta", "phi"]:
+        for cut in ["track", "pid", "energy"]:
+            cand_eff_plots.extend([Plot("eff_"+ct+"_"+cut+"_"+var, title=cut + " efficiency for "+ct.replace("_", " ")+" vs "+var, ytitle="Efficiency", **_common_eff_fake)])
+    _all_cand_eff_plots.append(cand_eff_plots)
+
+_all_cand_fake_plots = []
+for ct in cand_type:
+    cand_fake_plots = []
+    for var in ["pt", "energy", "eta", "phi"]:
+        for cut in ["track", "pid", "energy"]:
+            cand_fake_plots.extend([Plot("fake_"+ct+"_"+cut+"_"+var, title=cut + " fake rate for "+ct.replace("_", " ")+" vs "+var, ytitle="Fake rate", **_common_eff_fake)])
+    _all_cand_fake_plots.append(cand_fake_plots)
+
+_allCandidatesPlots = [[],[],[],[],[],[]]
+for i in range(6):
+    _allCandidatesPlots[i].extend([PlotGroup(cand_type[i]+"_type", _all_cand_type_plots[i], ncols=2), PlotGroup(cand_type[i]+"_kin", _all_cand_ene_plots[i], ncols=3), PlotGroup(cand_type[i]+"_eff", _all_cand_eff_plots[i], ncols=3), PlotGroup(cand_type[i]+"_fake", _all_cand_fake_plots[i], ncols=3)])
+
+#--------------------------------------------------------------------------------------------
 # SIMHITS, DIGIS, RECHITS
 #--------------------------------------------------------------------------------------------
 
@@ -2840,3 +2901,29 @@ hgcalHitCalibPlotter.append("EcalDrivenGsfElectronsFromTrackster_Closest_EoverCP
         loopSubFolders=False,
         purpose=PlotPurpose.Timing, page=hitCalibrationLabel, section=hitCalibrationLabel
         ))
+
+hgcalTICLCandPlotter = Plotter()
+#def append_ticlCandidatesPlots(collection = 'ticlCandidates', name_collection = "candidates"):
+  # Appending generic plots for candiates 
+
+hgcalTICLCandPlotter.append('ticlCandidates', [
+             "DQMData/Run 1/HGCAL/Run summary/HGCalValidator/"+hgcalValidator.ticlCandidates.value(),
+            ], PlotFolder(
+            *_candidatesPlots,
+            loopSubFolders=False,
+            purpose=PlotPurpose.Timing, page="General", section="Candidates"))
+
+for i in range(6):
+    hgcalTICLCandPlotter.append('ticlCandidates', [
+             "DQMData/Run 1/HGCAL/Run summary/HGCalValidator/"+hgcalValidator.ticlCandidates.value()+"/"+cand_type[i],
+            ], PlotFolder(
+            *_allCandidatesPlots[i],
+            loopSubFolders=False,
+            purpose=PlotPurpose.Timing, page=cand_type[i], section="Candidates"))
+
+#_chgHadPlots = PlotGroup(cand_type[0], _all_cand_plots[0], ncols=4)
+#_elePlots = PlotGroup(cand_type[1], _all_cand_plots[1], ncols=4)
+#_muonsPlots = PlotGroup(cand_type[2], _all_cand_plots[2], ncols=4)
+#_neutHadPlots = PlotGroup(cand_type[3], _all_cand_plots[3], ncols=4)
+#_neutPiPlots = PlotGroup(cand_type[4], _all_cand_plots[4], ncols=4)
+#_photonsPlots = PlotGroup(cand_type[5], _all_cand_plots[5], ncols=4)

@@ -19,11 +19,12 @@ hitValLabel = 'hitValidation'
 layerClustersLabel = 'layerClusters'
 trackstersLabel = 'tracksters'
 trackstersWithEdgesLabel = 'trackstersWithEdges'
+candidatesLabel = 'candidates'
 simLabel = 'simulation'
 allLabel = 'all'
 
 collection_choices = [allLabel]
-collection_choices.extend([hitCalLabel]+[hitValLabel]+[layerClustersLabel]+[trackstersLabel]+[trackstersWithEdgesLabel]+[simLabel])
+collection_choices.extend([hitCalLabel]+[hitValLabel]+[layerClustersLabel]+[trackstersLabel]+[trackstersWithEdgesLabel]+[candidatesLabel]+[simLabel])
 
 def main(opts):
 
@@ -100,8 +101,12 @@ def main(opts):
         hgchitcalib = [hgcalPlots.hgcalHitCalibPlotter]
         val.doPlots(hgchitcalib, plotterDrawArgs=drawArgs)
 
+    def plotCand():
+        ticlcand = [hgcalPlots.hgcalTICLCandPlotter]
+        #hgcalPlots.append_ticlCandidatesPlots()
+        val.doPlots(ticlcand, plotterDrawArgs=drawArgs)
 
-    plotDict = {hitCalLabel:[plot_hitCal], hitValLabel:[plot_hitVal], layerClustersLabel:[plot_LC], trackstersLabel:[plot_Tst], trackstersWithEdgesLabel:[plot_TstEdges], simLabel:[plot_SC, plot_CP]}
+    plotDict = {hitCalLabel:[plot_hitCal], hitValLabel:[plot_hitVal], layerClustersLabel:[plot_LC], trackstersLabel:[plot_Tst], trackstersWithEdgesLabel:[plot_TstEdges], simLabel:[plot_SC, plot_CP], candidatesLabel:[plotCand]}
 
     if (opts.collection != allLabel):
         for task in plotDict[opts.collection]:
