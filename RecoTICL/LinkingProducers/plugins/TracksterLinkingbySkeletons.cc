@@ -1,7 +1,7 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include <Math/VectorUtil.h>
 #include "DataFormats/Math/interface/deltaR.h"
-#include "DataFormats/TICL/interface/Common.h"
+#include "DataFormats/TICL/interface/TileConstants.h"
 #include "DataFormats/GeometrySurface/interface/BoundDisk.h"
 #include "DataFormats/TICL/interface/Trackster.h"
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateTransform.h"

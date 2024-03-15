@@ -17,7 +17,7 @@
 #include "DataFormats/Common/interface/OrphanHandle.h"
 
 #include "DataFormats/CaloRecHit/interface/CaloCluster.h"
-#include "DataFormats/TICL/interface/Common.h"
+#include "DataFormats/TICL/interface/TileConstants.h"
 #include "DataFormats/TICL/interface/TICLLayerTile.h"
 #include "DataFormats/TICL/interface/Trackster.h"
 
