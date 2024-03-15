@@ -7,7 +7,7 @@
 
 #include <memory>
 #include <vector>
-#include "DataFormats/TICL/interface/Common.h"
+#include "DataFormats/TICL/interface/TileConstants.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "DataFormats/TICL/interface/TICLSeedingRegion.h"

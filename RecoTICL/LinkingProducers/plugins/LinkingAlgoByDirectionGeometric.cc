@@ -3,7 +3,7 @@
 #include "RecoTICL/LinkingProducers/plugins/LinkingAlgoByDirectionGeometric.h"
 
 #include "DataFormats/GeometrySurface/interface/BoundDisk.h"
-#include "DataFormats/TICL/interface/Common.h"
+#include "DataFormats/TICL/interface/TileConstants.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 

@@ -189,7 +189,7 @@ void HGCalCLUEAlgoT<T, STRATEGY>::calculateLocalDensity(const T& lt,
   auto& cellsOnLayer = cells_[layerId];
   unsigned int numberOfCells = cellsOnLayer.detid.size();
   for (unsigned int i = 0; i < numberOfCells; i++) {
-    std::array<int, 4> search_box = lt.searchBox(cellsOnLayer.dim1[i] - delta,
+    std::array<int, 4> search_box = lt.getSearchBox(cellsOnLayer.dim1[i] - delta,
                                                  cellsOnLayer.dim1[i] + delta,
                                                  cellsOnLayer.dim2[i] - delta,
                                                  cellsOnLayer.dim2[i] + delta);
@@ -220,7 +220,7 @@ void HGCalCLUEAlgoT<T, STRATEGY>::calculateLocalDensity(const T& lt,
   auto& cellsOnLayer = cells_[layerId];
   unsigned int numberOfCells = cellsOnLayer.detid.size();
   for (unsigned int i = 0; i < numberOfCells; i++) {
-    std::array<int, 4> search_box = lt.searchBox(cellsOnLayer.dim1[i] - delta,
+    std::array<int, 4> search_box = lt.getSearchBox(cellsOnLayer.dim1[i] - delta,
                                                  cellsOnLayer.dim1[i] + delta,
                                                  cellsOnLayer.dim2[i] - delta,
                                                  cellsOnLayer.dim2[i] + delta);
@@ -228,7 +228,7 @@ void HGCalCLUEAlgoT<T, STRATEGY>::calculateLocalDensity(const T& lt,
     float northeast(0), northwest(0), southeast(0), southwest(0), all(0);
     for (int etaBin = search_box[0]; etaBin < search_box[1] + 1; ++etaBin) {
       for (int phiBin = search_box[2]; phiBin < search_box[3] + 1; ++phiBin) {
-        int phi = (phiBin % T::type::nRows);
+        int phi = (phiBin % T::nRows);
         int binId = lt.getGlobalBinByBin(etaBin, phi);
         size_t binSize = lt[binId].size();
         for (unsigned int j = 0; j < binSize; j++) {
@@ -299,7 +299,7 @@ void HGCalCLUEAlgoT<T, STRATEGY>::calculateDistanceToHigher(const T& lt, const u
     float i_delta = maxDelta;
     int i_nearestHigher = -1;
     auto range = outlierDeltaFactor_ * delta;
-    std::array<int, 4> search_box = lt.searchBox(cellsOnLayer.dim1[i] - range,
+    std::array<int, 4> search_box = lt.getSearchBox(cellsOnLayer.dim1[i] - range,
                                                  cellsOnLayer.dim1[i] + range,
                                                  cellsOnLayer.dim2[i] - range,
                                                  cellsOnLayer.dim2[i] + range);
@@ -309,7 +309,7 @@ void HGCalCLUEAlgoT<T, STRATEGY>::calculateDistanceToHigher(const T& lt, const u
         // get the id of this bin
         size_t binId = lt.getGlobalBinByBin(dim1Bin, dim2Bin);
         if constexpr (std::is_same_v<STRATEGY, HGCalScintillatorStrategy>)
-          binId = lt.getGlobalBinByBin(dim1Bin, (dim2Bin % T::type::nRows));
+          binId = lt.getGlobalBinByBin(dim1Bin, (dim2Bin % T::nRows));
         // get the size of this bin
         size_t binSize = lt[binId].size();
 

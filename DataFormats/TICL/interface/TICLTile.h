@@ -1,12 +1,12 @@
 // Authors: Felice Pantaleo - felice.pantaleo@cern.ch, Aurora Perego aurora.perego@cern.ch
 // Date: 03/2024
 
-#ifndef DataFormats_TICL_TICLTiles_h
-#define DataFormats_TICL_TICLTiles_h
+#ifndef DataFormats_TICL_TICLTile_h
+#define DataFormats_TICL_TICLTile_h
 
 #include "DataFormats/Math/interface/normalizedPhi.h"
 #include "DataFormats/Math/interface/constexpr_cmath.h"
-#include "DataFormats/TICL/interface/Common.h"
+#include "DataFormats/TICL/interface/TileConstants.h"
 #include <vector>
 #include <array>
 #include <cmath>
@@ -27,24 +27,32 @@
 //int main() { ticl::TileConstantsEtaPhi<-3.f, 21.f/7.f, -3.14f, 3.14f, 0.2f> tile; }
 namespace ticl {
 template <typename T, typename objType = int>
-class Tiles {
+class Tile {
 public:
   typedef T type;
   /**
-     * @brief fill the tile 
-     * 
+     * @brief fill the tile
+     *
      * @param[in] dim1 represents x or eta
      * @param[in] dim2 represents y or phi
-     * 
+     *
     */
   void fill(const float dim1, const float dim2, const objType& obj) {
     auto idx = getGlobalBin(dim1, dim2);
     tiles_[idx].push_back(obj);
   }
 
-  /** 
+  void fill(const std::vector<float>& dim1, const std::vector<float>& dim2) {
+    auto cellsSize = dim1.size();
+    for (unsigned int i = 0; i < cellsSize; ++i) {
+      auto idx = getGlobalBin(dim1[i], dim2[i]);
+      tiles_[idx].push_back(i);
+    }
+  }
+
+  /**
     * @brief compute bin for dim1 (x or eta)
-    * 
+    *
     * @param[in] dim for binning
     * @return computed bin
     */
@@ -57,14 +65,14 @@ public:
     return dimBin;
   }
 
-  /** 
+  /**
     * @brief compute bin for dim2 (y or phi)
-    * 
-    * @param[in] dim for bining
+    *
+    * @param[in] dim for binning
     * @return computed bin
     */
   int getDim2Bin(float dim2) const {
-    if constexpr (T::wrapped) {
+    if constexpr (not T::wrapped) {
       constexpr float dimRange = T::maxDim2 - T::minDim2;
       static_assert(dimRange >= 0.);
       constexpr float r = nRows / dimRange;
@@ -117,10 +125,10 @@ public:
 
   const std::vector<objType>& operator[](int globalBinId) const { return tiles_[globalBinId]; }
 
-private:
   static constexpr int nColumns = reco::ceil((T::maxDim1 - T::minDim1) / T::tileSize);
   static constexpr int nRows = reco::ceil((T::maxDim2 - T::minDim2) / T::tileSize);
   static constexpr int nTiles = nColumns * nRows;
+private:
   std::array<std::vector<objType>, nTiles> tiles_;
 
 
@@ -128,6 +136,8 @@ private:
 
 }  // namespace ticl
 
-
+using HGCalSiliconLayerTiles = ticl::Tile<ticl::TileConstantsEndcap_XY>;
+using HGCalScintillatorLayerTiles = ticl::Tile<ticl::TileConstantsGlobal_EtaPhi>;
+using HFNoseLayerTiles = ticl::Tile<ticl::TileConstantsHFNose_XY>;
 
 #endif

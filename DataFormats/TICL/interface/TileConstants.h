@@ -1,5 +1,5 @@
-#ifndef DataFormats_TICL_Common_h
-#define DataFormats_TICL_Common_h
+#ifndef DataFormats_TICL_TileConstants_h
+#define DataFormats_TICL_TileConstants_h
 
 #include <vector>
 #include <array>
@@ -42,12 +42,12 @@ namespace ticl {
     static constexpr float maxDim1 = 1.5f;
     static constexpr float minDim2 = -M_PI;
     static constexpr float maxDim2 = M_PI;
-             static constexpr bool wrapped = true;
+    static constexpr bool wrapped = true;
   };
 
 
   struct TileConstantsEndcap_XY {
-  static constexpr float tileSize = 5.f;
+    static constexpr float tileSize = 5.f;
     static constexpr float minDim1 = -285.f;
     static constexpr float maxDim1 = 285.f;
     static constexpr float minDim2 = -285.f;
@@ -56,10 +56,15 @@ namespace ticl {
 
   };
 
+  struct TileConstantsHFNose_XY {
+    static constexpr float tileSize = 5.f;
+    static constexpr float minDim1 = -110.f;
+    static constexpr float maxDim1 = 110.f;
+    static constexpr float minDim2 = -110.f;
+    static constexpr float maxDim2 = 110.f;
+    static constexpr bool wrapped = false;
+  };
 
-}  // namespace ticl
-
-namespace ticl {
   struct TileConstants {
     static constexpr float minEta = 1.5f;
     static constexpr float maxEta = 3.2f;

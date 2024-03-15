@@ -4,7 +4,7 @@
 #include "DataFormats/TICL/interface/MtdHostCollection.h"
 #include "DataFormats/TICL/interface/Trackster.h"
 #include "DataFormats/TICL/interface/TICLLayerTile.h"
-#include "DataFormats/TICL/interface/HGCalLayerTiles.h"
+#include "DataFormats/TICL/interface/TICLTile.h"
 #include "DataFormats/TICL/interface/TICLSeedingRegion.h"
 #include "DataFormats/TICL/interface/TICLCandidate.h"
 #include "DataFormats/Common/interface/Wrapper.h"
