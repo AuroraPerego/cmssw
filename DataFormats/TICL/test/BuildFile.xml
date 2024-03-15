@@ -1,4 +1,9 @@
-<bin   name="EtaPhiSearchInTile" file="EtaPhiSearchInTile_t.cpp">
+<bin   name="EtaPhiSearchInTICLTile" file="EtaPhiSearchInTICLTile_t.cpp">
   <use name="catch2"/>
+  <use name="DataFormats/TICL" />
+</bin>
+
+<bin   name="EtaPhiSearchInTICLTileLC" file="EtaPhiSearchInHGCalTile_t.cpp">
+  <use name="catch2" />
   <use name="DataFormats/TICL" />
 </bin>

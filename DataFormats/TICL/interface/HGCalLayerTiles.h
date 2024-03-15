@@ -4,9 +4,9 @@
 #ifndef RecoLocalCalo_HGCalRecProducers_HGCalLayerTiles_h
 #define RecoLocalCalo_HGCalRecProducers_HGCalLayerTiles_h
 
-#include "RecoLocalCalo/HGCalRecProducers/interface/HGCalTilesConstants.h"
-#include "RecoLocalCalo/HGCalRecProducers/interface/HFNoseTilesConstants.h"
-#include "RecoLocalCalo/HGCalRecProducers/interface/HGCalTilesWrapper.h"
+#include "DataFormats/TICL/interface/HGCalTilesConstants.h"
+#include "DataFormats/TICL/interface/HFNoseTilesConstants.h"
+#include "DataFormats/TICL/interface/HGCalTilesWrapper.h"
 #include "DataFormats/Math/interface/normalizedPhi.h"
 
 #include <vector>
@@ -20,11 +20,11 @@ class HGCalLayerTilesT {
 public:
   typedef T type;
   /**
-     * @brief fill the tile 
-     * 
+     * @brief fill the tile
+     *
      * @param[in] dim1 represents x or eta
      * @param[in] dim2 represents y or phils
-     * 
+     *
     */
   void fill(const std::vector<float>& dim1, const std::vector<float>& dim2) {
     auto cellsSize = dim1.size();
@@ -33,9 +33,9 @@ public:
       tiles_[idx].push_back(i);
     }
   }
-  /** 
+  /**
     * @brief compute bin for dim1 (x or eta)
-    * 
+    *
     * @param[in] dim for bining
     * @return computed bin
     */
@@ -48,9 +48,9 @@ public:
     return dimBin;
   }
 
-  /** 
+  /**
     * @brief compute bin for dim2 (y or phi)
-    * 
+    *
     * @param[in] dim for bining
     * @return computed bin
     */

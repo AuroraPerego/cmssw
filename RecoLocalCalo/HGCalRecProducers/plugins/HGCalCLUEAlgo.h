@@ -15,7 +15,7 @@
 #include "DataFormats/Math/interface/Point3D.h"
 #include "DataFormats/Math/interface/deltaPhi.h"
 
-#include "RecoLocalCalo/HGCalRecProducers/interface/HGCalLayerTiles.h"
+#include "DataFormats/TICL/interface/HGCalLayerTiles.h"
 #include "RecoLocalCalo/HGCalRecProducers/interface/HGCalCLUEStrategy.h"
 
 #include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"
