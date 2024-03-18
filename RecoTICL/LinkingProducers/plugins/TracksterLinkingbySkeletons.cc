@@ -313,19 +313,19 @@ void TracksterLinkingbySkeletons::linkTracksters(
     auto const &skeleton = skeletons[t_idx];
 
     auto const bary = trackster.barycenter();
-    float eta_min = std::max(abs(bary.eta()) - del_, TileConstants::minEta);
-    float eta_max = std::min(abs(bary.eta()) + del_, TileConstants::maxEta);
+    float eta_min = std::max(abs(bary.eta()) - del_, TileConstants::minDim1);
+    float eta_max = std::min(abs(bary.eta()) + del_, TileConstants::maxDim1);
     int tileIndex = bary.eta() > 0.f;
     const auto &tiles = tracksterTile[tileIndex];
-    std::array<int, 4> search_box = tiles.searchBoxEtaPhi(eta_min, eta_max, bary.phi() - del_, bary.phi() + del_);
+    std::array<int, 4> search_box = tiles.getSearchBox(eta_min, eta_max, bary.phi() - del_, bary.phi() + del_);
     if (search_box[2] > search_box[3]) {
-      search_box[3] += TileConstants::nPhiBins;
+      search_box[3] += tiles.nRows;
     }
 
     for (int eta_i = search_box[0]; eta_i <= search_box[1]; ++eta_i) {
       for (int phi_i = search_box[2]; phi_i <= search_box[3]; ++phi_i) {
-        auto &neighbours = tiles[tiles.globalBin(eta_i, (phi_i % TileConstants::nPhiBins))];
-        for (auto n : neighbours) {
+        auto &neighbours = tiles[tiles.getGlobalBinByBin(eta_i, (phi_i % tiles.nRows))];
+        for (unsigned int n : neighbours) {
           if (t_idx == n)
             continue;
           if (maskReceivedLink[n] == 0 or allNodes[t_idx].isInnerNeighbour(n))

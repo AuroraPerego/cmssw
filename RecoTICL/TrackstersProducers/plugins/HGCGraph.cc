@@ -53,8 +53,8 @@ void HGCGraphT<TILES>::makeAndConnectDoublets(const TILES &histo,
       const auto &firstLayerHisto = histo[firstLayerOnZSide];
       origin_eta = r.origin.eta();
       origin_phi = r.origin.phi();
-      int entryEtaBin = firstLayerHisto.etaBin(origin_eta);
-      int entryPhiBin = firstLayerHisto.phiBin(origin_phi);
+      int entryEtaBin = firstLayerHisto.getDim1Bin(origin_eta);
+      int entryPhiBin = firstLayerHisto.getDim2Bin(origin_phi);
       // For track-seeded iterations, if the impact point is below a certain
       // eta-threshold, i.e., it has higher eta, make the initial search
       // window bigger in both eta and phi by one bin, to contain better low
@@ -74,15 +74,15 @@ void HGCGraphT<TILES>::makeAndConnectDoublets(const TILES &histo,
       if (verbosity_ > ticl::VerbosityLevel::Guru) {
         LogDebug("HGCGraph") << " Entrance eta, phi: " << origin_eta << ", " << origin_phi
                              << " entryEtaBin: " << entryEtaBin << " entryPhiBin: " << entryPhiBin
-                             << " globalBin: " << firstLayerHisto.globalBin(origin_eta, origin_phi)
+                             << " globalBin: " << firstLayerHisto.getGlobalBin(origin_eta, origin_phi)
                              << " on layer: " << firstLayerOnZSide << " startEtaBin: " << startEtaBin
                              << " endEtaBin: " << endEtaBin << " startPhiBin: " << startPhiBin
-                             << " endPhiBin: " << endPhiBin << " phiBin(0): " << firstLayerHisto.phiBin(0.)
-                             << " phiBin(" << M_PI / 2. << "): " << firstLayerHisto.phiBin(M_PI / 2.) << " phiBin("
-                             << M_PI << "): " << firstLayerHisto.phiBin(M_PI) << " phiBin(" << -M_PI / 2.
-                             << "): " << firstLayerHisto.phiBin(-M_PI / 2.) << " phiBin(" << -M_PI
-                             << "): " << firstLayerHisto.phiBin(-M_PI) << " phiBin(" << 2. * M_PI
-                             << "): " << firstLayerHisto.phiBin(2. * M_PI) << std::endl;
+                             << " endPhiBin: " << endPhiBin << " getDim2Bin(0): " << firstLayerHisto.getDim2Bin(0.)
+                             << " getDim2Bin(" << M_PI / 2. << "): " << firstLayerHisto.getDim2Bin(M_PI / 2.) << " phiBin("
+                             << M_PI << "): " << firstLayerHisto.getDim2Bin(M_PI) << " phiBin(" << -M_PI / 2.
+                             << "): " << firstLayerHisto.getDim2Bin(-M_PI / 2.) << " phiBin(" << -M_PI
+                             << "): " << firstLayerHisto.getDim2Bin(-M_PI) << " phiBin(" << 2. * M_PI
+                             << "): " << firstLayerHisto.getDim2Bin(2. * M_PI) << std::endl;
       }
     }
 
@@ -95,7 +95,7 @@ void HGCGraphT<TILES>::makeAndConnectDoublets(const TILES &histo,
         maxRSquared = (il <= lastLayerEE)   ? siblings_maxRSquared[0]
                       : (il <= lastLayerFH) ? siblings_maxRSquared[1]
                                             : siblings_maxRSquared[2];
-        const int etaLimitIncreaseWindowBin = innerLayerHisto.etaBin(etaLimitIncreaseWindow);
+        const int etaLimitIncreaseWindowBin = innerLayerHisto.getDim1Bin(etaLimitIncreaseWindow);
         if (verbosity_ > ticl::VerbosityLevel::Advanced) {
           LogDebug("HGCGraph") << "Limit of Eta for increase: " << etaLimitIncreaseWindow
                                << " at etaBin: " << etaLimitIncreaseWindowBin << std::endl;

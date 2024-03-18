@@ -72,8 +72,8 @@ void PatternRecognitionbyCA<TILES>::makeTracksters(
   }
 
   constexpr auto isHFnose = std::is_same<TILES, TICLLayerTilesHFNose>::value;
-  constexpr int nEtaBin = TILES::constants_type_t::nEtaBins;
-  constexpr int nPhiBin = TILES::constants_type_t::nPhiBins;
+  constexpr int nEtaBin = TILES::tile_type_t::nColumns;
+  constexpr int nPhiBin = TILES::tile_type_t::nRows;
 
   bool isRegionalIter = (input.regions[0].index != -1);
   std::vector<HGCDoublet::HGCntuplet> foundNtuplets;

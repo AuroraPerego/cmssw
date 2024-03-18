@@ -13,16 +13,16 @@ int countEntries(const TICLLayerTile &t, const std::array<int, 4> &limits) {
   int entries = 0;
   for (int e = limits[0]; e <= limits[1]; ++e) {
     for (int p = limits[2]; p <= limits[3]; ++p) {
-      int phi = (p % TICLLayerTile::type::nPhiBins);
-      auto global_bin = t.globalBin(e, phi);
+      int phi = (p % TICLLayerTile::nRows);
+      auto global_bin = t.getGlobalBinByBin(e, phi);
       entries += t[global_bin].size();
     }
   }
   return entries;
 }
 
-TEST_CASE("Check the correct phi wrapping", "searchBoxEtaPhi") {
-  auto constexpr phiBins = TICLLayerTile::type::nPhiBins;
+TEST_CASE("Check the correct phi wrapping", "getSearchBox") {
+  auto constexpr phiBins = TICLLayerTile::nRows;
   auto constexpr phi_bin_width = 2. * M_PI / phiBins;
   auto constexpr phi_transition_left = M_PI - phi_bin_width / 2.;
   auto constexpr phi_transition_right = M_PI + phi_bin_width / 2.;
@@ -36,10 +36,10 @@ TEST_CASE("Check the correct phi wrapping", "searchBoxEtaPhi") {
   TICLLayerTile t, t2, t_neg;
   std::cout << "Testing a Tile with " << phiBins << " bins with binwidth: " << phi_bin_width << " at bin transition"
             << std::endl;
-  std::cout << "Filling left-pi bin: " << t.phiBin(phi_transition_left) << std::endl;
-  std::cout << "Filling right-pi bin: " << t.phiBin(phi_transition_right) << std::endl;
-  std::cout << "Filling right2-pi bin: " << t.phiBin(phi_transition_right2) << std::endl;
-  std::cout << "Filling right3-pi bin: " << t.phiBin(phi_transition_right3) << std::endl;
+  std::cout << "Filling left-pi bin: " << t.getDim2Bin(phi_transition_left) << std::endl;
+  std::cout << "Filling right-pi bin: " << t.getDim2Bin(phi_transition_right) << std::endl;
+  std::cout << "Filling right2-pi bin: " << t.getDim2Bin(phi_transition_right2) << std::endl;
+  std::cout << "Filling right3-pi bin: " << t.getDim2Bin(phi_transition_right3) << std::endl;
 
   for (unsigned int i = 0; i < entries_left; ++i) {
     t.fill(eta, phi_transition_left, i);
@@ -54,11 +54,11 @@ TEST_CASE("Check the correct phi wrapping", "searchBoxEtaPhi") {
   }
 
   SECTION("Phi bins from positive and negative pi") {
-    REQUIRE(t.phiBin(phi_transition_right2) == t.phiBin(phi_transition_right3));
+    REQUIRE(t.getDim2Bin(phi_transition_right2) == t.getDim2Bin(phi_transition_right3));
   }
 
   SECTION("Symmetric case around pi") {
-    auto limits = t.searchBoxEtaPhi(1.95, 2.05, phi_transition_left, phi_transition_right);
+    auto limits = t.getSearchBox(1.95, 2.05, phi_transition_left, phi_transition_right);
 
     std::cout << "Limits are: " << limits[0] << " " << limits[1] << " " << limits[2] << " " << limits[3] << std::endl;
     REQUIRE(limits[0] <= limits[1]);
@@ -69,7 +69,7 @@ TEST_CASE("Check the correct phi wrapping", "searchBoxEtaPhi") {
   }
 
   SECTION("Asymmetric case around pi, negative") {
-    auto limits = t2.searchBoxEtaPhi(1.95, 2.05, phi_transition_left, phi_transition_right2);
+    auto limits = t2.getSearchBox(1.95, 2.05, phi_transition_left, phi_transition_right2);
 
     std::cout << "Limits are: " << limits[0] << " " << limits[1] << " " << limits[2] << " " << limits[3] << std::endl;
     REQUIRE(limits[0] <= limits[1]);
@@ -80,7 +80,7 @@ TEST_CASE("Check the correct phi wrapping", "searchBoxEtaPhi") {
   }
 
   SECTION("Asymmetric case around pi, positive") {
-    auto limits = t2.searchBoxEtaPhi(1.95, 2.05, phi_transition_left, phi_transition_right3);
+    auto limits = t2.getSearchBox(1.95, 2.05, phi_transition_left, phi_transition_right3);
 
     std::cout << "Limits are: " << limits[0] << " " << limits[1] << " " << limits[2] << " " << limits[3] << std::endl;
     REQUIRE(limits[0] <= limits[1]);
@@ -91,7 +91,7 @@ TEST_CASE("Check the correct phi wrapping", "searchBoxEtaPhi") {
   }
 
   SECTION("Correct all negative eta searchRange") {
-    auto limits = t_neg.searchBoxEtaPhi(-2.45, -2.35, phi_transition_left, phi_transition_right2);
+    auto limits = t_neg.getSearchBox(-2.45, -2.35, phi_transition_left, phi_transition_right2);
 
     std::cout << "Limits are: " << limits[0] << " " << limits[1] << " " << limits[2] << " " << limits[3] << std::endl;
     REQUIRE(limits[0] <= limits[1]);
@@ -102,7 +102,7 @@ TEST_CASE("Check the correct phi wrapping", "searchBoxEtaPhi") {
   }
 
   SECTION("Correct all positive overflow eta searchRange") {
-    auto limits = t.searchBoxEtaPhi(0., 5., phi_transition_left, phi_transition_right2);
+    auto limits = t.getSearchBox(0., 5., phi_transition_left, phi_transition_right2);
 
     std::cout << "Limits are: " << limits[0] << " " << limits[1] << " " << limits[2] << " " << limits[3] << std::endl;
     REQUIRE(limits[0] <= limits[1]);
@@ -113,7 +113,7 @@ TEST_CASE("Check the correct phi wrapping", "searchBoxEtaPhi") {
   }
 
   SECTION("Wrong mixed signs (neg,pos) eta searchRange") {
-    auto limits = t.searchBoxEtaPhi(-2.05, 1.95, phi_transition_left, phi_transition_right2);
+    auto limits = t.getSearchBox(-2.05, 1.95, phi_transition_left, phi_transition_right2);
 
     std::cout << "Limits are: " << limits[0] << " " << limits[1] << " " << limits[2] << " " << limits[3] << std::endl;
     REQUIRE(limits[0] == limits[1]);
@@ -126,7 +126,7 @@ TEST_CASE("Check the correct phi wrapping", "searchBoxEtaPhi") {
   }
 
   SECTION("Wrong mixed signs (pos,neg) eta searchRange") {
-    auto limits = t.searchBoxEtaPhi(2.05, -1.95, phi_transition_left, phi_transition_right2);
+    auto limits = t.getSearchBox(2.05, -1.95, phi_transition_left, phi_transition_right2);
 
     std::cout << "Limits are: " << limits[0] << " " << limits[1] << " " << limits[2] << " " << limits[3] << std::endl;
     REQUIRE(limits[0] == limits[1]);
@@ -139,7 +139,7 @@ TEST_CASE("Check the correct phi wrapping", "searchBoxEtaPhi") {
   }
 
   SECTION("Wrong all positive eta searchRange") {
-    auto limits = t.searchBoxEtaPhi(2.05, 1.95, phi_transition_left, phi_transition_right2);
+    auto limits = t.getSearchBox(2.05, 1.95, phi_transition_left, phi_transition_right2);
 
     std::cout << "Limits are: " << limits[0] << " " << limits[1] << " " << limits[2] << " " << limits[3] << std::endl;
     REQUIRE(limits[0] == limits[1]);
@@ -152,7 +152,7 @@ TEST_CASE("Check the correct phi wrapping", "searchBoxEtaPhi") {
   }
 
   SECTION("Wrong all negative eta searchRange") {
-    auto limits = t.searchBoxEtaPhi(-1.95, -2.05, phi_transition_left, phi_transition_right2);
+    auto limits = t.getSearchBox(-1.95, -2.05, phi_transition_left, phi_transition_right2);
 
     std::cout << "Limits are: " << limits[0] << " " << limits[1] << " " << limits[2] << " " << limits[3] << std::endl;
     REQUIRE(limits[0] == limits[1]);

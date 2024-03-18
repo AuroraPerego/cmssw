@@ -75,7 +75,7 @@ void TICLLayerTileProducer::produce(edm::Event &evt, const edm::EventSetup &) {
     else
       result->fill(layer, lc.eta(), lc.phi(), lcId);
     LogDebug("TICLLayerTileProducer") << "Adding layerClusterId: " << lcId << " into bin [eta,phi]: [ "
-                                      << (*result)[layer].etaBin(lc.eta()) << ", " << (*result)[layer].phiBin(lc.phi())
+                                      << (*result)[layer].getDim1Bin(lc.eta()) << ", " << (*result)[layer].getDim2Bin(lc.phi())
                                       << "] for layer: " << layer << std::endl;
     lcId++;
   }

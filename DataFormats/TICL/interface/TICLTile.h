@@ -42,6 +42,7 @@ public:
     tiles_[idx].push_back(obj);
   }
 
+  template <typename = std::enable_if_t<std::is_integral_v<objType>>>
   void fill(const std::vector<float>& dim1, const std::vector<float>& dim2) {
     auto cellsSize = dim1.size();
     for (unsigned int i = 0; i < cellsSize; ++i) {
@@ -58,9 +59,9 @@ public:
     */
   int getDim1Bin(float dim) const {
     constexpr float dimRange = T::maxDim1 - T::minDim1;
-    static_assert(dimRange >= 0.);
+    static_assert(dimRange >= 0.f);
     constexpr float r = nColumns / dimRange;
-    int dimBin = (dim - T::minDim1) * r;
+    int dimBin = T::absDim1 ? (std::abs(dim) - T::minDim1) * r : (dim - T::minDim1) * r;
     dimBin = std::clamp(dimBin, 0, nColumns - 1);
     return dimBin;
   }
@@ -74,7 +75,7 @@ public:
   int getDim2Bin(float dim2) const {
     if constexpr (not T::wrapped) {
       constexpr float dimRange = T::maxDim2 - T::minDim2;
-      static_assert(dimRange >= 0.);
+      static_assert(dimRange >= 0.f);
       constexpr float r = nRows / dimRange;
       int dimBin = (dim2 - T::minDim2) * r;
       dimBin = std::clamp(dimBin, 0, nRows - 1);
@@ -104,11 +105,21 @@ public:
       if (dim1Max - dim1Min < 0) {
         return std::array<int, 4>({{0, 0, 0, 0}});
       }
+      if constexpr(T::absDim1) {
+        if (dim1Max * dim1Min < 0) {
+          return std::array<int, 4>({{0, 0, 0, 0}});
+        }
+      }
     }
     int dim1BinMin = getDim1Bin(dim1Min);
     int dim1BinMax = getDim1Bin(dim1Max);
     int dim2BinMin = getDim2Bin(dim2Min);
     int dim2BinMax = getDim2Bin(dim2Max);
+    if constexpr(T::absDim1) {
+      if (dim1Min < 0) {
+          std::swap(dim1BinMin, dim1BinMax);
+      }
+    }
     if constexpr (T::wrapped) {
       if (dim2BinMax < dim2BinMin) {
         dim2BinMax += nRows;
@@ -116,7 +127,6 @@ public:
     }
     return std::array<int, 4>({{dim1BinMin, dim1BinMax, dim2BinMin, dim2BinMax}});
   }
-
 
   void clear() {
     for (auto& t : tiles_)

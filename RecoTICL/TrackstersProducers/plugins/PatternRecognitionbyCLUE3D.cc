@@ -49,8 +49,8 @@ PatternRecognitionbyCLUE3D<TILES>::PatternRecognitionbyCLUE3D(const edm::Paramet
 
 template <typename TILES>
 void PatternRecognitionbyCLUE3D<TILES>::dumpTiles(const TILES &tiles) const {
-  constexpr int nEtaBin = TILES::constants_type_t::nEtaBins;
-  constexpr int nPhiBin = TILES::constants_type_t::nPhiBins;
+  constexpr int nEtaBin = TILES::tile_type_t::nColumns;
+  constexpr int nPhiBin = TILES::tile_type_t::nRows;
   auto lastLayerPerSide = static_cast<int>(rhtools_.lastLayer(false));
   int maxLayer = 2 * lastLayerPerSide - 1;
   for (int layer = 0; layer <= maxLayer; layer++) {
@@ -124,8 +124,8 @@ void PatternRecognitionbyCLUE3D<TILES>::dumpClusters(const TILES &tiles,
             << std::setw(4) << eventNumber << ", " << std::setw(3) << layer << ", " << std::setw(4)
             << thisLayer.isSeed[num] << ", " << std::setprecision(3) << std::fixed << v << ", " << thisLayer.y[num]
             << ", " << thisLayer.z[num] << ", " << thisLayer.r_over_absz[num] << ", " << thisLayer.eta[num] << ", "
-            << thisLayer.phi[num] << ", " << std::setw(5) << tiles[layer].etaBin(thisLayer.eta[num]) << ", "
-            << std::setw(5) << tiles[layer].phiBin(thisLayer.phi[num]) << ", " << std::setw(4) << thisLayer.cells[num]
+            << thisLayer.phi[num] << ", " << std::setw(5) << tiles[layer].getDim1Bin(thisLayer.eta[num]) << ", "
+            << std::setw(5) << tiles[layer].getDim2Bin(thisLayer.phi[num]) << ", " << std::setw(4) << thisLayer.cells[num]
             << ", " << std::setprecision(3) << thisLayer.energy[num] << ", "
             << (thisLayer.energy[num] / thisLayer.rho[num]) << ", " << thisLayer.rho[num] << ", "
             << thisLayer.z_extension[num] << ", " << std::scientific << thisLayer.delta[num].first << ", "
@@ -515,8 +515,8 @@ void PatternRecognitionbyCLUE3D<TILES>::energyRegressionAndID(const std::vector<
 template <typename TILES>
 void PatternRecognitionbyCLUE3D<TILES>::calculateLocalDensity(
     const TILES &tiles, const int layerId, const std::vector<std::pair<int, int>> &layerIdx2layerandSoa) {
-  constexpr int nEtaBin = TILES::constants_type_t::nEtaBins;
-  constexpr int nPhiBin = TILES::constants_type_t::nPhiBins;
+  constexpr int nEtaBin = TILES::tile_type_t::nColumns;
+  constexpr int nPhiBin = TILES::tile_type_t::nRows;
   auto &clustersOnLayer = clusters_[layerId];
   unsigned int numberOfClusters = clustersOnLayer.x.size();
 
@@ -555,10 +555,10 @@ void PatternRecognitionbyCLUE3D<TILES>::calculateLocalDensity(
       }
       const int etaWindow = 2;
       const int phiWindow = 2;
-      int etaBinMin = std::max(tileOnLayer.etaBin(clustersOnLayer.eta[i]) - etaWindow, 0);
-      int etaBinMax = std::min(tileOnLayer.etaBin(clustersOnLayer.eta[i]) + etaWindow, nEtaBin - 1);
-      int phiBinMin = tileOnLayer.phiBin(clustersOnLayer.phi[i]) - phiWindow;
-      int phiBinMax = tileOnLayer.phiBin(clustersOnLayer.phi[i]) + phiWindow;
+      int etaBinMin = std::max(tileOnLayer.getDim1Bin(clustersOnLayer.eta[i]) - etaWindow, 0);
+      int etaBinMax = std::min(tileOnLayer.getDim1Bin(clustersOnLayer.eta[i]) + etaWindow, nEtaBin - 1);
+      int phiBinMin = tileOnLayer.getDim2Bin(clustersOnLayer.phi[i]) - phiWindow;
+      int phiBinMax = tileOnLayer.getDim2Bin(clustersOnLayer.phi[i]) + phiWindow;
       if (PatternRecognitionAlgoBaseT<TILES>::algo_verbosity_ > VerbosityLevel::Advanced) {
         edm::LogVerbatim("PatternRecognitionbyCLUE3D") << "eta: " << clustersOnLayer.eta[i];
         edm::LogVerbatim("PatternRecognitionbyCLUE3D") << "phi: " << clustersOnLayer.phi[i];
@@ -577,7 +577,7 @@ void PatternRecognitionbyCLUE3D<TILES>::calculateLocalDensity(
             edm::LogVerbatim("PatternRecognitionbyCLUE3D")
                 << "Entries in tileBin: " << tileOnLayer[offset + iphi].size();
           }
-          for (auto otherClusterIdx : tileOnLayer[offset + iphi]) {
+          for (unsigned int otherClusterIdx : tileOnLayer[offset + iphi]) {
             auto const &layerandSoa = layerIdx2layerandSoa[otherClusterIdx];
             // Skip masked layer clusters
             if ((layerandSoa.first == -1) && (layerandSoa.second == -1)) {
@@ -671,8 +671,8 @@ void PatternRecognitionbyCLUE3D<TILES>::calculateLocalDensity(
 template <typename TILES>
 void PatternRecognitionbyCLUE3D<TILES>::calculateDistanceToHigher(
     const TILES &tiles, const int layerId, const std::vector<std::pair<int, int>> &layerIdx2layerandSoa) {
-  constexpr int nEtaBin = TILES::constants_type_t::nEtaBins;
-  constexpr int nPhiBin = TILES::constants_type_t::nPhiBins;
+  constexpr int nEtaBin = TILES::tile_type_t::nColumns;
+  constexpr int nPhiBin = TILES::tile_type_t::nRows;
   auto &clustersOnLayer = clusters_[layerId];
   unsigned int numberOfClusters = clustersOnLayer.x.size();
 
@@ -685,8 +685,8 @@ void PatternRecognitionbyCLUE3D<TILES>::calculateDistanceToHigher(
     if (PatternRecognitionAlgoBaseT<TILES>::algo_verbosity_ > VerbosityLevel::Advanced) {
       edm::LogVerbatim("PatternRecognitionbyCLUE3D")
           << "Starting searching nearestHigher on " << layerId << " with rho: " << clustersOnLayer.rho[i]
-          << " at eta, phi: " << tiles[layerId].etaBin(clustersOnLayer.eta[i]) << ", "
-          << tiles[layerId].phiBin(clustersOnLayer.phi[i]);
+          << " at eta, phi: " << tiles[layerId].getDim1Bin(clustersOnLayer.eta[i]) << ", "
+          << tiles[layerId].getDim2Bin(clustersOnLayer.phi[i]);
     }
     // We need to partition the two sides of the HGCAL detector
     auto lastLayerPerSide = static_cast<int>(rhtools_.lastLayer(false));
@@ -710,10 +710,10 @@ void PatternRecognitionbyCLUE3D<TILES>::calculateDistanceToHigher(
       const auto &tileOnLayer = tiles[currentLayer];
       int etaWindow = 1;
       int phiWindow = 1;
-      int etaBinMin = std::max(tileOnLayer.etaBin(clustersOnLayer.eta[i]) - etaWindow, 0);
-      int etaBinMax = std::min(tileOnLayer.etaBin(clustersOnLayer.eta[i]) + etaWindow, nEtaBin - 1);
-      int phiBinMin = tileOnLayer.phiBin(clustersOnLayer.phi[i]) - phiWindow;
-      int phiBinMax = tileOnLayer.phiBin(clustersOnLayer.phi[i]) + phiWindow;
+      int etaBinMin = std::max(tileOnLayer.getDim1Bin(clustersOnLayer.eta[i]) - etaWindow, 0);
+      int etaBinMax = std::min(tileOnLayer.getDim1Bin(clustersOnLayer.eta[i]) + etaWindow, nEtaBin - 1);
+      int phiBinMin = tileOnLayer.getDim2Bin(clustersOnLayer.phi[i]) - phiWindow;
+      int phiBinMax = tileOnLayer.getDim2Bin(clustersOnLayer.phi[i]) + phiWindow;
       for (int ieta = etaBinMin; ieta <= etaBinMax; ++ieta) {
         auto offset = ieta * nPhiBin;
         for (int iphi_it = phiBinMin; iphi_it <= phiBinMax; ++iphi_it) {

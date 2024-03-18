@@ -8,12 +8,13 @@
 
 namespace ticl {
   struct TileConstantsGlobal_EtaPhi {
-  static constexpr float tileSize = 0.15f;
-  static constexpr float minDim1 = -3.f;
-  static constexpr float maxDim1 = 3.f;
-  static constexpr float minDim2 = -M_PI;
-  static constexpr float maxDim2 = M_PI;
-  static constexpr bool wrapped = true;
+    static constexpr float tileSize = 0.15f;
+    static constexpr float minDim1 = -3.f;
+    static constexpr float maxDim1 = 3.f;
+    static constexpr float minDim2 = -M_PI;
+    static constexpr float maxDim2 = M_PI;
+    static constexpr bool wrapped = true;
+    static constexpr bool absDim1 = false;
   };
 
   struct TileConstantsEndcapNeg_EtaPhi {
@@ -23,28 +24,28 @@ namespace ticl {
     static constexpr float minDim2 = -M_PI;
     static constexpr float maxDim2 = M_PI;
     static constexpr bool wrapped = true;
-
+    static constexpr bool absDim1 = false;
   };
 
-    struct TileConstantsEndcapPos_EtaPhi {
+  struct TileConstantsEndcapPos_EtaPhi {
     static constexpr float tileSize = 0.15f;
     static constexpr float minDim1 = 1.5f;
     static constexpr float maxDim1 = 3.f;
     static constexpr float minDim2 = -M_PI;
     static constexpr float maxDim2 = M_PI;
     static constexpr bool wrapped = true;
-
+    static constexpr bool absDim1 = false;
   };
 
   struct TileConstantsBarrel_EtaPhi {
-    static constexpr float tileSize = 3*0.087f;
+    static constexpr float tileSize = 3 * 0.087f;
     static constexpr float minDim1 = -1.5f;
     static constexpr float maxDim1 = 1.5f;
     static constexpr float minDim2 = -M_PI;
     static constexpr float maxDim2 = M_PI;
     static constexpr bool wrapped = true;
+    static constexpr bool absDim1 = false;
   };
-
 
   struct TileConstantsEndcap_XY {
     static constexpr float tileSize = 5.f;
@@ -53,7 +54,7 @@ namespace ticl {
     static constexpr float minDim2 = -285.f;
     static constexpr float maxDim2 = 285.f;
     static constexpr bool wrapped = false;
-
+    static constexpr bool absDim1 = false;
   };
 
   struct TileConstantsHFNose_XY {
@@ -63,26 +64,31 @@ namespace ticl {
     static constexpr float minDim2 = -110.f;
     static constexpr float maxDim2 = 110.f;
     static constexpr bool wrapped = false;
+    static constexpr bool absDim1 = false;
   };
 
   struct TileConstants {
-    static constexpr float minEta = 1.5f;
-    static constexpr float maxEta = 3.2f;
-    static constexpr int nEtaBins = 34;
-    static constexpr int nPhiBins = 126;
+    static constexpr float tileSize = 0.05f;
+    static constexpr float minDim1 = 1.5f;
+    static constexpr float maxDim1 = 3.2f;
+    static constexpr float minDim2 = -M_PI;
+    static constexpr float maxDim2 = M_PI;
     static constexpr int nLayers = 104;
     static constexpr int iterations = 4;
-    static constexpr int nBins = nEtaBins * nPhiBins;
+    static constexpr bool wrapped = true;
+    static constexpr bool absDim1 = true;
   };
 
   struct TileConstantsHFNose {
-    static constexpr float minEta = 3.0f;
-    static constexpr float maxEta = 4.2f;
-    static constexpr int nEtaBins = 24;
-    static constexpr int nPhiBins = 126;
+    static constexpr float tileSize = 0.05f;
+    static constexpr float minDim1 = 3.0f;
+    static constexpr float maxDim1 = 4.2f;
+    static constexpr float minDim2 = -M_PI;
+    static constexpr float maxDim2 = M_PI;
     static constexpr int nLayers = 16;  // 8x2
     static constexpr int iterations = 4;
-    static constexpr int nBins = nEtaBins * nPhiBins;
+    static constexpr bool wrapped = true;
+    static constexpr bool absDim1 = true;
   };
 
 }  // namespace ticl
