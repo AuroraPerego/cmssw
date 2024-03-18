@@ -42,6 +42,7 @@ public:
     tiles_[idx].push_back(obj);
   }
 
+  template <typename = std::enable_if_t<std::is_integral_v<objType>>>
   void fill(const std::vector<float>& dim1, const std::vector<float>& dim2) {
     auto cellsSize = dim1.size();
     for (unsigned int i = 0; i < cellsSize; ++i) {
@@ -58,7 +59,7 @@ public:
     */
   int getDim1Bin(float dim) const {
     constexpr float dimRange = T::maxDim1 - T::minDim1;
-    static_assert(dimRange >= 0.);
+    static_assert(dimRange >= 0.f);
     constexpr float r = nColumns / dimRange;
     int dimBin = (dim - T::minDim1) * r;
     dimBin = std::clamp(dimBin, 0, nColumns - 1);
@@ -74,7 +75,7 @@ public:
   int getDim2Bin(float dim2) const {
     if constexpr (not T::wrapped) {
       constexpr float dimRange = T::maxDim2 - T::minDim2;
-      static_assert(dimRange >= 0.);
+      static_assert(dimRange >= 0.f);
       constexpr float r = nRows / dimRange;
       int dimBin = (dim2 - T::minDim2) * r;
       dimBin = std::clamp(dimBin, 0, nRows - 1);

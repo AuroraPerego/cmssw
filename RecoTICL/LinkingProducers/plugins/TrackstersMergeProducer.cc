@@ -220,8 +220,8 @@ void TrackstersMergeProducer::fillTile(TICLTracksterTiles &tracksterTile,
   for (auto const &t : tracksters) {
     tracksterTile.fill(tracksterIteration, t.barycenter().eta(), t.barycenter().phi(), tracksterId);
     LogDebug("TrackstersMergeProducer") << "Adding tracksterId: " << tracksterId << " into bin [eta,phi]: [ "
-                                        << tracksterTile[tracksterIteration].etaBin(t.barycenter().eta()) << ", "
-                                        << tracksterTile[tracksterIteration].phiBin(t.barycenter().phi())
+                                        << tracksterTile[tracksterIteration].getDim1Bin(t.barycenter().eta()) << ", "
+                                        << tracksterTile[tracksterIteration].getDim2Bin(t.barycenter().phi())
                                         << "] for iteration: " << tracksterIteration << std::endl;
 
     tracksterId++;

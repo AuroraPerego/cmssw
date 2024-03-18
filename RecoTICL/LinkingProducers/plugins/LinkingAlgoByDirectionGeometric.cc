@@ -92,17 +92,17 @@ void LinkingAlgoByDirectionGeometric::findTrackstersInWindow(
     unsigned seedId = i.second;
     auto sideZ = seed_eta > 0;  //forward or backward region
     const TICLLayerTile &tile = tracksterTiles[sideZ];
-    float eta_min = std::max(abs(seed_eta) - delta, (float)TileConstants::minEta);
-    float eta_max = std::min(abs(seed_eta) + delta, (float)TileConstants::maxEta);
+    float eta_min = std::max(abs(seed_eta) - delta, (float)TileConstants::minDim1);
+    float eta_max = std::min(abs(seed_eta) + delta, (float)TileConstants::maxDim1);
 
     // get range of bins touched by delta
-    std::array<int, 4> search_box = tile.searchBoxEtaPhi(eta_min, eta_max, seed_phi - delta, seed_phi + delta);
+    std::array<int, 4> search_box = tile.getSearchBox(eta_min, eta_max, seed_phi - delta, seed_phi + delta);
 
     std::vector<unsigned> in_delta;
     std::vector<float> distances2;
     for (int eta_i = search_box[0]; eta_i <= search_box[1]; ++eta_i) {
       for (int phi_i = search_box[2]; phi_i <= search_box[3]; ++phi_i) {
-        const auto &in_tile = tile[tile.globalBin(eta_i, (phi_i % TileConstants::nPhiBins))];
+        const auto &in_tile = tile[tile.getGlobalBinByBin(eta_i, (phi_i % tile.nRows))];
         for (const unsigned &t_i : in_tile) {
           // calculate actual distances of tracksters to the seed for a more accurate cut
           auto sep2 = (tracksterPropPoints[t_i].Eta() - seed_eta) * (tracksterPropPoints[t_i].Eta() - seed_eta) +

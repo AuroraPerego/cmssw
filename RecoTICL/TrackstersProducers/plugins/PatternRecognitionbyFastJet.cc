@@ -95,8 +95,8 @@ void PatternRecognitionbyFastJet<TILES>::makeTracksters(
   rhtools_.setGeometry(geom);
 
   constexpr auto isHFnose = std::is_same<TILES, TICLLayerTilesHFNose>::value;
-  constexpr int nEtaBin = TILES::constants_type_t::nEtaBins;
-  constexpr int nPhiBin = TILES::constants_type_t::nPhiBins;
+  constexpr int nEtaBin = TILES::tile_type_t::nColumns;
+  constexpr int nPhiBin = TILES::tile_type_t::nRows;
 
   // We need to partition the two sides of the HGCAL detector
   auto lastLayerPerSide = static_cast<unsigned int>(rhtools_.lastLayer(isHFnose)) - 1;
