@@ -61,7 +61,7 @@ public:
     constexpr float dimRange = T::maxDim1 - T::minDim1;
     static_assert(dimRange >= 0.f);
     constexpr float r = nColumns / dimRange;
-    int dimBin = (dim - T::minDim1) * r;
+    int dimBin = T::absDim1 ? (std::abs(dim) - T::minDim1) * r : (dim - T::minDim1) * r;
     dimBin = std::clamp(dimBin, 0, nColumns - 1);
     return dimBin;
   }
@@ -105,11 +105,21 @@ public:
       if (dim1Max - dim1Min < 0) {
         return std::array<int, 4>({{0, 0, 0, 0}});
       }
+      if constexpr(T::absDim1) {
+        if (dim1Max * dim1Min < 0) {
+          return std::array<int, 4>({{0, 0, 0, 0}});
+        }
+      }
     }
     int dim1BinMin = getDim1Bin(dim1Min);
     int dim1BinMax = getDim1Bin(dim1Max);
     int dim2BinMin = getDim2Bin(dim2Min);
     int dim2BinMax = getDim2Bin(dim2Max);
+    if constexpr(T::absDim1) {
+      if (dim1Min < 0) {
+          std::swap(dim1BinMin, dim1BinMax);
+      }
+    }
     if constexpr (T::wrapped) {
       if (dim2BinMax < dim2BinMin) {
         dim2BinMax += nRows;
@@ -117,7 +127,6 @@ public:
     }
     return std::array<int, 4>({{dim1BinMin, dim1BinMax, dim2BinMin, dim2BinMax}});
   }
-
 
   void clear() {
     for (auto& t : tiles_)
