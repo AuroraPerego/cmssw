@@ -138,8 +138,10 @@ private:
   const edm::EDGetTokenT<std::vector<SimCluster>> simclusters_token_;
   const edm::EDGetTokenT<std::vector<CaloParticle>> caloparticles_token_;
   const edm::EDGetTokenT<MtdSimTracksterCollection> MTDSimTrackstersToken_;
-  const edm::EDGetTokenT<MtdSimLayerClusterCollection> MTDSimLayerClustersToken_;
+  const edm::EDGetTokenT<MtdSimLayerClusterCollection>
+      MTDSimLayerClustersToken_;
   const edm::EDGetTokenT<reco::SimToRecoCollection> assocTpToTrackToken_;
+  const edm::EDGetTokenT<reco::RecoToSimCollection> assocTrackToTpToken_;
   const edm::EDGetTokenT<SimTrackToTPMap> associationSimTrackToTPToken_;
   const edm::EDGetTokenT<reco::TrackCollection> mtdTracksToken_;
   const edm::EDGetTokenT<edm::ValueMap<int>> mtdTracksAssocToken_;
@@ -472,31 +474,34 @@ private:
   std::vector<int> track_nhits;
 
   // validation of mtd clusters / tracksters
-  int number_of_mtdSimTracksters_;
-  std::vector<int> number_of_mtdSimLCinST_;
+  int nTracks;
+  std::vector<int> recoTrackIdx;
+  std::vector<float> simTracksterTime;
+  std::vector<GlobalPoint> simTracksterPos;
+  std::vector<int> simTracksterNsimLC;
+  std::vector<int> recoTrackNclusters;
+  std::vector<float> simTrack_pt;
+  std::vector<float> simTrack_eta;
+  std::vector<float> simTrack_phi;
+  std::vector<int> recoTrackToSimTrack;
 
-  std::vector<int> number_of_mtdHits_;
-  std::vector<std::vector<int>> mtdHits_det_;
-  std::vector<int> ST_simTrack_;
-  std::vector<int> ST_recoTrack_;
-  std::vector<float> simTrack_pt_;
-  std::vector<float> simTrack_eta_;
-  std::vector<float> simTrack_phi_;
+  std::vector<std::vector<float>> recoLCtime_;
+  std::vector<std::vector<float>> recoLCtimeErr_;
+  std::vector<std::vector<int>> recoLCdirect_;
 
-  std::vector<std::vector<bool>> simLC_is_looper_;
-  std::vector<std::vector<int>> simLC_idx_;
-  std::vector<std::vector<int>> simLC_simTrack_;
-  std::vector<std::vector<int>> simLC_recoTrack_;
-  std::vector<std::vector<float>> simLC_time_;
-  std::vector<std::vector<float>> simLC_posX_;
-  std::vector<std::vector<float>> simLC_posY_;
-  std::vector<std::vector<float>> recocluster_time_;
-  std::vector<std::vector<float>> recocluster_timeErr_;
-  std::vector<std::vector<float>> recocluster_posX_;
-  std::vector<std::vector<float>> recocluster_posY_;
-  std::vector<std::vector<bool>> simLC_matched_;
-  std::vector<std::vector<bool>> simLC_CorrectMatch_;
-  std::vector<std::vector<bool>> simLC_DirectMatch_;
+  std::vector<std::vector<float>> simLCtime_;
+  std::vector<std::vector<int>> simLCmatch_;
+  std::vector<std::vector<int>> simLCcorrect_;
+  std::vector<std::vector<int>> simLCdirect_;
+
+  std::vector<float> hit_pt;
+  std::vector<float> hit_eta;
+  std::vector<float> hit_phi;
+  std::vector<int> hit_match;
+  // std::vector<std::vector<uint64_t>> clustersRecHits_; //FIXME_ could be more
+  // than one
+  // std::vector<std::vector<uint64_t>> simLChits_; //FIXME_ could be more than
+  // one
 
   TTree* trackster_tree_;
   TTree* cluster_tree_;
@@ -808,31 +813,32 @@ void TICLDumper::clearVariables() {
   track_time_err.clear();
   track_nhits.clear();
 
-  number_of_mtdSimTracksters_ = 0;
-  number_of_mtdSimLCinST_.clear();
-  
-  number_of_mtdHits_.clear();
-  mtdHits_det_.clear();
-  ST_simTrack_.clear();
-  ST_recoTrack_.clear();
-  simTrack_pt_.clear();
-  simTrack_eta_.clear();
-  simTrack_phi_.clear();
-  
-  simLC_is_looper_.clear();
-  simLC_idx_.clear();
-  simLC_simTrack_.clear();
-  simLC_recoTrack_.clear();
-  simLC_time_.clear();
-  simLC_posX_.clear();
-  simLC_posY_.clear();
-  recocluster_time_.clear();
-  recocluster_timeErr_.clear();
-  recocluster_posX_.clear();
-  recocluster_posY_.clear();
-  simLC_matched_.clear();
-  simLC_CorrectMatch_.clear();
-  simLC_DirectMatch_.clear();
+  nTracks = 0;
+  recoTrackIdx.clear();
+  simTracksterTime.clear();
+  simTracksterPos.clear();
+  simTracksterNsimLC.clear();
+  recoTrackNclusters.clear();
+
+  // clustersRecHits_.clear();
+  recoLCtime_.clear();
+  recoLCtimeErr_.clear();
+  recoLCdirect_.clear();
+
+  simLCtime_.clear();
+  // simLChits_.clear();
+  simTrack_pt.clear();
+  simTrack_eta.clear();
+  simTrack_phi.clear();
+  simLCmatch_.clear();
+  simLCcorrect_.clear();
+  simLCdirect_.clear();
+  recoTrackToSimTrack.clear();
+ 
+  hit_pt.clear();
+  hit_eta.clear();
+  hit_phi.clear();
+  hit_match.clear();
 };
 
 TICLDumper::TICLDumper(const edm::ParameterSet& ps)
@@ -884,16 +890,28 @@ TICLDumper::TICLDumper(const edm::ParameterSet& ps)
           consumes(ps.getParameter<edm::InputTag>("simclusters"))),
       caloparticles_token_(
           consumes(ps.getParameter<edm::InputTag>("caloparticles"))),
-      MTDSimTrackstersToken_(consumes<MtdSimTracksterCollection>(ps.getParameter<edm::InputTag>("MtdSimTracksters"))),
-      MTDSimLayerClustersToken_(consumes<MtdSimLayerClusterCollection>(ps.getParameter<edm::InputTag>("MtdSimLayerCluster"))),
-      assocTpToTrackToken_(consumes(ps.getParameter<edm::InputTag>("tpToTrack"))),
-      associationSimTrackToTPToken_(consumes(ps.getParameter<edm::InputTag>("simTrackToTPMap"))),
-      mtdTracksToken_(consumes<reco::TrackCollection>(ps.getParameter<edm::InputTag>("tracksWithMtd"))),
-      mtdTracksAssocToken_(consumes<edm::ValueMap<int>>(ps.getParameter<edm::InputTag>("mtdtrackAssocSrc"))),
-      btlRecHitsToken_(consumes<FTLRecHitCollection>(ps.getParameter<edm::InputTag>("BTLrecHits"))),
-      etlRecHitsToken_(consumes<FTLRecHitCollection>(ps.getParameter<edm::InputTag>("ETLrecHits"))),
-      btlClustersToken_(consumes<FTLClusterCollection>(ps.getParameter<edm::InputTag>("BTLclusters"))),
-      etlClustersToken_(consumes<FTLClusterCollection>(ps.getParameter<edm::InputTag>("ETLclusters"))),
+      MTDSimTrackstersToken_(consumes<MtdSimTracksterCollection>(
+          ps.getParameter<edm::InputTag>("MtdSimTracksters"))),
+      MTDSimLayerClustersToken_(consumes<MtdSimLayerClusterCollection>(
+          ps.getParameter<edm::InputTag>("MtdSimLayerCluster"))),
+      assocTpToTrackToken_(
+          consumes(ps.getParameter<edm::InputTag>("tpToTrack"))),
+      assocTrackToTpToken_(
+          consumes(ps.getParameter<edm::InputTag>("tpToTrack"))),
+      associationSimTrackToTPToken_(
+          consumes(ps.getParameter<edm::InputTag>("simTrackToTPMap"))),
+      mtdTracksToken_(consumes<reco::TrackCollection>(
+          ps.getParameter<edm::InputTag>("tracksWithMtd"))),
+      mtdTracksAssocToken_(consumes<edm::ValueMap<int>>(
+          ps.getParameter<edm::InputTag>("mtdtrackAssocSrc"))),
+      btlRecHitsToken_(consumes<FTLRecHitCollection>(
+          ps.getParameter<edm::InputTag>("BTLrecHits"))),
+      etlRecHitsToken_(consumes<FTLRecHitCollection>(
+          ps.getParameter<edm::InputTag>("ETLrecHits"))),
+      btlClustersToken_(consumes<FTLClusterCollection>(
+          ps.getParameter<edm::InputTag>("BTLclusters"))),
+      etlClustersToken_(consumes<FTLClusterCollection>(
+          ps.getParameter<edm::InputTag>("ETLclusters"))),
       geometry_token_(esConsumes<CaloGeometry, CaloGeometryRecord,
                                  edm::Transition::BeginRun>()),
       detector_(ps.getParameter<std::string>("detector")),
@@ -942,24 +960,38 @@ void TICLDumper::beginJob() {
   tracks_tree_ = fs->make<TTree>("tracks", "Tracks");
   simTICLCandidate_tree =
       fs->make<TTree>("simTICLCandidate", "Sim TICL Candidate");
-  MTDclusters_tree =
-      fs->make<TTree>("MTDclusters", "MTD clusters");
+  MTDclusters_tree = fs->make<TTree>("MTDclusters", "MTD clusters");
 
-  simTICLCandidate_tree->Branch("simTICLCandidate_raw_energy", &simTICLCandidate_raw_energy);
-  simTICLCandidate_tree->Branch("simTICLCandidate_regressed_energy", &simTICLCandidate_regressed_energy);
-  simTICLCandidate_tree->Branch("simTICLCandidate_simTracksterCPIndex", &simTICLCandidate_simTracksterCPIndex);
-  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryX", &simTICLCandidate_boundaryX);
-  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryY", &simTICLCandidate_boundaryY);
-  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryZ", &simTICLCandidate_boundaryZ);
-  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryPx", &simTICLCandidate_boundaryPx);
-  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryPy", &simTICLCandidate_boundaryPy);
-  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryPz", &simTICLCandidate_boundaryPz);
-  simTICLCandidate_tree->Branch("simTICLCandidate_trackTime", &simTICLCandidate_trackTime);
-  simTICLCandidate_tree->Branch("simTICLCandidate_trackBeta", &simTICLCandidate_trackBeta);
-  simTICLCandidate_tree->Branch("simTICLCandidate_caloParticleMass", &simTICLCandidate_caloParticleMass);
-  simTICLCandidate_tree->Branch("simTICLCandidate_pdgId", &simTICLCandidate_pdgId);
-  simTICLCandidate_tree->Branch("simTICLCandidate_charge", &simTICLCandidate_charge);
-  simTICLCandidate_tree->Branch("simTICLCandidate_track_in_candidate", &simTICLCandidate_track_in_candidate);
+  simTICLCandidate_tree->Branch("simTICLCandidate_raw_energy",
+                                &simTICLCandidate_raw_energy);
+  simTICLCandidate_tree->Branch("simTICLCandidate_regressed_energy",
+                                &simTICLCandidate_regressed_energy);
+  simTICLCandidate_tree->Branch("simTICLCandidate_simTracksterCPIndex",
+                                &simTICLCandidate_simTracksterCPIndex);
+  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryX",
+                                &simTICLCandidate_boundaryX);
+  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryY",
+                                &simTICLCandidate_boundaryY);
+  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryZ",
+                                &simTICLCandidate_boundaryZ);
+  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryPx",
+                                &simTICLCandidate_boundaryPx);
+  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryPy",
+                                &simTICLCandidate_boundaryPy);
+  simTICLCandidate_tree->Branch("simTICLCandidate_boundaryPz",
+                                &simTICLCandidate_boundaryPz);
+  simTICLCandidate_tree->Branch("simTICLCandidate_trackTime",
+                                &simTICLCandidate_trackTime);
+  simTICLCandidate_tree->Branch("simTICLCandidate_trackBeta",
+                                &simTICLCandidate_trackBeta);
+  simTICLCandidate_tree->Branch("simTICLCandidate_caloParticleMass",
+                                &simTICLCandidate_caloParticleMass);
+  simTICLCandidate_tree->Branch("simTICLCandidate_pdgId",
+                                &simTICLCandidate_pdgId);
+  simTICLCandidate_tree->Branch("simTICLCandidate_charge",
+                                &simTICLCandidate_charge);
+  simTICLCandidate_tree->Branch("simTICLCandidate_track_in_candidate",
+                                &simTICLCandidate_track_in_candidate);
 
   trackster_tree_->Branch("event", &ev_event_);
   trackster_tree_->Branch("NClusters", &nclusters_);
@@ -1308,29 +1340,32 @@ void TICLDumper::beginJob() {
   tracks_tree_->Branch("track_time_err", &track_time_err);
   tracks_tree_->Branch("track_nhits", &track_nhits);
 
-  MTDclusters_tree->Branch("number_of_mtdSimTracksters", &number_of_mtdSimTracksters_);
-  MTDclusters_tree->Branch("number_of_mtdSimLCinST", &number_of_mtdSimLCinST_);
-  MTDclusters_tree->Branch("number_of_mtdHits", &number_of_mtdHits_);
-  MTDclusters_tree->Branch("mtdHits_det", &mtdHits_det_);
-  MTDclusters_tree->Branch("ST_simTrack", &ST_simTrack_);
-  MTDclusters_tree->Branch("ST_recoTrack", &ST_recoTrack_);
-  MTDclusters_tree->Branch("ST_simTrack_pt", &simTrack_pt_);
-  MTDclusters_tree->Branch("ST_simTrack_eta_", &simTrack_eta_);
-  MTDclusters_tree->Branch("ST_simTrack_phi_", &simTrack_phi_);
-  MTDclusters_tree->Branch("simLC_is_looper", &simLC_is_looper_);
-  MTDclusters_tree->Branch("simLC_idx", &simLC_idx_);
-  MTDclusters_tree->Branch("simLC_simTrack", &simLC_simTrack_);
-  MTDclusters_tree->Branch("simLC_recoTrack", &simLC_recoTrack_);
-  MTDclusters_tree->Branch("simLC_time", &simLC_time_);
-  MTDclusters_tree->Branch("simLC_posX", &simLC_posX_);
-  MTDclusters_tree->Branch("simLC_posY", &simLC_posY_);
-  MTDclusters_tree->Branch("recocluster_time", &recocluster_time_);
-  MTDclusters_tree->Branch("recocluster_timeErr", &recocluster_timeErr_);
-  MTDclusters_tree->Branch("recocluster_posX", &recocluster_posX_);
-  MTDclusters_tree->Branch("recocluster_posY", &recocluster_posY_);
-  MTDclusters_tree->Branch("sc_matched", &simLC_matched_);
-  MTDclusters_tree->Branch("sc_CorrMatched", &simLC_CorrectMatch_);
-  MTDclusters_tree->Branch("sc_DirectMatched", &simLC_DirectMatch_);
+  MTDclusters_tree->Branch("nTracks", &nTracks);
+  MTDclusters_tree->Branch("recoTrackIdx", &recoTrackIdx);
+  MTDclusters_tree->Branch("simTrackIdx", &recoTrackToSimTrack);
+  MTDclusters_tree->Branch("simTracksterTime", &simTracksterTime);
+  MTDclusters_tree->Branch("simTracksterPos", &simTracksterPos);
+  MTDclusters_tree->Branch("simTracksterNsimLC", &simTracksterNsimLC);
+  MTDclusters_tree->Branch("recoTrackNclusters", &recoTrackNclusters);
+  //  MTDclusters_tree->Branch("recoLChits", &clustersRecHits_);
+  MTDclusters_tree->Branch("recoLCtime", &recoLCtime_);
+  MTDclusters_tree->Branch("recoCLtimeErr", &recoLCtimeErr_);
+  MTDclusters_tree->Branch("recoCLdirect", &recoLCdirect_);
+  MTDclusters_tree->Branch("simLCtime", &simLCtime_);
+  //  MTDclusters_tree->Branch("simLChits", &simLChits_);
+  //  MTDclusters_tree->Branch("simLCrows", &simLCrows_);
+  //  MTDclusters_tree->Branch("simLCcols", &simLCcols_);
+  MTDclusters_tree->Branch("simTrackPt", &simTrack_pt);
+  MTDclusters_tree->Branch("simTrackEta", &simTrack_eta);
+  MTDclusters_tree->Branch("simTrackPhi", &simTrack_phi);
+  MTDclusters_tree->Branch("simLCmatch", &simLCmatch_);
+  MTDclusters_tree->Branch("simLCcorrect", &simLCcorrect_);
+  MTDclusters_tree->Branch("simLCdirect", &simLCdirect_);
+
+  MTDclusters_tree->Branch("hitPt", &hit_pt);
+  MTDclusters_tree->Branch("hitEta", &hit_eta);
+  MTDclusters_tree->Branch("hitPhi", &hit_phi);
+  MTDclusters_tree->Branch("hitMatch", &hit_match);
 
   event_index = 0;
 }
@@ -1491,6 +1526,7 @@ void TICLDumper::analyze(const edm::Event& event,
   const auto& mtdSimLCs = *mtdSimLCs_h;
 
   const auto& TPtoRecoTrackMap = event.get(assocTpToTrackToken_);
+  const auto& RecoTrackToTPMap = event.get(assocTrackToTpToken_);
   const auto& simTrackToTPMap = event.get(associationSimTrackToTPToken_);
 
   const auto& trackAssoc = event.get(mtdTracksAssocToken_);
@@ -1501,7 +1537,8 @@ void TICLDumper::analyze(const edm::Event& event,
   edm::Handle<FTLRecHitCollection> btlRecHits, etlRecHits;
   event.getByToken(btlRecHitsToken_, btlRecHits);
   event.getByToken(etlRecHitsToken_, etlRecHits);
-  std::array<edm::Handle<FTLRecHitCollection>, 2> RecHitsHandle{{btlRecHits, etlRecHits}};
+  std::array<edm::Handle<FTLRecHitCollection>, 2> RecHitsHandle{
+      {btlRecHits, etlRecHits}};
 
   edm::Handle<FTLClusterCollection> btlClusters_h, etlClusters_h;
   event.getByToken(btlClustersToken_, btlClusters_h);
@@ -1510,17 +1547,21 @@ void TICLDumper::analyze(const edm::Event& event,
   std::vector<FTLCluster> MtdRecoClusters;
   MtdRecoClusters.reserve(btlClusters_h->size() + etlClusters_h->size());
 
-  for (const auto& btlClusters : *btlClusters_h) 
-    std::copy(btlClusters.begin(), btlClusters.end(), std::back_inserter(MtdRecoClusters));
+  for (const auto& btlClusters : *btlClusters_h)
+    std::copy(btlClusters.begin(), btlClusters.end(),
+              std::back_inserter(MtdRecoClusters));
 
-  for (const auto& etlClusters : *etlClusters_h) 
-    std::copy(etlClusters.begin(), etlClusters.end(), std::back_inserter(MtdRecoClusters));
+  for (const auto& etlClusters : *etlClusters_h)
+    std::copy(etlClusters.begin(), etlClusters.end(),
+              std::back_inserter(MtdRecoClusters));
 
- // FTLClusterCollection etlClusters = *etlClusters_h;
- // FTLClusterCollection btlClusters = *btlClusters_h;
+  // FTLClusterCollection etlClusters = *etlClusters_h;
+  // FTLClusterCollection btlClusters = *btlClusters_h;
 
- // std::copy(btlClusters.begin(), btlClusters.end(), std::back_inserter(MtdRecoClusters));
- // std::copy(etlClusters.begin(), etlClusters.end(), std::back_inserter(MtdRecoClusters));
+  // std::copy(btlClusters.begin(), btlClusters.end(),
+  // std::back_inserter(MtdRecoClusters));
+  // std::copy(etlClusters.begin(), etlClusters.end(),
+  // std::back_inserter(MtdRecoClusters));
 
   ev_event_ = event_index;
   ntracksters_ = tracksters.size();
@@ -1919,7 +1960,7 @@ void TICLDumper::analyze(const edm::Event& event,
     stsCP_trackster_vertices_multiplicity.push_back(vertices_multiplicity);
   }
 
- 	simTICLCandidate_track_in_candidate.resize(simTICLCandidates.size(), -1);
+  simTICLCandidate_track_in_candidate.resize(simTICLCandidates.size(), -1);
   for (size_t i = 0; i < simTICLCandidates.size(); ++i) {
     auto const& cand = simTICLCandidates[i];
     // auto const& cp = caloparticles[simTrackstersCP[i].seedIndex()];
@@ -1940,9 +1981,8 @@ void TICLDumper::analyze(const edm::Event& event,
     if (!trackPtr.isNull()) {
       auto const& track = *trackPtr;
       int iSide = int(track.eta() > 0);
-    		int tk_idx = trackPtr.get() - (edm::Ptr<reco::Track>(tracks_h, 0)).get();
- 		   simTICLCandidate_track_in_candidate[i] = tk_idx;
-  
+      int tk_idx = trackPtr.get() - (edm::Ptr<reco::Track>(tracks_h, 0)).get();
+      simTICLCandidate_track_in_candidate[i] = tk_idx;
 
       const auto& fts =
           trajectoryStateTransform::outerFreeState((track), bFieldProd);
@@ -2026,7 +2066,8 @@ void TICLDumper::analyze(const edm::Event& event,
     candidate_time_err.push_back(candidate.timeError());
     std::vector<float> id_probs;
     for (int j = 0; j < 8; j++) {
-      ticl::Trackster::ParticleType type = static_cast<ticl::Trackster::ParticleType>(j);
+      ticl::Trackster::ParticleType type =
+          static_cast<ticl::Trackster::ParticleType>(j);
       id_probs.push_back(candidate.id_probability(type));
     }
     candidate_id_probabilities.push_back(id_probs);
@@ -2329,6 +2370,15 @@ void TICLDumper::analyze(const edm::Event& event,
   }
 
   /* MTD VALIDATION */
+  auto simTrackToTrackingParticle = [&](SimTrack simTrk) {
+    UniqueSimTrackId simTkIds(simTrk.trackId(), simTrk.eventId());
+    auto tppos = simTrackToTPMap.mapping.find(simTkIds);
+    //  if (tppos != simTrackToTPMap.mapping.end() and !(simPos->val).empty())
+    if (tppos == simTrackToTPMap.mapping.end())
+      std::cout << "AAAAAAAAAAA" << std::endl;
+    const auto& tp = *(tppos->second);
+    return tp;
+  };
 
   auto simTrackToRecoTrack = [&](UniqueSimTrackId simTkId)
       ->std::pair<int, float> {
@@ -2351,7 +2401,7 @@ void TICLDumper::analyze(const edm::Event& event,
     return {trackIdx, quality};
   };
 
-  auto MtdSCtoRC = [&] (MtdSimLayerCluster sc) -> int {
+  auto MtdSCtoRC = [&](MtdSimLayerCluster sc)->int {
     auto hAndF = sc.hits_and_fractions();
     int index = -1;
     for (const auto& cluster : MtdRecoClusters) {
@@ -2364,17 +2414,23 @@ void TICLDumper::analyze(const edm::Event& event,
           for (const auto& recHit : *RecHitsColl) {
             MTDDetId hitId(recHit.id().rawId());
 
-            if (hitId.mtdSide() != cluId.mtdSide() || hitId.mtdRR() != cluId.mtdRR() || recHit.row() != hit_row || recHit.column() != hit_col)
+            if (hitId.mtdSide() != cluId.mtdSide() ||
+                hitId.mtdRR() != cluId.mtdRR() || recHit.row() != hit_row ||
+                recHit.column() != hit_col)
               continue;
 
-            if (recHit.energy() != cluster.hitENERGY()[ihit] || recHit.time() != cluster.hitTIME()[ihit])
+            if (recHit.energy() != cluster.hitENERGY()[ihit] ||
+                recHit.time() != cluster.hitTIME()[ihit])
               continue;
 
             uint64_t targetId = static_cast<uint64_t>(hitId.rawId()) << 32;
             targetId |= recHit.row() << 16;
             targetId |= recHit.column();
-            auto found_clu = std::find_if( hAndF.begin(), hAndF.end(),
-                [&targetId] (const std::pair<uint64_t, float>& elem) { return elem.first == targetId;} );
+            auto found_clu = std::find_if(
+                hAndF.begin(), hAndF.end(),
+                [&targetId](const std::pair<uint64_t, float>& elem) {
+                  return elem.first == targetId;
+                });
             if (found_clu != hAndF.end()) {
               return index;
             }
@@ -2385,9 +2441,132 @@ void TICLDumper::analyze(const edm::Event& event,
     return -1;
   };
 
-  [[maybe_unused]] auto MtdRCtoSC = [&] (FTLCluster cluster) -> int {
+  [[maybe_unused]] auto MtdRCtoSC = [&](FTLCluster cluster)->int {
+    MTDDetId cluId = cluster.id();
+    std::vector<uint64_t> rcDetIds;
+    for (int ihit = 0; ihit < cluster.size(); ++ihit) {
+      int hit_row = cluster.minHitRow() + cluster.hitOffset()[ihit * 2];
+      int hit_col = cluster.minHitCol() + cluster.hitOffset()[ihit * 2 + 1];
+      for (const auto& RecHitsColl : RecHitsHandle) {
+        for (const auto& recHit : *RecHitsColl) {
+          MTDDetId hitId(recHit.id().rawId());
+
+          if (hitId.mtdSide() != cluId.mtdSide() ||
+              hitId.mtdRR() != cluId.mtdRR() || recHit.row() != hit_row ||
+              recHit.column() != hit_col)
+            continue;
+
+          if (recHit.energy() != cluster.hitENERGY()[ihit] ||
+              recHit.time() != cluster.hitTIME()[ihit])
+            continue;
+
+          uint64_t targetId = static_cast<uint64_t>(hitId.rawId()) << 32;
+          targetId |= recHit.row() << 16;
+          targetId |= recHit.column();
+          std::cout << "searching match for rechit " << targetId << std::endl;
+          rcDetIds.push_back(targetId);
+        }
+      }
+    }
+    int index = -1;
+    for (const auto& sc : mtdSimLCs) {
+      index++;
+      const auto& hAndF = sc.hits_and_fractions();
+      std::vector<uint64_t> scHits(hAndF.size());
+      std::transform(
+          hAndF.begin(), hAndF.end(), scHits.begin(),
+          [](const std::pair<uint64_t, float>& pair) { return pair.first; });
+      std::vector<uint64_t> intersection;
+      std::set_intersection(scHits.begin(), scHits.end(), rcDetIds.begin(),
+                            rcDetIds.end(), std::back_inserter(intersection));
+
+      if (!intersection.empty())
+        return index;
+    }
+    return -1;
+  };
+
+  // simtrack to recotrack
+  std::unordered_map<unsigned int, unsigned int> RecoTrackToSimTrack;
+  for (const auto& st : mtdSimTracksters) {
+    const auto& simTrack = st.g4Tracks()[0];
+    // association with recotrack
+    UniqueSimTrackId simTkIds(simTrack.trackId(), simTrack.eventId());
+    auto bestAssociatedRecoTrack = simTrackToRecoTrack(simTkIds);
+    if (bestAssociatedRecoTrack.first !=
+        -1 and bestAssociatedRecoTrack.second > 0.75f) {
+      RecoTrackToSimTrack[bestAssociatedRecoTrack.first] = simTrack.trackId();
+    }
+  }
+
+  // given the index of the simTrack in the collection, returns the index of the
+  // mtdSimTrackster
+  std::unordered_map<unsigned int, unsigned int> SimTrackToMtdST;
+  for (unsigned int i = 0; i < mtdSimTracksters.size(); ++i) {
+    const auto& simTrack = mtdSimTracksters[i].g4Tracks()[0];
+    SimTrackToMtdST[simTrack.trackId()] = i;
+  }
+
+  nTracks = tracks.size();
+  // START: loop on recoTracks
+  std::cout << "BEGIN: start looping on tracks\n";
+  for (long unsigned int tkIdx = 0; tkIdx < tracks.size(); tkIdx++) {
+    // check if there is a track extended in MTD, if no skip
+    const reco::TrackRef trackref(tracks_h, tkIdx);
+    if (trackAssoc[trackref] == -1) {
+      std::cout << " ** Extended track not associated ** \n";
+      continue;
+    }
+    recoTrackIdx.push_back(tkIdx);
+    // look for a simTrack
+    auto pos = RecoTrackToSimTrack.find(tkIdx);
+    int32_t SimTrackIdx = pos != RecoTrackToSimTrack.end() ? pos->second : -1;
+    // if not found is either fake or no MTD
+    std::cout << "track " << tkIdx << " associated with simtrack "
+              << SimTrackIdx << std::endl;
+
+    // if we have a simtrack, there is also an MTD SimTrackster
+    int32_t stIdx = -1;
+    if (SimTrackIdx != -1) {
+      stIdx = SimTrackToMtdST.find(SimTrackIdx)->second;
+      const auto& SCindices = mtdSimTracksters[stIdx].clusters();
+      std::cout << " simtrackster with time " << mtdSimTracksters[stIdx].time()
+                << " ns and pos " << mtdSimTracksters[stIdx].position()
+                << " cm and " << SCindices.size() << " simLCs\n";
+      simTracksterTime.push_back(mtdSimTracksters[stIdx].time());
+      simTracksterPos.push_back(mtdSimTracksters[stIdx].position());
+      simTracksterNsimLC.push_back(SCindices.size());
+    } else {
+      simTracksterTime.push_back(-1);
+      simTracksterPos.push_back({0., 0., 0.});
+      simTracksterNsimLC.push_back(0);
+    }
+    // look for MTD hits
+    const reco::TrackRef mtdTrackref =
+        reco::TrackRef(mtdTracks_h, trackAssoc[trackref]);
+    const reco::Track& track = *mtdTrackref;
+    std::cout << " looping on track hits, there are ";
+    std::vector<FTLCluster> mtdRecoClusters;
+    for (const auto hit : track.recHits()) {
+      if (hit->isValid() == false)
+        continue;
+      MTDDetId Hit = hit->geographicalId();
+      if ((Hit.det() == 6) && (Hit.subdetId() == 1)) {
+        const MTDTrackingRecHit* mtdhit =
+            static_cast<const MTDTrackingRecHit*>(hit);
+        mtdRecoClusters.push_back(mtdhit->mtdCluster());
+      }
+    }
+    std::cout << mtdRecoClusters.size() << " recHits in MTD\n";
+    recoTrackNclusters.push_back(mtdRecoClusters.size());
+
+    // loop on recoclusters to save the extended detIds
+    // std::vector<float> recoLCtime;
+    std::vector<float> recoLCtimeErr;
+    std::vector<int> recoLCdirect;
+    std::vector<uint64_t> recoLChits;
+    for (const auto& cluster : mtdRecoClusters) {
       MTDDetId cluId = cluster.id();
-      std::vector<uint64_t> rcDetIds;
       for (int ihit = 0; ihit < cluster.size(); ++ihit) {
         int hit_row = cluster.minHitRow() + cluster.hitOffset()[ihit * 2];
         int hit_col = cluster.minHitCol() + cluster.hitOffset()[ihit * 2 + 1];
@@ -2395,222 +2574,442 @@ void TICLDumper::analyze(const edm::Event& event,
           for (const auto& recHit : *RecHitsColl) {
             MTDDetId hitId(recHit.id().rawId());
 
-            if (hitId.mtdSide() != cluId.mtdSide() || hitId.mtdRR() != cluId.mtdRR() || recHit.row() != hit_row || recHit.column() != hit_col)
+            if (hitId.mtdSide() != cluId.mtdSide() ||
+                hitId.mtdRR() != cluId.mtdRR() || recHit.row() != hit_row ||
+                recHit.column() != hit_col)
               continue;
 
-            if (recHit.energy() != cluster.hitENERGY()[ihit] || recHit.time() != cluster.hitTIME()[ihit])
+            if (recHit.energy() != cluster.hitENERGY()[ihit] ||
+                recHit.time() != cluster.hitTIME()[ihit])
               continue;
 
             uint64_t targetId = static_cast<uint64_t>(hitId.rawId()) << 32;
             targetId |= recHit.row() << 16;
             targetId |= recHit.column();
-
-	    rcDetIds.push_back(targetId);
+            recoLChits.push_back(targetId);
+            break;
           }
         }
       }
-      int index = -1;
-      for (const auto& sc : mtdSimLCs) {
-        index ++;
-        const auto& hAndF = sc.hits_and_fractions();
-        std::vector<int> scHits(hAndF.size());
-        std::transform(hAndF.begin(), hAndF.end(), scHits.begin(), [](const std::pair<int, float>& pair) {
-          return pair.first;
-        });
-        std::vector<uint64_t> intersection;  
-        std::set_intersection(scHits.begin(), scHits.end(), rcDetIds.begin(), rcDetIds.end(), std::back_inserter(intersection));
-    
-   	if (!intersection.empty())
-          return index;
-      }
-      return -1;
-    };
-
-  std::cout << "BEGIN\nThere are " << mtdSimTracksters.size() << " mtdSimTracksters"<< std::endl;
-number_of_mtdSimTracksters_ = mtdSimTracksters.size();
-  // loop on simTracksters
-  for (const auto& st : mtdSimTracksters) {
-    const auto& SCindices = st.clusters();
-number_of_mtdSimLCinST_.push_back(SCindices.size());
-    std::cout << "  number of LC in ST: " << SCindices.size() << std::endl;
-
-    const auto& simTrack = st.g4Tracks()[0];
-    int trackIndex = -1;
-   std::cout << "  ST associated with simTrack " << simTrack.trackId();
-    // association with recotrack
-    UniqueSimTrackId simTkIds(simTrack.trackId(), simTrack.eventId());
-    auto bestAssociatedRecoTrack = simTrackToRecoTrack(simTkIds);
-std::vector<int> mtdHit_det;
-      std::vector<const MTDTrackingRecHit*> mtdRecHits;
-    if (bestAssociatedRecoTrack.first != -1 and bestAssociatedRecoTrack.second > 0.75f) {
-      trackIndex = bestAssociatedRecoTrack.first;
-   std::cout << " and associated with recoTrack " << trackIndex << std::endl;
-      const reco::TrackRef trackref(tracks_h, trackIndex);
-      if (trackAssoc[trackref] == -1) {
-        std::cout << " ** Extended track not associated ** \n";
-number_of_mtdHits_.push_back(0);
-mtdHit_det.push_back({-1});
-        continue;
-      }
-
-      const reco::TrackRef mtdTrackref = reco::TrackRef(mtdTracks_h, trackAssoc[trackref]);
-      const reco::Track& track = *mtdTrackref;
-std::cout << " looping on track hits, there are ";
-      for (const auto hit : track.recHits()) {
-        if (hit->isValid() == false)
-          continue;
-        MTDDetId Hit = hit->geographicalId();
-        if ((Hit.det() == 6) && (Hit.subdetId() == 1)) {
-          const MTDTrackingRecHit* mtdhit = static_cast<const MTDTrackingRecHit*>(hit);
-          mtdRecHits.push_back(mtdhit);
-    mtdHit_det.push_back(Hit.mtdSubDetector());
-	}
-      }
-      number_of_mtdHits_.push_back(mtdRecHits.size());
-std::cout << mtdRecHits.size() <<  " hits in MTD\n";
-    } else {
-number_of_mtdHits_.push_back(0);
-mtdHit_det.push_back({-1});
-	std::cout << std::endl;
+     // recoLCtime.push_back(cluster.time());
+      recoLCtimeErr.push_back(cluster.timeError());
+      // recoLCposX.push_back(cluster.x());
+      // recoLCposY.push_back(cluster.y());
+      int sc_directMatch = MtdRCtoSC(cluster);
+      if (sc_directMatch != -1) {
+        std::cout << " direct match reco to sim ";
+        recoLCdirect.push_back(1);
+      } else
+        recoLCdirect.push_back(0);
     }
-mtdHits_det_.push_back(mtdHit_det);
-ST_simTrack_.push_back(simTrack.trackId());
-ST_recoTrack_.push_back(trackIndex);
-simTrack_phi_.push_back(st.phi());
-simTrack_eta_.push_back(st.eta());
-simTrack_pt_.push_back(st.pt());
+    std::cout << std::endl;
 
-std::vector<bool> is_looper;
-std::vector<int> simLC_idx;
-std::vector<int> LC_simTrack;
-std::vector<int> LC_recoTrack;
-std::vector<float> simLC_time;
-std::vector<float> simLC_posX;
-std::vector<float> simLC_posY;
-std::vector<float> recocluster_time;
-std::vector<float> recocluster_timeErr;
-std::vector<float> recocluster_posX;
-std::vector<float> recocluster_posY;
-std::vector<bool> simLC_matched;
-std::vector<bool> simLC_CorrectMatch;
-std::vector<bool> simLC_DirectMatch;
+    if (mtdRecoClusters.size() == 0) {
+      recoLChits.push_back({0});
+    //  recoLCtime.push_back({0});
+      recoLCtimeErr.push_back({-1});
+      recoLCdirect.push_back({0});
+      //      continue;
+    }
 
-    for (const auto& idx : SCindices) {
-    const auto& sc = mtdSimLCs[idx];
-      std::cout << "Considering LC " << idx << " with time " << sc.simLCTime();
+    // recoLCtime_.push_back(recoLCtime);
+    recoLCtimeErr_.push_back(recoLCtimeErr);
+    recoLCdirect_.push_back(recoLCdirect);
+    // clustersRecHits_.push_back(recoLChits);
 
-simLC_idx.push_back(idx);
-LC_simTrack.push_back(simTrack.trackId());
-LC_recoTrack.push_back(trackIndex);
-simLC_time.push_back(sc.simLCTime());
-simLC_posX.push_back(sc.simLCPos().x());
-simLC_posY.push_back(sc.simLCPos().y());
+    std::vector<float> recoLCtime;
+    std::vector<float> simLCtime;
+    std::vector<uint64_t> simLChits;
+    std::vector<int> simLCmatch;
+    std::vector<int> simLCdirect;
+    std::vector<int> simLCcorrect;
+    // std::vector<std::vector<uint8_t>> simLCXpos;
+    // std::vector<std::vector<uint8_t>> simLCYpos;
 
-      const auto& hAndF = sc.hits_and_fractions();
-      // flag per dire se e' looper o no in qualche modo
-      [[maybe_unused]] bool isLooper = false;
-      if (std::abs(sc.simLCTime() - st.time()) > 0.2)
-         isLooper = true; 
-std::cout << (isLooper ? " marked as looper\n" : "\n"); 
-is_looper.push_back(isLooper);
+    // take the simTrackster
+    if (SimTrackIdx != -1) {
+      const auto& st = SimTrackToMtdST.find(SimTrackIdx)->second;
+      const auto& SCindices = mtdSimTracksters[st].clusters();
+      for (const auto& idx : SCindices) {
+        auto match = 0;
+        auto direct = 0;
+        auto correct = 0;
+        const auto& sc = mtdSimLCs[idx];
+        const auto& hAndF = sc.hits_and_fractions();
+        std::cout << "considering simLC " << idx << " with time "
+                  << mtdSimLCs[idx].simLCTime() << " and detIds ";
+        for (const auto& id : hAndF)
+          std::cout << id.first << ", ";
+        std::cout << std::endl;
+        // save simLC info
+        simLChits.push_back(hAndF[0].first);
+        // std::vector<uint8_t> scXpos(hAndF.size());
+        // std::transform(hAndF.begin(), hAndF.end(), scXpos.begin(), [](const
+        // std::pair<int, float>& pair) {
+        //  return (pair.second).first;
+        //});
+        // simLCXpos.push_back(scXpos);
+        // std::vector<uint8_t> scYpos(hAndF.size());
+        // std::transform(hAndF.begin(), hAndF.end(), scYpos.begin(), [](const
+        // std::pair<int, float>& pair) {
+        //  return (pair.second).second;
+        //});
+        // simLCYpos.push_back(scYpos);
 
-std::cout << "There are " << mtdRecHits.size() << " mtd hits\n"; 
+        // two possibilities: one reco cluster matched is enough or all have to
+        // be matched
         bool found = false;
-        for (const auto& mtdhit : mtdRecHits){
-            const auto& cluster = mtdhit->mtdCluster();
-            MTDDetId cluId = cluster.id();
-            for (int ihit = 0; ihit < cluster.size(); ++ihit) {
-              int hit_row = cluster.minHitRow() + cluster.hitOffset()[ihit * 2];
-              int hit_col = cluster.minHitCol() + cluster.hitOffset()[ihit * 2 + 1];
-              for (const auto& RecHitsColl : RecHitsHandle) {
-                for (const auto& recHit : *RecHitsColl) {
-                  MTDDetId hitId(recHit.id().rawId());
+        for (const auto& cluster : mtdRecoClusters) {
+          MTDDetId cluId = cluster.id();
+          for (int ihit = 0; ihit < cluster.size(); ++ihit) {
+            int hit_row = cluster.minHitRow() + cluster.hitOffset()[ihit * 2];
+            int hit_col =
+                cluster.minHitCol() + cluster.hitOffset()[ihit * 2 + 1];
+            for (const auto& RecHitsColl : RecHitsHandle) {
+              for (const auto& recHit : *RecHitsColl) {
+                MTDDetId hitId(recHit.id().rawId());
 
-                  if (hitId.mtdSide() != cluId.mtdSide() || hitId.mtdRR() != cluId.mtdRR() || recHit.row() != hit_row || recHit.column() != hit_col)
-                    continue;
+                if (hitId.mtdSide() != cluId.mtdSide() ||
+                    hitId.mtdRR() != cluId.mtdRR() || recHit.row() != hit_row ||
+                    recHit.column() != hit_col)
+                  continue;
 
-                  if (recHit.energy() != cluster.hitENERGY()[ihit] || recHit.time() != cluster.hitTIME()[ihit])
-                    continue;
+                if (recHit.energy() != cluster.hitENERGY()[ihit] ||
+                    recHit.time() != cluster.hitTIME()[ihit])
+                  continue;
 
-                  uint64_t targetId = static_cast<uint64_t>(hitId.rawId()) << 32;
-                  targetId |= recHit.row() << 16;
-                  targetId |= recHit.column();
-                  auto found_clu = std::find_if( hAndF.begin(), hAndF.end(),
-                      [&targetId](const std::pair<uint64_t, float>& elem){ return elem.first == targetId;} );
-                    if (found_clu != hAndF.end()) {
-                      found = true;
-std::cout << "simLC matched with reco cluster with time " << mtdhit->time();
-recocluster_time.push_back(mtdhit->time());
-recocluster_timeErr.push_back(mtdhit->timeError());
-recocluster_posX.push_back(cluster.x());
-recocluster_posY.push_back(cluster.y());
-simLC_matched.push_back(true);
-   int rc_directMatch = MtdSCtoRC(sc);
-   if (rc_directMatch != -1) {
-     FTLCluster rc = MtdRecoClusters[rc_directMatch];
-     MTDDetId rcId = rc.id();
-     if (cluId == rcId and rc.time() == cluster.time() and rc.energy() == cluster.energy() and rc.size() == cluster.size()) {
-       simLC_CorrectMatch.push_back(true);
-       simLC_DirectMatch.push_back(true);
-std::cout << "direct match also with reco and correct\n";
-     } else {
-       simLC_DirectMatch.push_back(true);
-       simLC_CorrectMatch.push_back(false);
-std::cout << " direct match also with reco but not correct\n";
-     }
-   } else {
-       simLC_CorrectMatch.push_back(false);
-       simLC_DirectMatch.push_back(false); 
-std::cout << "but not direct match with reco\n";
-   }
-                      break;
+                uint64_t targetId = static_cast<uint64_t>(hitId.rawId()) << 32;
+                targetId |= recHit.row() << 16;
+                targetId |= recHit.column();
+                std::cout << "  Looking at recoCluster " << targetId
+                          << std::endl;
+                auto found_clu = std::find_if(
+                    hAndF.begin(), hAndF.end(),
+                    [&targetId](const std::pair<uint64_t, float>& elem) {
+                      return elem.first == targetId;
+                    });
+                if (found_clu != hAndF.end()) {
+                  found = true;
+                  std::cout << " matched with reco";
+                  match = 1;
+                  int rc_directMatch = MtdSCtoRC(sc);
+                  if (rc_directMatch != -1) {
+                    FTLCluster rc = MtdRecoClusters[rc_directMatch];
+                    MTDDetId rcId = rc.id();
+                    // direct match
+                    std::cout << " also direct match";
+                    direct = 1;
+                    if (cluId == rcId and rc.time() ==
+                        cluster.time() and rc.energy() ==
+                        cluster.energy() and rc.size() == cluster.size()) {
+                      std::cout << " and correct";
+                      correct = 1;
                     }
                   }
-                  if (found)
-		    break;
+                  simLCmatch.push_back(match);
+                  simLCcorrect.push_back(correct);
+                  simLCdirect.push_back(direct);
+                  simLCtime.push_back(mtdSimLCs[idx].simLCTime());
+                  recoLCtime.push_back(cluster.time());
+                  break;
                 }
-                if (found)
-		  break;
-              } 
+              }
               if (found)
-	        break;
+                break;
             }
-            if (not found){
-recocluster_time.push_back(0);
-recocluster_timeErr.push_back(-1);
-recocluster_posX.push_back(-99.);
-recocluster_posY.push_back(-99.);
-simLC_matched.push_back(false);
-std::cout << "simLC not matched with reco cluster\n";
-   int rc_directMatch = MtdSCtoRC(sc);
-   if (rc_directMatch != -1) {
-     simLC_DirectMatch.push_back(true);
-std::cout << " but there is a direct match\n";
-   } else {
-     simLC_DirectMatch.push_back(false);
-std::cout << " and there is no direct match\n";
-   }
-   simLC_CorrectMatch.push_back(false);
-            }
+            if (found)
+              break;
           }
-// push_back nel vettorone
-simLC_is_looper_.push_back(is_looper);
-simLC_idx_.push_back(simLC_idx);
-simLC_simTrack_.push_back(LC_simTrack);
-simLC_recoTrack_.push_back(LC_recoTrack);
-simLC_time_.push_back(simLC_time);
-simLC_posX_.push_back(simLC_posX);
-simLC_posY_.push_back(simLC_posY);
-recocluster_time_.push_back(recocluster_time);
-recocluster_timeErr_.push_back(recocluster_timeErr);
-recocluster_posX_.push_back(recocluster_posX);
-recocluster_posY_.push_back(recocluster_posY);
-simLC_matched_.push_back(simLC_matched);
-simLC_CorrectMatch_.push_back(simLC_CorrectMatch);
-simLC_DirectMatch_.push_back(simLC_DirectMatch);
+          if (found)
+            break;
         }
+        if (not found) {
+          std::cout << " no matched with reco through the track ";
+          int rc_directMatch = MtdSCtoRC(sc);
+          if (rc_directMatch != -1) {
+            FTLCluster rc = MtdRecoClusters[rc_directMatch];
+            std::cout << " but direct match";
+            direct = 1;
+          }
+          simLCmatch.push_back(match);
+          simLCcorrect.push_back(correct);
+          simLCdirect.push_back(direct);
+                  simLCtime.push_back(mtdSimLCs[idx].simLCTime());
+                  recoLCtime.push_back(rc_directMatch == -1 ? 0 : MtdRecoClusters[rc_directMatch].time());  
+        }
+        std::cout << std::endl;
+      }
+      // QUI attenzione ai seg fault, trusting the existence of a TP
+      auto tp = simTrackToTrackingParticle(mtdSimTracksters[st].g4Tracks()[0]);
+      simTrack_pt.push_back(tp.pt());
+      simTrack_phi.push_back(tp.phi());
+      simTrack_eta.push_back(tp.eta());
+    } else {
+      simLCtime.push_back(0);
+                  recoLCtime.push_back(0);
+      simLCmatch.push_back(0);
+      simLCcorrect.push_back(0);
+      simLCdirect.push_back(0);
+      std::cout << std::endl;
+      // try to associate with another simtrack not in mtd
+      auto simPos = RecoTrackToTPMap.find((reco::TrackBaseRef)trackref);
+      if (simPos != RecoTrackToTPMap.end() and !(simPos->val)
+                                                    .empty() and(simPos->val)[0]
+                                                    .second > 0.75f) {
+        SimTrackIdx = -2;  // means that is not fake, but no simtrackster in mtd
+        const auto& tp = *((simPos->val)[0].first);
+        simTrack_pt.push_back(tp.pt());
+        simTrack_phi.push_back(tp.phi());
+        simTrack_eta.push_back(tp.eta());
+      } else {
+        simTrack_pt.push_back(-1);
+        simTrack_phi.push_back(-99);
+        simTrack_eta.push_back(-99);
+      }
+    }
+    // simLChits_.push_back(simLChits);
+    recoLCtime_.push_back(recoLCtime);
+    simLCtime_.push_back(simLCtime);
+    simLCmatch_.push_back(simLCmatch);
+    simLCcorrect_.push_back(simLCcorrect);
+    simLCdirect_.push_back(simLCdirect);
+    recoTrackToSimTrack.push_back(SimTrackIdx);
+  }
 
-std::cout << "------------------------------\n";
+  for (const auto& sc : mtdSimLCs) {
+    const auto& hAndF = sc.hits_and_fractions();
+    for (const auto& id : hAndF) {
+      auto simHitId = id.first; 
+      auto simHitPt = sc.pt(); //idem per eta e phi
+
+      bool found = false;
+      for (const auto& RecHitsColl : RecHitsHandle) {
+        for (const auto& recHit : *RecHitsColl) {
+          MTDDetId hitId(recHit.id().rawId());
+
+          uint64_t targetId = static_cast<uint64_t>(hitId.rawId()) << 32;
+          targetId |= recHit.row() << 16;
+          targetId |= recHit.column();
+
+          if (targetId==simHitId){
+            found=true;
+            break;
+          }
+        }
+        if (found)
+          break;
+      }
+      hit_pt.push_back(sc.pt());
+      hit_eta.push_back(sc.eta());
+      hit_phi.push_back(sc.phi()); 
+      hit_match.push_back(found ? 1 : 0);
+    }
+  }
+
+  ////  std::cout << "BEGIN\nThere are " << mtdSimTracksters.size() << "
+  ///mtdSimTracksters"<< std::endl;
+  //  number_of_mtdSimTracksters_ = mtdSimTracksters.size();
+  //  // loop on simTracksters
+  //  for (const auto& st : mtdSimTracksters) {
+  //    const auto& SCindices = st.clusters();
+  //    number_of_mtdSimLCinST_.push_back(SCindices.size());
+  ////    std::cout << "  number of LC in ST: " << SCindices.size() <<
+  ///std::endl;
+  //
+  //    const auto& simTrack = st.g4Tracks()[0];
+  //    int trackIndex = -1;
+  ////    std::cout << "  ST associated with simTrack " << simTrack.trackId();
+  //    // association with recotrack
+  //    UniqueSimTrackId simTkIds(simTrack.trackId(), simTrack.eventId());
+  //    auto bestAssociatedRecoTrack = simTrackToRecoTrack(simTkIds);
+  //    std::vector<int> mtdHit_det;
+  //    std::vector<const MTDTrackingRecHit*> mtdRecHits;
+  //    int missingOuterHits = -1;
+  //    if (bestAssociatedRecoTrack.first != -1 and
+  // bestAssociatedRecoTrack.second > 0.75f) {
+  //      trackIndex = bestAssociatedRecoTrack.first;
+  ////      std::cout << " and associated with recoTrack " << trackIndex <<
+  ///std::endl;
+  //      const reco::TrackRef trackref(tracks_h, trackIndex);
+  //      missingOuterHits = trackref->missingOuterHits();
+  //
+  //      if (trackAssoc[trackref] == -1) {
+  ////        std::cout << " ** Extended track not associated ** \n";
+  //        number_of_mtdHits_.push_back(0);
+  //        mtdHit_det.push_back({-1});
+  //        continue;
+  //      }
+  //
+  //      const reco::TrackRef mtdTrackref = reco::TrackRef(mtdTracks_h,
+  // trackAssoc[trackref]);
+  //      const reco::Track& track = *mtdTrackref;
+  ////      std::cout << " looping on track hits, there are ";
+  //      for (const auto hit : track.recHits()) {
+  //        if (hit->isValid() == false)
+  //          continue;
+  //        MTDDetId Hit = hit->geographicalId();
+  //        if ((Hit.det() == 6) && (Hit.subdetId() == 1)) {
+  //          const MTDTrackingRecHit* mtdhit = static_cast<const
+  // MTDTrackingRecHit*>(hit);
+  //          mtdRecHits.push_back(mtdhit);
+  //          mtdHit_det.push_back(Hit.mtdSubDetector());
+  // 	}
+  //      }
+  //      number_of_mtdHits_.push_back(mtdRecHits.size());
+  // //     std::cout << mtdRecHits.size() <<  " hits in MTD\n";
+  //    } else {
+  //      number_of_mtdHits_.push_back(0);
+  //      mtdHit_det.push_back({-1});
+  ////      std::cout << std::endl;
+  //    }
+  //    mtdHits_det_.push_back(mtdHit_det);
+  //    ST_simTrack_.push_back(simTrack.trackId());
+  //    ST_recoTrack_.push_back(trackIndex);
+  //    ST_RTouterHits_.push_back(missingOuterHits);
+  //    simTrack_phi_.push_back(st.phi());
+  //    simTrack_eta_.push_back(st.eta());
+  //    simTrack_pt_.push_back(st.pt());
+  //
+  //    std::vector<bool> is_looper;
+  //    std::vector<int> simLC_idx;
+  //    std::vector<int> LC_simTrack;
+  //    std::vector<int> LC_recoTrack;
+  //    std::vector<float> simLC_time;
+  //    std::vector<float> simLC_posX;
+  //    std::vector<float> simLC_posY;
+  //    std::vector<float> recocluster_time;
+  //    std::vector<float> recocluster_timeErr;
+  //    std::vector<float> recocluster_posX;
+  //    std::vector<float> recocluster_posY;
+  //    std::vector<bool> simLC_matched;
+  //    std::vector<bool> simLC_CorrectMatch;
+  //    std::vector<bool> simLC_DirectMatch;
+  //
+  //    for (const auto& idx : SCindices) {
+  //    const auto& sc = mtdSimLCs[idx];
+  ////      std::cout << "Considering LC " << idx << " with time " <<
+  ///sc.simLCTime();
+  //
+  // simLC_idx.push_back(idx);
+  // LC_simTrack.push_back(simTrack.trackId());
+  // LC_recoTrack.push_back(trackIndex);
+  // simLC_time.push_back(sc.simLCTime());
+  // simLC_posX.push_back(sc.simLCPos().x());
+  // simLC_posY.push_back(sc.simLCPos().y());
+  //
+  //      const auto& hAndF = sc.hits_and_fractions();
+  //      // flag per dire se e' looper o no in qualche modo
+  //      [[maybe_unused]] bool isLooper = false;
+  //      if (std::abs(sc.simLCTime() - st.time()) > 0.2)
+  //         isLooper = true;
+  ////std::cout << (isLooper ? " marked as looper\n" : "\n");
+  // is_looper.push_back(isLooper);
+  //
+  ////std::cout << "There are " << mtdRecHits.size() << " mtd hits\n";
+  //        bool found = false;
+  //        for (const auto& mtdhit : mtdRecHits){
+  //            const auto& cluster = mtdhit->mtdCluster();
+  //            MTDDetId cluId = cluster.id();
+  //            for (int ihit = 0; ihit < cluster.size(); ++ihit) {
+  //              int hit_row = cluster.minHitRow() + cluster.hitOffset()[ihit *
+  // 2];
+  //              int hit_col = cluster.minHitCol() + cluster.hitOffset()[ihit *
+  // 2 + 1];
+  //              for (const auto& RecHitsColl : RecHitsHandle) {
+  //                for (const auto& recHit : *RecHitsColl) {
+  //                  MTDDetId hitId(recHit.id().rawId());
+  //
+  //                  if (hitId.mtdSide() != cluId.mtdSide() || hitId.mtdRR() !=
+  // cluId.mtdRR() || recHit.row() != hit_row || recHit.column() != hit_col)
+  //                    continue;
+  //
+  //                  if (recHit.energy() != cluster.hitENERGY()[ihit] ||
+  // recHit.time() != cluster.hitTIME()[ihit])
+  //                    continue;
+  //
+  //                  uint64_t targetId = static_cast<uint64_t>(hitId.rawId())
+  // << 32;
+  //                  targetId |= recHit.row() << 16;
+  //                  targetId |= recHit.column();
+  //                  auto found_clu = std::find_if( hAndF.begin(), hAndF.end(),
+  //                      [&targetId](const std::pair<uint64_t, float>& elem){
+  // return elem.first == targetId;} );
+  //                    if (found_clu != hAndF.end()) {
+  //                      found = true;
+  ////std::cout << "simLC matched with reco cluster with time " <<
+  ///mtdhit->time();
+  // recocluster_time.push_back(mtdhit->time());
+  // recocluster_timeErr.push_back(mtdhit->timeError());
+  // recocluster_posX.push_back(cluster.x());
+  // recocluster_posY.push_back(cluster.y());
+  // simLC_matched.push_back(true);
+  //   int rc_directMatch = MtdSCtoRC(sc);
+  //   if (rc_directMatch != -1) {
+  //     FTLCluster rc = MtdRecoClusters[rc_directMatch];
+  //     MTDDetId rcId = rc.id();
+  //     if (cluId == rcId and rc.time() == cluster.time() and rc.energy() ==
+  // cluster.energy() and rc.size() == cluster.size()) {
+  //       simLC_CorrectMatch.push_back(true);
+  //       simLC_DirectMatch.push_back(true);
+  ////std::cout << "direct match also with reco and correct\n";
+  //     } else {
+  //       simLC_DirectMatch.push_back(true);
+  //       simLC_CorrectMatch.push_back(false);
+  ////std::cout << " direct match also with reco but not correct\n";
+  //     }
+  //   } else {
+  //       simLC_CorrectMatch.push_back(false);
+  //       simLC_DirectMatch.push_back(false);
+  ////std::cout << "but not direct match with reco\n";
+  //   }
+  //                      break;
+  //                    }
+  //                  }
+  //                  if (found)
+  //		    break;
+  //                }
+  //                if (found)
+  //		  break;
+  //              }
+  //              if (found)
+  //	        break;
+  //            }
+  //            if (not found){
+  // recocluster_time.push_back(0);
+  // recocluster_timeErr.push_back(-1);
+  // recocluster_posX.push_back(-99.);
+  // recocluster_posY.push_back(-99.);
+  // simLC_matched.push_back(false);
+  ////std::cout << "simLC not matched with reco cluster\n";
+  //   int rc_directMatch = MtdSCtoRC(sc);
+  //   if (rc_directMatch != -1) {
+  //     simLC_DirectMatch.push_back(true);
+  ////std::cout << " but there is a direct match\n";
+  //   } else {
+  //     simLC_DirectMatch.push_back(false);
+  ////std::cout << " and there is no direct match\n";
+  //   }
+  //   simLC_CorrectMatch.push_back(false);
+  //            }
+  //          }
+  //// push_back nel vettorone
+  // simLC_is_looper_.push_back(is_looper);
+  // simLC_idx_.push_back(simLC_idx);
+  // simLC_simTrack_.push_back(LC_simTrack);
+  // simLC_recoTrack_.push_back(LC_recoTrack);
+  // simLC_time_.push_back(simLC_time);
+  // simLC_posX_.push_back(simLC_posX);
+  // simLC_posY_.push_back(simLC_posY);
+  // recocluster_time_.push_back(recocluster_time);
+  // recocluster_timeErr_.push_back(recocluster_timeErr);
+  // recocluster_posX_.push_back(recocluster_posX);
+  // recocluster_posY_.push_back(recocluster_posY);
+  // simLC_matched_.push_back(simLC_matched);
+  // simLC_CorrectMatch_.push_back(simLC_CorrectMatch);
+  // simLC_DirectMatch_.push_back(simLC_DirectMatch);
+  //        }
+
+  std::cout << "------------------------------\n";
 
   node_linked_inners.resize(tracksters.size());
   node_linked_outers.resize(tracksters.size());
@@ -2619,8 +3018,10 @@ std::cout << "------------------------------\n";
     const auto& node = graph.getNode((int)i);
     auto this_inners = node.getInner();
     auto this_outers = node.getOuter();
-    node_linked_inners[i].insert(node_linked_inners[i].end(), this_inners.begin(), this_inners.end());
-    node_linked_outers[i].insert(node_linked_outers[i].end(), this_outers.begin(), this_outers.end());
+    node_linked_inners[i].insert(node_linked_inners[i].end(),
+                                 this_inners.begin(), this_inners.end());
+    node_linked_outers[i].insert(node_linked_outers[i].end(),
+                                 this_outers.begin(), this_outers.end());
     if (node.getInner().empty())
       isRootTrackster[i] = true;
   }
@@ -2700,14 +3101,16 @@ void TICLDumper::fillDescriptions(
                           edm::InputTag("mix", "MergedMtdTruthST"));
   desc.add<edm::InputTag>("MtdSimLayerCluster",
                           edm::InputTag("mix", "MergedMtdTruthLC"));
-  desc.add<edm::InputTag>("tpToTrack",
-                          edm::InputTag("trackingParticleRecoTrackAsssociation"));
-  desc.add<edm::InputTag>("simTrackToTPMap",
-                          edm::InputTag("simHitTPAssocProducer", "simTrackToTP"));
+  desc.add<edm::InputTag>(
+      "tpToTrack", edm::InputTag("trackingParticleRecoTrackAsssociation"));
+  desc.add<edm::InputTag>(
+      "simTrackToTPMap",
+      edm::InputTag("simHitTPAssocProducer", "simTrackToTP"));
   desc.add<edm::InputTag>("tracksWithMtd",
                           edm::InputTag("trackExtenderWithMTD"));
-  desc.add<edm::InputTag>("mtdtrackAssocSrc",
-                          edm::InputTag("trackExtenderWithMTD:generalTrackassoc"));
+  desc.add<edm::InputTag>(
+      "mtdtrackAssocSrc",
+      edm::InputTag("trackExtenderWithMTD:generalTrackassoc"));
   desc.add<edm::InputTag>("BTLrecHits",
                           edm::InputTag("mtdRecHits", "FTLBarrel"));
   desc.add<edm::InputTag>("ETLrecHits",
