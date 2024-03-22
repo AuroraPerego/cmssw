@@ -1,6 +1,5 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "DataFormats/Common/interface/ValueMap.h"
-#include "RecoLocalCalo/HGCalRecProducers/interface/ComputeClusterTime.h"
 #include "TrackstersPCA.h"
 
 #include <iostream>
@@ -43,10 +42,6 @@ void ticl::assignPCAtoTracksters(std::vector<Trackster> &tracksters,
     sigmasEigen << 0., 0., 0.;
     Eigen::Matrix3d covM = Eigen::Matrix3d::Zero();
 
-    float tracksterTime = 0.;
-    float tracksterTimeErr = 0.;
-    std::set<uint32_t> usedLC;
-
     for (size_t i = 0; i < N; ++i) {
       auto fraction = 1.f / trackster.vertex_multiplicity(i);
       trackster.addToRawEnergy(layerClusters[trackster.vertices(i)].energy() * fraction);
@@ -64,61 +59,10 @@ void ticl::assignPCAtoTracksters(std::vector<Trackster> &tracksters,
     if (energyWeight && trackster.raw_energy())
       barycenter /= trackster.raw_energy();
 
-    auto project_lc_to_pca = [](const std::vector<double> &point, const std::vector<double> &segment_end) {
-      double dot_product = 0.0;
-      double segment_dot = 0.0;
-
-      for (int i = 0; i < 3; ++i) {
-        dot_product += point[i] * segment_end[i];
-        segment_dot += segment_end[i] * segment_end[i];
-      }
-
-      double projection = 0.0;
-      if (segment_dot != 0.0) {
-        projection = dot_product / segment_dot;
-      }
-
-      std::vector<double> closest_point(3);
-      for (int i = 0; i < 3; ++i) {
-        closest_point[i] = projection * segment_end[i];
-      }
-
-      double distance = 0.0;
-      for (int i = 0; i < 3; ++i) {
-        distance += std::pow(point[i] - closest_point[i], 2);
-      }
-
-      return std::sqrt(distance);
-    };
-
     // Compute the Covariance Matrix and the sum of the squared weights, used
     // to compute the correct normalization.
     // The barycenter has to be known.
     for (size_t i = 0; i < N; ++i) {
-      constexpr double c = 29.9792458;  // cm/ns
-      // Add timing from layerClusters not already used
-      if ((usedLC.insert(trackster.vertices(i))).second) {
-        float timeE = layerClustersTime.get(trackster.vertices(i)).second;
-        if (timeE > 0.f) {
-          float time = layerClustersTime.get(trackster.vertices(i)).first;
-          timeE = 1. / pow(timeE, 2);
-          float x = layerClusters[trackster.vertices(i)].x();
-          float y = layerClusters[trackster.vertices(i)].y();
-          float z = layerClusters[trackster.vertices(i)].z();
-
-          if (project_lc_to_pca({x, y, z}, {barycenter[0], barycenter[1], barycenter[2]}) < 3) {  // set MR to 3
-            float deltaT = 1 / c *
-                           std::sqrt(((barycenter[2] / z - 1) * x) * ((barycenter[2] / z - 1) * x) +
-                                     ((barycenter[2] / z - 1) * y) * ((barycenter[2] / z - 1) * y) +
-                                     (barycenter[2] - z) * (barycenter[2] - z));
-            time = std::abs(barycenter[2]) < std::abs(z) ? time - deltaT : time + deltaT;
-
-            tracksterTime += time * timeE;
-            tracksterTimeErr += timeE;
-          }
-        }
-      }
-
       fillPoint(layerClusters[trackster.vertices(i)]);
       if (energyWeight && trackster.raw_energy())
         weight =
@@ -132,9 +76,12 @@ void ticl::assignPCAtoTracksters(std::vector<Trackster> &tracksters,
     }
     covM *= 1. / (1. - weights2_sum);
 
+    bool computeTracksterTime_ = true;
     std::pair<float, float> timeTrackster{-99.f, -1.f};
-    if (tracksterTimeErr > 0.f)
-      timeTrackster = {tracksterTime / tracksterTimeErr, 1. / std::sqrt(tracksterTimeErr)};
+    if (computeTracksterTime_)
+      timeTrackster = ticl::computeTracksterTime(trackster, layerClusters, layerClustersTime, barycenter, N);
+
+    trackster.setTimeAndError(timeTrackster.first, timeTrackster.second);
 
     // Perform the actual decomposition
     Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d>::RealVectorType eigenvalues_fromEigen;
@@ -164,8 +111,6 @@ void ticl::assignPCAtoTracksters(std::vector<Trackster> &tracksters,
     // Add trackster attributes
     trackster.setBarycenter(ticl::Trackster::Vector(barycenter));
 
-    trackster.setTimeAndError(timeTrackster.first, timeTrackster.second);
-
     trackster.fillPCAVariables(
         eigenvalues_fromEigen, eigenvectors_fromEigen, sigmas, sigmasEigen, 3, ticl::Trackster::PCAOrdering::ascending);
 
@@ -194,4 +139,71 @@ void ticl::assignPCAtoTracksters(std::vector<Trackster> &tracksters,
                               << sigmasEigen[0] << std::endl;
     LogDebug("TrackstersPCA") << "covM:     \n" << covM << std::endl;
   }
+}
+
+std::pair<float, float> ticl::computeTracksterTime(const Trackster &trackster,
+                                                   const std::vector<reco::CaloCluster> &layerClusters,
+                                                   const edm::ValueMap<std::pair<float, float>> &layerClustersTime,
+                                                   const Eigen::Vector3d &barycenter,
+                                                   size_t N) {
+  float tracksterTime = 0.;
+  float tracksterTimeErr = 0.;
+  std::set<uint32_t> usedLC;
+
+  auto project_lc_to_pca = [](const std::vector<double> &point, const std::vector<double> &segment_end) {
+    double dot_product = 0.0;
+    double segment_dot = 0.0;
+
+    for (int i = 0; i < 3; ++i) {
+      dot_product += point[i] * segment_end[i];
+      segment_dot += segment_end[i] * segment_end[i];
+    }
+
+    double projection = 0.0;
+    if (segment_dot != 0.0) {
+      projection = dot_product / segment_dot;
+    }
+
+    std::vector<double> closest_point(3);
+    for (int i = 0; i < 3; ++i) {
+      closest_point[i] = projection * segment_end[i];
+    }
+
+    double distance = 0.0;
+    for (int i = 0; i < 3; ++i) {
+      distance += std::pow(point[i] - closest_point[i], 2);
+    }
+
+    return std::sqrt(distance);
+  };
+
+  for (size_t i = 0; i < N; ++i) {
+    constexpr double c = 29.9792458;  // cm/ns
+    // Add timing from layerClusters not already used
+    if ((usedLC.insert(trackster.vertices(i))).second) {
+      float timeE = layerClustersTime.get(trackster.vertices(i)).second;
+      if (timeE > 0.f) {
+        float time = layerClustersTime.get(trackster.vertices(i)).first;
+        timeE = 1. / pow(timeE, 2);
+        float x = layerClusters[trackster.vertices(i)].x();
+        float y = layerClusters[trackster.vertices(i)].y();
+        float z = layerClusters[trackster.vertices(i)].z();
+
+        if (project_lc_to_pca({x, y, z}, {barycenter[0], barycenter[1], barycenter[2]}) < 3) {  // set MR to 3
+          float deltaT = 1 / c *
+                         std::sqrt(((barycenter[2] / z - 1) * x) * ((barycenter[2] / z - 1) * x) +
+                                   ((barycenter[2] / z - 1) * y) * ((barycenter[2] / z - 1) * y) +
+                                   (barycenter[2] - z) * (barycenter[2] - z));
+          time = std::abs(barycenter[2]) < std::abs(z) ? time - deltaT : time + deltaT;
+
+          tracksterTime += time * timeE;
+          tracksterTimeErr += timeE;
+        }
+      }
+    }
+  }
+  if (tracksterTimeErr > 0.f)
+    return {tracksterTime / tracksterTimeErr, 1. / std::sqrt(tracksterTimeErr)};
+  else
+    return {-99., -1.};
 }
