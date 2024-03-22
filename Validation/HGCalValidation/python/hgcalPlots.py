@@ -1762,6 +1762,9 @@ _trackster_xyz_plots.extend([Plot("trackster_y", **_common)])
 _trackster_xyz_plots.extend([Plot("trackster_z", **_common)])
 _trackster_xyz = PlotGroup("XYZ", _trackster_xyz_plots, ncols=3)
 
+_candidate_nts_plots = [Plot("n_tracksters", **_common)]
+_candidate_nts = PlotGroup("NTracksters", _candidate_nts_plots, ncols=1)
+
 #--------------------------------------------------------------------------------------------
 # SIMHITS, DIGIS, RECHITS
 #--------------------------------------------------------------------------------------------
@@ -2840,3 +2843,19 @@ hgcalHitCalibPlotter.append("EcalDrivenGsfElectronsFromTrackster_Closest_EoverCP
         loopSubFolders=False,
         purpose=PlotPurpose.Timing, page=hitCalibrationLabel, section=hitCalibrationLabel
         ))
+
+# Candidates plots
+_candidatesPlots = [
+  _candidate_nts,
+]
+
+hgcalTICLCandPlotter = Plotter()
+#def append_ticlCandidatesPlots(collection = 'ticlCandidates', name_collection = "candidates"):
+  # Appending generic plots for candiates 
+hgcalTICLCandPlotter.append('ticlCandidates', [
+             #'DQMData/Run 1/HGCalHitCalibration/Run summary/ticlCandidates', #+ "/" + hgcalValidator.ticlCandidates.value())
+             "DQMData/Run 1/HGCAL;1/Run summary;1/HGCalValidator;1/ticlCandidates",
+            ], PlotFolder(
+            *_candidatesPlots,
+            loopSubFolders=False,
+            purpose=PlotPurpose.Timing, page="Candidates", section="Candidates"))
