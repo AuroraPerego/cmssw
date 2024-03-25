@@ -18,7 +18,7 @@
   <class name="edm::Wrapper<std::vector<std::vector<unsigned int>>>" />
 
   <class name="ticl::TICLLayerTile" persistent="false">
-    <field name="tile_" transient="true"/>
+    <field name="tiles_" transient="true"/>
   </class>
 
   <class name="TICLGenericTile<ticl::Tiles>" persistent="false">
@@ -32,7 +32,7 @@
   <class name="edm::Wrapper<TICLGenericTile<ticl::TracksterTiles>>" persistent="false"/>
 
   <class name="ticl::TICLLayerTileHFNose" persistent="false">
-    <field name="tile_" transient="true"/>
+    <field name="tiles_" transient="true"/>
   </class>
 
   <class name="TICLGenericTile<ticl::TilesHFNose>" persistent="false">

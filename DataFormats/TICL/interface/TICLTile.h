@@ -96,9 +96,10 @@ public:
     }
     return (d1 * d1 + d2 * d2);
   }
-  int getGlobalBin(float dim1, float dim2) const { return getDim1Bin(dim1) + getDim2Bin(dim2) * nColumns; }
 
-  int getGlobalBinByBin(int dim1Bin, int dim2Bin) const { return dim1Bin + dim2Bin * nColumns; }
+  int getGlobalBin(float dim1, float dim2) const { if constexpr(T::absDim1) return getDim1Bin(dim1) * nRows + getDim2Bin(dim2); else return getDim1Bin(dim1) + getDim2Bin(dim2) * nColumns; }
+
+  int getGlobalBinByBin(int dim1Bin, int dim2Bin) const { if constexpr(T::absDim1) return dim1Bin * nRows + dim2Bin; else return dim1Bin + dim2Bin * nColumns; }
 
   std::array<int, 4> getSearchBox(float dim1Min, float dim1Max, float dim2Min, float dim2Max) const {
     if constexpr (T::wrapped) {
