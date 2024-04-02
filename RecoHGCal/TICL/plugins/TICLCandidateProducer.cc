@@ -208,6 +208,7 @@ TICLCandidateProducer::TICLCandidateProducer(const edm::ParameterSet &ps)
 
   // New trackster collection after linking
   produces<std::vector<Trackster>>();
+  produces<std::vector<std::vector<unsigned int>>>();
 
   auto interpretationPSet = ps.getParameter<edm::ParameterSet>("interpretationDescPSet");
   auto algoType = interpretationPSet.getParameter<std::string>("type");
@@ -343,7 +344,7 @@ void TICLCandidateProducer::produce(edm::Event &evt, const edm::EventSetup &es) 
   //egammaInterpretationAlg_->makecandidates(inputGSF, inputTiming, *resultTrackstersMerged, trackstersInGSFTrackIndices)
   // mask generalTracks associated to GSFTrack linked in egammaInterpretationAlgo_
 
-  generalInterpretationAlgo_->makeCandidates(input, inputTiming_h, *resultTracksters, trackstersInTrackIndices);
+  generalInterpretationAlgo_->makeCandidates(input, inputTiming_h, *resultTracksters, *linkedResultTracksters, trackstersInTrackIndices);
 
   assignPCAtoTracksters(
       *resultTracksters, layerClusters, layerClustersTimes, rhtools_.getPositionLayer(rhtools_.lastLayerEE()).z(), true);
@@ -352,6 +353,7 @@ void TICLCandidateProducer::produce(edm::Event &evt, const edm::EventSetup &es) 
 
   std::vector<bool> maskTracksters(resultTracksters->size(), true);
   edm::OrphanHandle<std::vector<Trackster>> resultTracksters_h = evt.put(std::move(resultTracksters));
+  evt.put(std::move(linkedResultTracksters));
   //create ChargedCandidates
   for (size_t iTrack = 0; iTrack < tracks.size(); iTrack++) {
     auto const tracksterId = trackstersInTrackIndices[iTrack];

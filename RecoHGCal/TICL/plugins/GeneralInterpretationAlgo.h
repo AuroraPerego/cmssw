@@ -20,6 +20,7 @@ namespace ticl {
     void makeCandidates(const Inputs &input,
                         edm::Handle<MtdHostCollection> inputTiming_h,
                         std::vector<Trackster> &resultTracksters,
+                        std::vector<std::vector<unsigned int>> &resultTrackstersIndices,
                         std::vector<int> &resultCandidate) override;
 
     void initialize(const HGCalDDDConstants *hgcons,

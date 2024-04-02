@@ -99,10 +99,11 @@ TracksterLinksProducer::TracksterLinksProducer(const edm::ParameterSet &ps)
 
   // New trackster collection after linking
   produces<std::vector<Trackster>>();
-  produces<std::vector<Trackster>>("CLUE3D");
+  //produces<std::vector<Trackster>>("CLUE3D");
 
   // Links
   produces<std::vector<std::vector<unsigned int>>>();
+  produces<std::vector<std::vector<unsigned int>>>("tsIndices");
   // LayerClusters Mask
   produces<std::vector<float>>();
 
@@ -161,6 +162,7 @@ void TracksterLinksProducer::produce(edm::Event &evt, const edm::EventSetup &es)
   auto resultTracksters = std::make_unique<std::vector<Trackster>>();
 
   auto linkedResultTracksters = std::make_unique<std::vector<std::vector<unsigned int>>>();
+  auto linkedTracksterIdToInputTracksterId = std::make_unique<std::vector<std::vector<unsigned int>>>();
 
   const auto &layerClusters = evt.get(clusters_token_);
   const auto &layerClustersTimes = evt.get(clustersTime_token_);
@@ -187,14 +189,13 @@ void TracksterLinksProducer::produce(edm::Event &evt, const edm::EventSetup &es)
 
   // Linking
   const typename TracksterLinkingAlgoBase::Inputs input(evt, es, layerClusters, layerClustersTimes, trackstersManager);
-  std::vector<std::vector<unsigned int>> linkedTracksterIdToInputTracksterId;
 
   // LinkTracksters will produce a vector of vector of indices of tracksters that:
   // 1) are linked together if more than one
   // 2) are isolated if only one
   // Result tracksters contains the final version of the trackster collection
   // linkedTrackstersToInputTrackstersMap contains the mapping between the linked tracksters and the input tracksters
-  linkingAlgo_->linkTracksters(input, *resultTracksters, *linkedResultTracksters, linkedTracksterIdToInputTracksterId);
+  linkingAlgo_->linkTracksters(input, *resultTracksters, *linkedResultTracksters, *linkedTracksterIdToInputTracksterId);
 
   // Now we need to remove the tracksters that are not linked
   // We need to emplace_back in the resultTracksters only the tracksters that are linked
@@ -209,6 +210,7 @@ void TracksterLinksProducer::produce(edm::Event &evt, const edm::EventSetup &es)
       *resultTracksters, layerClusters, layerClustersTimes, rhtools_.getPositionLayer(rhtools_.lastLayerEE()).z(), true);
 
   evt.put(std::move(linkedResultTracksters));
+  evt.put(std::move(linkedTracksterIdToInputTracksterId), "tsIndices");
   evt.put(std::move(resultMask));
   evt.put(std::move(resultTracksters));
 }

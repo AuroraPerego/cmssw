@@ -205,6 +205,7 @@ bool GeneralInterpretationAlgo::timeAndEnergyCompatible(float &total_raw_energy,
 void GeneralInterpretationAlgo::makeCandidates(const Inputs &input,
                                                edm::Handle<MtdHostCollection> inputTiming_h,
                                                std::vector<Trackster> &resultTracksters,
+                                               std::vector<std::vector<unsigned int>> &linkedTsInResultTrackstersIdx,
                                                std::vector<int> &resultCandidate) {
   bool useMTDTiming = inputTiming_h.isValid();
   std::cout << "GeneralInterpretationAlgo " << std::endl;
@@ -367,18 +368,22 @@ void GeneralInterpretationAlgo::makeCandidates(const Inputs &input,
   for (size_t iTrack = 0; iTrack < trackstersInTrackIndices.size(); iTrack++) {
     if (!trackstersInTrackIndices[iTrack].empty()) {
       Trackster outTrackster;
-      for (auto const tracksterId : trackstersInTrackIndices[iTrack]) {
+      std::vector<unsigned int> indices;
+      for (unsigned int const tracksterId : trackstersInTrackIndices[iTrack]) {
         //maskTracksters[tracksterId] = 0;
         outTrackster.mergeTracksters(input.tracksters[tracksterId]);
+        indices.push_back(tracksterId);
       }
       resultCandidate[iTrack] = resultTracksters.size();
       resultTracksters.push_back(outTrackster);
+      linkedTsInResultTrackstersIdx.push_back(indices);
     }
   }
 
   for (size_t iTrackster = 0; iTrackster < input.tracksters.size(); iTrackster++) {
     if (chargedMask[iTrackster]) {
       resultTracksters.push_back(input.tracksters[iTrackster]);
+      linkedTsInResultTrackstersIdx.push_back({(unsigned int)iTrackster});
     }
   }
 };

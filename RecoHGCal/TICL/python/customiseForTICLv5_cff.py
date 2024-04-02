@@ -145,6 +145,7 @@ def customiseForTICLv5(process, enableDumper = False):
             saveSimTrackstersSC=True,
             saveSimTrackstersCP=True,
             saveTICLCandidate=True,
+            saveLinkedTracksters=True,
             saveSimTICLCandidate=True,
             saveTracks=True,
             saveAssociations=True,
