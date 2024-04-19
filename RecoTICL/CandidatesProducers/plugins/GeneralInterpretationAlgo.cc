@@ -108,27 +108,18 @@ void GeneralInterpretationAlgo::findTrackstersInWindow(const MultiVectorManager<
     float eta_min = std::max(std::fabs(seed_eta) - delta, (float)TileConstants::minDim1);
     float eta_max = std::min(std::fabs(seed_eta) + delta, (float)TileConstants::maxDim1);
 
-    // get range of bins touched by delta
-    std::array<int, 4> search_box = tile.getSearchBox(eta_min, eta_max, seed_phi - delta, seed_phi + delta);
-
     std::vector<unsigned> in_delta;
-    // std::vector<float> distances2;
     std::vector<float> energies;
-    for (int eta_i = search_box[0]; eta_i <= search_box[1]; ++eta_i) {
-      for (int phi_i = search_box[2]; phi_i <= search_box[3]; ++phi_i) {
-        const auto &in_tile = tile[tile.getGlobalBinByBin(eta_i, (phi_i % tile.nRows))];
-        for (const unsigned &t_i : in_tile) {
-          // calculate actual distances of tracksters to the seed for a more accurate cut
+    tile.searchInTheBox(eta_min, eta_max, seed_phi - delta, seed_phi + delta, [&](unsigned int t_i) {
+      // calculate actual distances of tracksters to the seed for a more accurate cut
           auto sep2 = (tracksterPropPoints[t_i].Eta() - seed_eta) * (tracksterPropPoints[t_i].Eta() - seed_eta) +
                       (tracksterPropPoints[t_i].Phi() - seed_phi) * (tracksterPropPoints[t_i].Phi() - seed_phi);
           if (sep2 < delta2) {
             in_delta.push_back(t_i);
             // distances2.push_back(sep2);
             energies.push_back(tracksters[t_i].raw_energy());
-          }
-        }
       }
-    }
+    });
 
     // sort tracksters found in ascending order of their distances from the seed
     std::vector<unsigned> indices(in_delta.size());

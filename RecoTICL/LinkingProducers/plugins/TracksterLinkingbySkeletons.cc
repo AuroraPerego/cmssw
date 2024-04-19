@@ -317,19 +317,16 @@ void TracksterLinkingbySkeletons::linkTracksters(
     float eta_max = std::min(abs(bary.eta()) + del_, TileConstants::maxDim1);
     int tileIndex = bary.eta() > 0.f;
     const auto &tiles = tracksterTile[tileIndex];
-    std::array<int, 4> search_box = tiles.getSearchBox(eta_min, eta_max, bary.phi() - del_, bary.phi() + del_);
-    if (search_box[2] > search_box[3]) {
-      search_box[3] += tiles.nRows;
-    }
 
-    for (int eta_i = search_box[0]; eta_i <= search_box[1]; ++eta_i) {
-      for (int phi_i = search_box[2]; phi_i <= search_box[3]; ++phi_i) {
-        auto &neighbours = tiles[tiles.getGlobalBinByBin(eta_i, (phi_i % tiles.nRows))];
-        for (unsigned int n : neighbours) {
+ //   if (search_box[2] > search_box[3]) {
+ //     search_box[3] += tiles.nRows;
+ //   }
+
+    tiles.searchInTheBox(eta_min, eta_max, bary.phi() - del_, bary.phi() + del_, [&](unsigned int n) {
           if (t_idx == n)
-            continue;
+            return;
           if (maskReceivedLink[n] == 0 or allNodes[t_idx].isInnerNeighbour(n))
-            continue;
+            return;
           if (isGoodTrackster(
                   tracksters[t_idx], skeletons[t_idx], min_num_lcs_, min_trackster_energy_, pca_quality_th_)) {
             LogDebug("TracksterLinkingbySkeletons")
@@ -343,9 +340,8 @@ void TracksterLinkingbySkeletons::linkTracksters(
               isRootTracksters[n] = 0;
             }
           }
-        }
-      }
-    }
+    });
+
   }
 
   LogDebug("TracksterLinkingbySkeletons") << "****************  FINAL GRAPH **********************" << std::endl;

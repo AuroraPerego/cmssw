@@ -7,11 +7,11 @@
 #include "DataFormats/Math/interface/normalizedPhi.h"
 #include "DataFormats/Math/interface/constexpr_cmath.h"
 #include "DataFormats/TICL/interface/TileConstants.h"
-#include <vector>
-#include <array>
-#include <cmath>
 #include <algorithm>
+#include <array>
 #include <cassert>
+#include <cmath>
+#include <vector>
 
 
 // TODO FP: As soon as C++20 is available, we can use floats as non-type template parameters and write something like
@@ -100,6 +100,22 @@ public:
   int getGlobalBin(float dim1, float dim2) const { if constexpr(T::absDim1) return getDim1Bin(dim1) * nRows + getDim2Bin(dim2); else return getDim1Bin(dim1) + getDim2Bin(dim2) * nColumns; }
 
   int getGlobalBinByBin(int dim1Bin, int dim2Bin) const { if constexpr(T::absDim1) return dim1Bin * nRows + dim2Bin; else return dim1Bin + dim2Bin * nColumns; }
+
+  template <typename TFunc, typename... TArgs>
+  void searchInTheBox(float dim1Min, float dim1Max, float dim2Min, float dim2Max, TFunc func, TArgs... args) const {
+    std::array<int, 4> search_box = getSearchBox(dim1Min, dim1Max, dim2Min, dim2Max);
+    for (int dim1Bin = search_box[0]; dim1Bin < search_box[1] + 1; ++dim1Bin) {
+      for (int dim2Bin = search_box[2]; dim2Bin < search_box[3] + 1; ++dim2Bin) {
+        if constexpr (T::wrapped)
+          dim2Bin = dim2Bin % nRows;
+        int binId = getGlobalBinByBin(dim1Bin, dim2Bin);
+        for (const unsigned &otherId : tiles_[binId]) {
+          // float dist = distance(lt, i, otherId, layerId); e uso distance2 direttamente se non funziona cosìcon lt
+          func(otherId, args...);
+        }
+      }
+    }
+  }
 
   std::array<int, 4> getSearchBox(float dim1Min, float dim1Max, float dim2Min, float dim2Max) const {
     if constexpr (T::wrapped) {
