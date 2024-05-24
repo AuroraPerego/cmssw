@@ -55,4 +55,11 @@
   <class name="std::vector<TICLCandidate>" />
   <class name="edm::Wrapper<TICLCandidate>" />
   <class name="edm::Wrapper<std::vector<TICLCandidate> >" />
+
+  <class name="MtdSoA"/>
+  <class name="MtdSoA::View"/>
+
+  <class name="MtdHostCollection"/>
+  <class name="edm::Wrapper<MtdHostCollection>" splitLevel="0"/>
+
 </lcgdict>
