@@ -53,11 +53,11 @@ void LCToTSAssociatorProducer::produce(edm::StreamID, edm::Event& iEvent, const 
 
   // Loop over tracksters
   for (unsigned int tracksterId = 0; tracksterId < tracksters->size(); ++tracksterId) {
-    const auto& trackster = (*tracksters)[tracksterId];
+    const auto &trackster = (*tracksters)[tracksterId];
     // Loop over vertices in trackster
     for (unsigned int i = 0; i < trackster.vertices().size(); ++i) {
       // Get layerCluster
-      const auto& lc = (*layer_clusters)[trackster.vertices()[i]];
+      const auto &lc = (*layer_clusters)[trackster.vertices()[i]];
       float sharedEnergy = lc.energy() / trackster.vertex_multiplicity()[i];
       edm::Ref<std::vector<reco::CaloCluster>> lcRef(layer_clusters, trackster.vertices()[i]);
       edm::Ref<std::vector<ticl::Trackster>> tracksterRef(tracksters, tracksterId);
