@@ -180,6 +180,8 @@ private:
     MapType map_;  // Store the map directly
 };
 
+using TracksterToTracksterMap = ticl::AssociationMap<ticl::mapWithFractionAndScore,std::vector<ticl::Trackster>, std::vector<ticl::Trackster>>;
+
 }  // namespace ticl
 
 #endif

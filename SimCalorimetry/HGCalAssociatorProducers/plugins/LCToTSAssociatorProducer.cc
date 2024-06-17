@@ -16,9 +16,10 @@
 #include "DataFormats/Provenance/interface/ProductID.h"
 #include "LCToTSAssociatorProducer.h"
 
-LCToTSAssociatorProducer::LCToTSAssociatorProducer(const edm::ParameterSet &pset)
+LCToTSAssociatorProducer::LCToTSAssociatorProducer(const edm::ParameterSet& pset)
     : LCCollectionToken_(consumes<std::vector<reco::CaloCluster>>(pset.getParameter<edm::InputTag>("layer_clusters"))),
-      tracksterCollectionToken_(consumes<std::vector<ticl::Trackster>>(pset.getParameter<edm::InputTag>("tracksters"))) {
+      tracksterCollectionToken_(
+          consumes<std::vector<ticl::Trackster>>(pset.getParameter<edm::InputTag>("tracksters"))) {
   produces<ticl::AssociationMap<ticl::mapWithFraction, std::vector<reco::CaloCluster>, std::vector<ticl::Trackster>>>();
 }
 
@@ -28,8 +29,15 @@ LCToTSAssociatorProducer::~LCToTSAssociatorProducer() {}
 // member functions
 //
 
+void LCToTSAssociatorProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+  edm::ParameterSetDescription desc;
+  desc.add<edm::InputTag>("layer_clusters", edm::InputTag("hgcalMergeLayerClusters"));
+  desc.add<edm::InputTag>("tracksters", edm::InputTag("ticlTracksters"));
+  descriptions.add("LCToTSAssociatorProducer", desc);
+}
+
 // ------------ method called to produce the data  ------------
-void LCToTSAssociatorProducer::produce(edm::StreamID, edm::Event &iEvent, const edm::EventSetup &iSetup) const {
+void LCToTSAssociatorProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const {
   using namespace edm;
 
   Handle<std::vector<reco::CaloCluster>> layer_clusters;
@@ -39,7 +47,9 @@ void LCToTSAssociatorProducer::produce(edm::StreamID, edm::Event &iEvent, const 
   iEvent.getByToken(tracksterCollectionToken_, tracksters);
 
   // Create association map
-  auto lcToTracksterMap = std::make_unique<ticl::AssociationMap<ticl::mapWithFraction, std::vector<reco::CaloCluster>, std::vector<ticl::Trackster>>>(layer_clusters.id(), tracksters.id(), iEvent);
+  auto lcToTracksterMap = std::make_unique<
+      ticl::AssociationMap<ticl::mapWithFraction, std::vector<reco::CaloCluster>, std::vector<ticl::Trackster>>>(
+      layer_clusters.id(), tracksters.id(), iEvent);
 
   // Loop over tracksters
   for (unsigned int tracksterId = 0; tracksterId < tracksters->size(); ++tracksterId) {

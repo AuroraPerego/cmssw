@@ -22,6 +22,8 @@ public:
   explicit LCToTSAssociatorProducer(const edm::ParameterSet &);
   ~LCToTSAssociatorProducer() override;
 
+  static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
+
 private:
   void produce(edm::StreamID, edm::Event &, const edm::EventSetup &) const override;
 
