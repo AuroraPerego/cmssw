@@ -15,8 +15,16 @@ layerClusterToTracksterMergeAssociation = LCToTSAssociatorProducer.clone(
     tracksters = cms.InputTag("ticlTrackstersMerge")
 )
 
-layerClusterToSimTracksterAssociation2 = LCToTSAssociatorProducer.clone(
+layerClusterToSimTracksterCPAssociation = LCToTSAssociatorProducer.clone(
+    tracksters = cms.InputTag("ticlSimTracksters", "fromCPs")
+)
+
+layerClusterToSimTracksterSCAssociation = LCToTSAssociatorProducer.clone(
     tracksters = cms.InputTag("ticlSimTracksters")
+)
+
+layerClusterToSimTracksterPUAssociation = LCToTSAssociatorProducer.clone(
+    tracksters = cms.InputTag("ticlSimTracksters", "PU")
 )
 
 from Configuration.ProcessModifiers.ticl_v5_cff import ticl_v5

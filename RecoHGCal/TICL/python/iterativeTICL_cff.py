@@ -23,7 +23,7 @@ from RecoHGCal.TICL.mtdSoAProducer_cfi import mtdSoAProducer as _mtdSoAProducer
 
 from Configuration.ProcessModifiers.ticl_v5_cff import ticl_v5
 
-from SimCalorimetry.HGCalAssociatorProducers.LCToTSAssociator_cfi import layerClusterToCLUE3DTracksterAssociation, layerClusterToTracksterMergeAssociation, layerClusterToSimTracksterAssociation2
+from SimCalorimetry.HGCalAssociatorProducers.LCToTSAssociator_cfi import layerClusterToCLUE3DTracksterAssociation, layerClusterToTracksterMergeAssociation, layerClusterToSimTracksterCPAssociation, layerClusterToSimTracksterSCAssociation, layerClusterToSimTracksterPUAssociation
 
 ticlLayerTileTask = cms.Task(ticlLayerTileProducer)
 
@@ -68,7 +68,7 @@ ticlIterLabels = ["CLUE3DHigh"]
 ticlTracksterMergeTask = cms.Task(ticlTrackstersMerge)
 ticlTracksterLinksTask = cms.Task(ticlTracksterLinks)
 
-ticlAssocTask = cms.Task(layerClusterToCLUE3DTracksterAssociation, layerClusterToTracksterMergeAssociation, layerClusterToSimTracksterAssociation2)
+ticlAssocTask = cms.Task(layerClusterToCLUE3DTracksterAssociation, layerClusterToTracksterMergeAssociation, layerClusterToSimTracksterCPAssociation, layerClusterToSimTracksterSCAssociation, layerClusterToSimTracksterPUAssociation)
 
 mergeTICLTask = cms.Task(ticlLayerTileTask
     ,ticlIterationsTask
