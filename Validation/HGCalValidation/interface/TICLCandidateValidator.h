@@ -16,7 +16,7 @@
 #include "DataFormats/HGCalReco/interface/Trackster.h"
 #include "DataFormats/HGCalReco/interface/TICLCandidate.h"
 
-#include "SimDataFormats/Associations/interface/TracksterToSimTracksterHitLCAssociator.h"
+#include "SimDataFormats/Associations/interface/TICLAssociationMap.h"
 
 #include "DQMServices/Core/interface/DQMStore.h"
 
@@ -112,9 +112,9 @@ public:
                          edm::EDGetTokenT<std::vector<TICLCandidate>> simTICLCandidatesToken,
                          edm::EDGetTokenT<std::vector<reco::Track>> recoTracksToken,
                          edm::EDGetTokenT<std::vector<ticl::Trackster>> trackstersToken,
-                         edm::EDGetTokenT<ticl::RecoToSimCollectionSimTracksters> associatorMapRtSToken,
-                         edm::EDGetTokenT<ticl::SimToRecoCollectionSimTracksters> associatorMapStRToken,
-                         edm::EDGetTokenT<ticl::RecoToSimCollectionSimTracksters> associatorMapRtSPUToken,
+                         edm::EDGetTokenT<ticl::TracksterToTracksterMap> associatorMapRtSToken,
+                         edm::EDGetTokenT<ticl::TracksterToTracksterMap> associatorMapStRToken,
+                         edm::EDGetTokenT<ticl::TracksterToTracksterMap> associatorMapRtSPUToken,
                          bool isTICLv5);
   ~TICLCandidateValidator();
 
@@ -131,9 +131,9 @@ private:
   edm::EDGetTokenT<std::vector<TICLCandidate>> simTICLCandidatesToken_;
   edm::EDGetTokenT<std::vector<reco::Track>> recoTracksToken_;
   edm::EDGetTokenT<std::vector<ticl::Trackster>> trackstersToken_;
-  edm::EDGetTokenT<ticl::RecoToSimCollectionSimTracksters> associatorMapRtSToken_;
-  edm::EDGetTokenT<ticl::SimToRecoCollectionSimTracksters> associatorMapStRToken_;
-  edm::EDGetTokenT<ticl::RecoToSimCollectionSimTracksters> associatorMapRtSPUToken_;
+  edm::EDGetTokenT<ticl::TracksterToTracksterMap> associatorMapRtSToken_;
+  edm::EDGetTokenT<ticl::TracksterToTracksterMap> associatorMapStRToken_;
+  edm::EDGetTokenT<ticl::TracksterToTracksterMap> associatorMapRtSPUToken_;
   bool isTICLv5_ = false;
 };
 
