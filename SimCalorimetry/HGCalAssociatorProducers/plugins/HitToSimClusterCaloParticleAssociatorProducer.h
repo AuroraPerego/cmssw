@@ -3,7 +3,6 @@
 
 // Author: Felice Pantaleo, felice.pantaleo@cern.ch 06/2024
 
-
 // user include files
 #include "FWCore/Framework/interface/global/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"

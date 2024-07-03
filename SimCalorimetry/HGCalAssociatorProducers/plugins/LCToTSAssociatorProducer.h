@@ -3,7 +3,6 @@
 
 // Author: Felice Pantaleo, felice.pantaleo@cern.ch 06/2024
 
-
 // user include files
 #include "FWCore/Framework/interface/global/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
@@ -21,8 +20,8 @@ public:
   explicit LCToTSAssociatorProducer(const edm::ParameterSet &);
   ~LCToTSAssociatorProducer() override;
 
-  static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
-  
+  static void fillDescriptions(edm::ConfigurationDescriptions &descriptions);
+
 private:
   void produce(edm::StreamID, edm::Event &, const edm::EventSetup &) const override;
 

@@ -19,7 +19,8 @@ HitToSimClusterCaloParticleAssociatorProducer::HitToSimClusterCaloParticleAssoci
     const edm::ParameterSet &pset)
     : simClusterToken_(consumes<std::vector<SimCluster>>(pset.getParameter<edm::InputTag>("simClusters"))),
       caloParticleToken_(consumes<std::vector<CaloParticle>>(pset.getParameter<edm::InputTag>("caloParticles"))),
-      hitMapToken_(consumes<std::unordered_map<DetId, const unsigned int>>(pset.getParameter<edm::InputTag>("hitMap"))) {
+      hitMapToken_(
+          consumes<std::unordered_map<DetId, const unsigned int>>(pset.getParameter<edm::InputTag>("hitMap"))) {
   auto hitsTags = pset.getParameter<std::vector<edm::InputTag>>("hits");
   for (const auto &tag : hitsTags) {
     hitsTokens_.push_back(consumes<HGCRecHitCollection>(tag));

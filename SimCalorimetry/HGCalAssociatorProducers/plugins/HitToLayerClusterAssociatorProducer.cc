@@ -1,6 +1,5 @@
 // Author: Felice Pantaleo, felice.pantaleo@cern.ch 06/2024
 
-
 // user include files
 #include "HitToLayerClusterAssociatorProducer.h"
 #include "FWCore/Framework/interface/Event.h"

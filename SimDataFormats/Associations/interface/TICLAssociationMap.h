@@ -8,7 +8,6 @@
 #include <type_traits>
 #include <iostream>
 
-
 // CMSSW specific includes
 #include "DataFormats/Common/interface/Ref.h"
 #include "DataFormats/Provenance/interface/ProductID.h"
@@ -144,9 +143,7 @@ namespace ticl {
 
     auto& operator[](unsigned int index1) { return map_[index1]; }
 
-    const auto& operator[](unsigned int index1) const {
-      return map_[index1];
-    }
+    const auto& operator[](unsigned int index1) const { return map_[index1]; }
 
     const auto& at(unsigned int index1) const {
       if (index1 >= map_.size()) {
@@ -177,25 +174,23 @@ namespace ticl {
     void resize(const unsigned int size1) {
       map_.resize(size1);
     }
-    
+
     // Method to print the entire map
     void print(std::ostream& os) const {
       for (size_t i = 0; i < map_.size(); ++i) {
         os << "Index " << i << ":\n";
         for (const auto& pair : map_[i]) {
           os << "  (" << pair.first << ", ";
-          if constexpr (std::is_same<MapType, mapWithFractionAndScore>::value || std::is_same<MapType, oneToOneMapWithFractionAndScore>::value) {
+          if constexpr (std::is_same<MapType, mapWithFractionAndScore>::value ||
+                        std::is_same<MapType, oneToOneMapWithFractionAndScore>::value) {
             os << pair.second.first << ", " << pair.second.second;
-          }
-          else
-          {
+          } else {
             os << pair.second;
           }
           os << ")\n";
         }
       }
     }
-    
 
   private:
     // For CMSSW-specific use

@@ -1,6 +1,5 @@
 // Author: Felice Pantaleo, felice.pantaleo@cern.ch 06/2024
 
-
 // user include files
 #include "HitToTracksterAssociatorProducer.h"
 #include "FWCore/Framework/interface/Event.h"
@@ -19,7 +18,8 @@
 HitToTracksterAssociatorProducer::HitToTracksterAssociatorProducer(const edm::ParameterSet &pset)
     : LCCollectionToken_(consumes<std::vector<reco::CaloCluster>>(pset.getParameter<edm::InputTag>("layer_clusters"))),
       tracksterCollectionToken_(consumes<std::vector<ticl::Trackster>>(pset.getParameter<edm::InputTag>("tracksters"))),
-      hitMapToken_(consumes<std::unordered_map<DetId, const unsigned int>>(pset.getParameter<edm::InputTag>("hitMapTag"))) {
+      hitMapToken_(
+          consumes<std::unordered_map<DetId, const unsigned int>>(pset.getParameter<edm::InputTag>("hitMapTag"))) {
   auto hitsTags = pset.getParameter<std::vector<edm::InputTag>>("hits");
   for (const auto &tag : hitsTags) {
     hitsTokens_.push_back(consumes<HGCRecHitCollection>(tag));

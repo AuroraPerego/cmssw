@@ -41,7 +41,7 @@ private:
   edm::EDGetTokenT<ticl::AssociationMap<ticl::mapWithFraction>> tracksterToHitMapToken_;
   edm::EDGetTokenT<ticl::AssociationMap<ticl::mapWithFraction>> simTracksterToHitMapToken_;
   edm::EDGetTokenT<ticl::AssociationMap<ticl::mapWithFraction>> simTracksterFromCPToHitMapToken_;
-
+  edm::EDGetTokenT<std::vector<CaloParticle>> caloParticleToken_;
   std::vector<edm::EDGetTokenT<HGCRecHitCollection>> hitsTokens_;
 };
 
