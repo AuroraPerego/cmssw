@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <stdexcept>
 #include <type_traits>
+#include <iostream>
+
 
 // CMSSW specific includes
 #include "DataFormats/Common/interface/Ref.h"
@@ -143,9 +145,6 @@ namespace ticl {
     auto& operator[](unsigned int index1) { return map_[index1]; }
 
     const auto& operator[](unsigned int index1) const {
-      if (index1 >= map_.size()) {
-        throw std::out_of_range("Index out of range");
-      }
       return map_[index1];
     }
 
@@ -162,8 +161,6 @@ namespace ticl {
       }
       return map_[index1];
     }
-
-  private:
     // CMSSW-specific resize method
     template <typename C1 = Collection1,
               typename C2 = Collection2,
@@ -171,11 +168,36 @@ namespace ticl {
     void resize(const edm::Event& event) {
       edm::Handle<Collection1> handle1;
       event.get(collectionIDs.first, handle1);
-      edm::Handle<Collection2> handle2;
-      event.get(collectionIDs.second, handle2);
       map_.resize(handle1->size());
     }
+    // Constructor for generic use
+    template <typename C1 = Collection1,
+              typename C2 = Collection2,
+              typename std::enable_if_t<std::is_void_v<C1> && std::is_void_v<C2>, int> = 0>
+    void resize(const unsigned int size1) {
+      map_.resize(size1);
+    }
+    
+    // Method to print the entire map
+    void print(std::ostream& os) const {
+      for (size_t i = 0; i < map_.size(); ++i) {
+        os << "Index " << i << ":\n";
+        for (const auto& pair : map_[i]) {
+          os << "  (" << pair.first << ", ";
+          if constexpr (std::is_same<MapType, mapWithFractionAndScore>::value || std::is_same<MapType, oneToOneMapWithFractionAndScore>::value) {
+            os << pair.second.first << ", " << pair.second.second;
+          }
+          else
+          {
+            os << pair.second;
+          }
+          os << ")\n";
+        }
+      }
+    }
+    
 
+  private:
     // For CMSSW-specific use
     std::pair<edm::ProductID, edm::ProductID> collectionIDs;
     MapType map_;  // Store the map directly

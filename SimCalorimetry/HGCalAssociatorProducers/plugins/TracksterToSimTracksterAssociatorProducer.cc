@@ -183,7 +183,8 @@ void TracksterToSimTracksterAssociatorProducer::produce(edm::StreamID,
       }
     }
   }
-
+  tracksterToSimTracksterMap->sort(true);
+  simTracksterToTracksterMap->sort(true);
   iEvent.put(std::move(tracksterToSimTracksterMap), "tracksterToSimTracksterMap");
   iEvent.put(std::move(simTracksterToTracksterMap), "simTracksterToTracksterMap");
 }

@@ -115,15 +115,15 @@ void TracksterToSimTracksterAssociatorByHitsProducer::produce(edm::StreamID,
   }
 
   auto tracksterToSimTracksterMap = std::make_unique<
-      ticl::AssociationMap<ticl::mapWithFractionAndScore, std::vector<ticl::Trackster>, std::vector<ticl::Trackster>>>();
+      ticl::AssociationMap<ticl::mapWithFractionAndScore, std::vector<ticl::Trackster>, std::vector<ticl::Trackster>>>(recoTrackstersHandle.id(), simTrackstersHandle.id(), iEvent);
   auto tracksterToSimTracksterFromCPMap = std::make_unique<
-      ticl::AssociationMap<ticl::mapWithFractionAndScore, std::vector<ticl::Trackster>, std::vector<ticl::Trackster>>>();
+      ticl::AssociationMap<ticl::mapWithFractionAndScore, std::vector<ticl::Trackster>, std::vector<ticl::Trackster>>>(recoTrackstersHandle.id(), simTrackstersFromCPHandle.id(), iEvent);
 
   auto simTracksterToTracksterMap = std::make_unique<
-      ticl::AssociationMap<ticl::mapWithFractionAndScore, std::vector<ticl::Trackster>, std::vector<ticl::Trackster>>>();
+      ticl::AssociationMap<ticl::mapWithFractionAndScore, std::vector<ticl::Trackster>, std::vector<ticl::Trackster>>>(simTrackstersHandle.id(), recoTrackstersHandle.id(), iEvent);
   auto simTracksterFromCPToTracksterMap = std::make_unique<
-      ticl::AssociationMap<ticl::mapWithFractionAndScore, std::vector<ticl::Trackster>, std::vector<ticl::Trackster>>>();
-
+      ticl::AssociationMap<ticl::mapWithFractionAndScore, std::vector<ticl::Trackster>, std::vector<ticl::Trackster>>>(simTrackstersFromCPHandle.id(), recoTrackstersHandle.id(), iEvent);
+  tracksterToHitMap.print(std::cout);
   for (unsigned int tracksterIndex = 0; tracksterIndex < recoTracksters.size(); ++tracksterIndex) {
     edm::Ref<std::vector<ticl::Trackster>> recoTracksterRef(recoTrackstersHandle, tracksterIndex);
     float recoToSimScoresDenominator = 0.f;
@@ -168,39 +168,41 @@ void TracksterToSimTracksterAssociatorByHitsProducer::produce(edm::StreamID,
         hitToAssociatedSimTracksterFromCPMap[i].emplace_back(simTracksterIndex, caloParticleFraction);
         associatedSimTracksterFromCPIndices.push_back(simTracksterIndex);
       }
-      std::sort(associatedSimTracksterIndices.begin(), associatedSimTracksterIndices.end());
-      associatedSimTracksterIndices.erase(
-          std::unique(associatedSimTracksterIndices.begin(), associatedSimTracksterIndices.end()),
-          associatedSimTracksterIndices.end());
+    }
+    std::sort(associatedSimTracksterIndices.begin(), associatedSimTracksterIndices.end());
+    associatedSimTracksterIndices.erase(
+        std::unique(associatedSimTracksterIndices.begin(), associatedSimTracksterIndices.end()),
+        associatedSimTracksterIndices.end());
 
-      std::sort(associatedSimTracksterFromCPIndices.begin(), associatedSimTracksterFromCPIndices.end());
-      associatedSimTracksterFromCPIndices.erase(
-          std::unique(associatedSimTracksterFromCPIndices.begin(), associatedSimTracksterFromCPIndices.end()),
-          associatedSimTracksterFromCPIndices.end());
+    std::sort(associatedSimTracksterFromCPIndices.begin(), associatedSimTracksterFromCPIndices.end());
+    associatedSimTracksterFromCPIndices.erase(
+        std::unique(associatedSimTracksterFromCPIndices.begin(), associatedSimTracksterFromCPIndices.end()),
+        associatedSimTracksterFromCPIndices.end());
 
-      // Add missing sim tracksters with 0 shared energy to hitToAssociatedSimTracksterMap and hitToAssociatedSimTracksterFromCPMap
-      for (unsigned int i = 0; i < recoTracksterHitsAndFractions.size(); ++i) {
-        unsigned int hitId = recoTracksterHitsAndFractions[i].first;
-        const auto& simTracksterVec = hitToSimTracksterMap[hitId];
-        for (unsigned int simTracksterIndex : associatedSimTracksterIndices) {
-          if (std::find_if(simTracksterVec.begin(), simTracksterVec.end(), [simTracksterIndex](const auto& pair) {
-                return pair.first == simTracksterIndex;
-              }) == simTracksterVec.end()) {
-            hitToAssociatedSimTracksterMap[i].emplace_back(simTracksterIndex, 0);
-          }
-        }
-
-        const auto& simTracksterFromCPVec = hitToSimTracksterFromCPMap[hitId];
-        for (unsigned int simTracksterIndex : associatedSimTracksterFromCPIndices) {
-          if (std::find_if(
-                  simTracksterFromCPVec.begin(), simTracksterFromCPVec.end(), [simTracksterIndex](const auto& pair) {
-                    return pair.first == simTracksterIndex;
-                  }) == simTracksterFromCPVec.end()) {
-            hitToAssociatedSimTracksterFromCPMap[i].emplace_back(simTracksterIndex, 0);
-          }
+    // Add missing sim tracksters with 0 shared energy to hitToAssociatedSimTracksterMap and hitToAssociatedSimTracksterFromCPMap
+    for (unsigned int i = 0; i < recoTracksterHitsAndFractions.size(); ++i) {
+      unsigned int hitId = recoTracksterHitsAndFractions[i].first;
+      const auto& simTracksterVec = hitToSimTracksterMap[hitId];
+      for (unsigned int simTracksterIndex : associatedSimTracksterIndices) {
+        if (std::find_if(simTracksterVec.begin(), simTracksterVec.end(), [simTracksterIndex](const auto& pair) {
+              return pair.first == simTracksterIndex;
+            }) == simTracksterVec.end()) {
+          hitToAssociatedSimTracksterMap[i].emplace_back(simTracksterIndex, 0);
         }
       }
 
+      const auto& simTracksterFromCPVec = hitToSimTracksterFromCPMap[hitId];
+      for (unsigned int simTracksterIndex : associatedSimTracksterFromCPIndices) {
+        if (std::find_if(
+                simTracksterFromCPVec.begin(), simTracksterFromCPVec.end(), [simTracksterIndex](const auto& pair) {
+                  return pair.first == simTracksterIndex;
+                }) == simTracksterFromCPVec.end()) {
+          hitToAssociatedSimTracksterFromCPMap[i].emplace_back(simTracksterIndex, 0);
+        }
+      }
+    }
+      std::cout << "reco trackster " << tracksterIndex << " recoToSimScoresDenominator " << recoToSimScoresDenominator
+                << std::endl;
       const float invDenominator = 1.f / recoToSimScoresDenominator;
 
       for (unsigned int i = 0; i < recoTracksterHitsAndFractions.size(); ++i) {
@@ -227,7 +229,7 @@ void TracksterToSimTracksterAssociatorByHitsProducer::produce(edm::StreamID,
         }
       }
     }
-  }
+  
 
   // Reverse mapping: SimTrackster -> RecoTrackster
   for (unsigned int tracksterIndex = 0; tracksterIndex < simTracksters.size(); ++tracksterIndex) {
@@ -346,7 +348,12 @@ void TracksterToSimTracksterAssociatorByHitsProducer::produce(edm::StreamID,
       }
     }
   }
+  tracksterToSimTracksterMap->sort(true);
+  tracksterToSimTracksterFromCPMap->sort(true);
+  simTracksterToTracksterMap->sort(true);
+  simTracksterFromCPToTracksterMap->sort(true);
 
+  tracksterToSimTracksterMap->print(std::cout);
   iEvent.put(std::move(tracksterToSimTracksterMap), "tracksterToSimTracksterMap");
   iEvent.put(std::move(tracksterToSimTracksterFromCPMap), "tracksterToSimTracksterFromCPMap");
   iEvent.put(std::move(simTracksterToTracksterMap), "simTracksterToTracksterMap");

@@ -26,8 +26,6 @@ HitToSimClusterCaloParticleAssociatorProducer::HitToSimClusterCaloParticleAssoci
   }
   produces<ticl::AssociationMap<ticl::mapWithFraction>>("hitToSimClusterMap");
   produces<ticl::AssociationMap<ticl::mapWithFraction>>("hitToCaloParticleMap");
-  // produces<ticl::AssociationMap<ticl::mapWithFraction>>("simClusterToHitMap");
-  // produces<ticl::AssociationMap<ticl::mapWithFraction>>("caloParticleToHitMap");
 }
 
 HitToSimClusterCaloParticleAssociatorProducer::~HitToSimClusterCaloParticleAssociatorProducer() {}
@@ -43,7 +41,6 @@ void HitToSimClusterCaloParticleAssociatorProducer::produce(edm::StreamID,
 
   Handle<std::vector<SimCluster>> simClustersHandle;
   iEvent.getByToken(simClusterToken_, simClustersHandle);
-  const auto &simClusters = *simClustersHandle;
   Handle<std::unordered_map<DetId, const unsigned int>> hitMap;
   iEvent.getByToken(hitMapToken_, hitMap);
 
@@ -71,16 +68,12 @@ void HitToSimClusterCaloParticleAssociatorProducer::produce(edm::StreamID,
           float fraction = hitAndFraction.second;
           hitToSimClusterMap->insert(rechitIndex, simCluster.key(), fraction);
           hitToCaloParticleMap->insert(rechitIndex, cpId, fraction);
-          // SimClusterToHitMap->insert(simCluster.key(), rechitIndex, fraction);
-          // CaloParticleToHitMap->insert(cpId, rechitIndex, fraction);
         }
       }
     }
   }
   iEvent.put(std::move(hitToSimClusterMap), "hitToSimClusterMap");
   iEvent.put(std::move(hitToCaloParticleMap), "hitToCaloParticleMap");
-  // iEvent.put(std::move(SimClusterToHitMap), "simClusterToHitMap");
-  // iEvent.put(std::move(CaloParticleToHitMap), "caloParticleToHitMap");
 }
 
 void HitToSimClusterCaloParticleAssociatorProducer::fillDescriptions(edm::ConfigurationDescriptions &descriptions) {
