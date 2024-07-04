@@ -260,9 +260,23 @@ void TracksterToSimTracksterAssociatorByHitsProducer::produce(edm::StreamID,
     const auto& simTracksterHitsAndFractions = simTracksterToHitMap[tracksterIndex];
     ticl::AssociationMap<ticl::mapWithFraction> hitToAssociatedRecoTracksterMap(simTracksterHitsAndFractions.size());
     std::vector<unsigned int> associatedRecoTracksterIndices;
-
+    const auto& simTrackster = simTracksters[tracksterIndex];
+    auto& seed = simTrackster.seedID();
+    unsigned int simObjectIndex = simTrackster.seedIndex();
+    bool isSimTracksterFromCP = (seed == caloParticlesHandle.id());
+    std::vector<float> simFractions(simTracksterHitsAndFractions.size(), 0.f);
     for (unsigned int i = 0; i < simTracksterHitsAndFractions.size(); ++i) {
-      const auto& [hitIndex, simFraction] = simTracksterHitsAndFractions[i];
+        const auto& [hitIndex, simTracksterFraction] = simTracksterHitsAndFractions[i];
+
+        auto it = isSimTracksterFromCP ? (std::find_if(hitToCaloParticleMap[hitIndex].begin(),
+                                 hitToCaloParticleMap[hitIndex].end(),
+                                 [simObjectIndex](const auto& pair) { return pair.first == simObjectIndex; })) :  std::find_if(hitToSimClusterMap[hitIndex].begin(),
+                                 hitToSimClusterMap[hitIndex].end(),
+                                 [simObjectIndex](const auto& pair) { return pair.first == simObjectIndex; });
+        if(it != hitToCaloParticleMap[hitIndex].end() and it != hitToSimClusterMap[hitIndex].end()){
+            simFractions[i] = it->second;
+        }
+      float simFraction = simFractions[i];
       const auto& recHit = rechitManager[hitIndex];
       float squaredSimFraction = simFraction * simFraction;
       float squaredRecHitEnergy = recHit.energy() * recHit.energy();
@@ -296,11 +310,12 @@ void TracksterToSimTracksterAssociatorByHitsProducer::produce(edm::StreamID,
     const float invDenominator = 1.f / simToRecoScoresDenominator;
 
     for (unsigned int i = 0; i < simTracksterHitsAndFractions.size(); ++i) {
-      const auto& [hitIndex, simFraction] = simTracksterHitsAndFractions[i];
+      const auto& [hitIndex, simTracksterFraction] = simTracksterHitsAndFractions[i];
+      float simFraction = simFractions[i];
       const auto& recHit = rechitManager[hitIndex];
-      float squaredSimFraction = simTracksterHitsAndFractions[i].second * simTracksterHitsAndFractions[i].second;
+      float squaredSimFraction = simFraction * simFraction;
       float squaredRecHitEnergy = recHit.energy() * recHit.energy();
-      float simSharedEnergy = recHit.energy() * simTracksterHitsAndFractions[i].second;
+      float simSharedEnergy = recHit.energy() * simFraction;
 
       const auto& hitToRecoTracksterVec = hitToAssociatedRecoTracksterMap[i];
       for (const auto& [recoTracksterIndex, recoFraction] : hitToRecoTracksterVec) {
@@ -321,9 +336,19 @@ void TracksterToSimTracksterAssociatorByHitsProducer::produce(edm::StreamID,
     const auto& simTracksterHitsAndFractions = simTracksterFromCPToHitMap[tracksterIndex];
     ticl::AssociationMap<ticl::mapWithFraction> hitToAssociatedRecoTracksterMap(simTracksterHitsAndFractions.size());
     std::vector<unsigned int> associatedRecoTracksterIndices;
-
+    std::vector<float> simFractions(simTracksterHitsAndFractions.size(), 0.f);
+    const auto& simTrackster = simTrackstersFromCP[tracksterIndex];
+    unsigned int simObjectIndex = simTrackster.seedIndex();
     for (unsigned int i = 0; i < simTracksterHitsAndFractions.size(); ++i) {
-      const auto& [hitIndex, simFraction] = simTracksterHitsAndFractions[i];
+      const auto& [hitIndex, simTracksterFraction] = simTracksterHitsAndFractions[i];
+      auto it = std::find_if(hitToCaloParticleMap[hitIndex].begin(),
+                                 hitToCaloParticleMap[hitIndex].end(),
+                                 [simObjectIndex](const auto& pair) { return pair.first == simObjectIndex; });
+        if(it != hitToCaloParticleMap[hitIndex].end()){
+            simFractions[i] = it->second;
+        }
+      float simFraction = simFractions[i];
+      
       const auto& recHit = rechitManager[hitIndex];
       float squaredSimFraction = simFraction * simFraction;
       float squaredRecHitEnergy = recHit.energy() * recHit.energy();
@@ -357,11 +382,12 @@ void TracksterToSimTracksterAssociatorByHitsProducer::produce(edm::StreamID,
     const float invDenominator = 1.f / simToRecoScoresDenominator;
 
     for (unsigned int i = 0; i < simTracksterHitsAndFractions.size(); ++i) {
-      const auto& [hitIndex, simFraction] = simTracksterHitsAndFractions[i];
+      const auto& [hitIndex, simTracksterFraction] = simTracksterHitsAndFractions[i];
       const auto& recHit = rechitManager[hitIndex];
-      float squaredSimFraction = simTracksterHitsAndFractions[i].second * simTracksterHitsAndFractions[i].second;
+      float simFraction = simFractions[i];
+      float squaredSimFraction = simFraction * simFraction;
       float squaredRecHitEnergy = recHit.energy() * recHit.energy();
-      float simSharedEnergy = recHit.energy() * simTracksterHitsAndFractions[i].second;
+      float simSharedEnergy = recHit.energy() * simFraction;
 
       const auto& hitToRecoTracksterVec = hitToAssociatedRecoTracksterMap[i];
       for (const auto& [recoTracksterIndex, recoFraction] : hitToRecoTracksterVec) {
