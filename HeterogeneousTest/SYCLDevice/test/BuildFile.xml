@@ -1,0 +1,10 @@
+<iftool name="sycl-support">
+  <bin file="testDeviceAddition.sycl.cc" name="testSyclDeviceAddition">
+    <use name="catch2"/>
+    <use name="sycl"/>
+    <use name="HeterogeneousTest/SYCLDevice"/>
+    <use name="HeterogeneousCore/SYCLUtilities"/>
+  </bin>
+
+  <test name="testSYCLTestDeviceAdditionModule" command="cmsRun ${LOCALTOP}/src/HeterogeneousTest/SYCLDevice/test/testSYCLTestDeviceAdditionModule.py"/>
+</iftool>
