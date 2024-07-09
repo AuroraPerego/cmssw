@@ -1,0 +1,9 @@
+<iftool name="sycl-support">
+  <library file="*.cc" name="HeterogeneousTestSYCLDevicePlugins">
+    <use name="sycl"/>
+    <use name="FWCore/Framework"/>
+    <use name="FWCore/ParameterSet"/>
+    <use name="FWCore/ServiceRegistry"/>
+    <flags EDM_PLUGIN="1"/>
+  </library>
+</iftool>
