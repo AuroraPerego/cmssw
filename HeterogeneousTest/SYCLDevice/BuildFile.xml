@@ -1,0 +1,6 @@
+<iftool name="sycl-support">
+  <use name="sycl"/>
+  <export>
+    <lib name="1"/>
+  </export>
+</iftool>
