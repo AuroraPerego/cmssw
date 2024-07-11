@@ -228,15 +228,8 @@ void EtlLocalRecoValidation::analyze(const edm::Event& iEvent, const edm::EventS
 
     int idet = -1;
 
-    if ((id.zside() == -1) && (id.nDisc() == 1)) {
-      idet = 0;
-    } else if ((id.zside() == -1) && (id.nDisc() == 2)) {
-      idet = 1;
-    } else if ((id.zside() == 1) && (id.nDisc() == 1)) {
-      idet = 2;
-    } else if ((id.zside() == 1) && (id.nDisc() == 2)) {
-      idet = 3;
-    } else {
+    idet = id.zside()  + id.nDisc();
+    if ((id.zside() != 1 and id.zside() != -1) or (id.nDisc() != 1 and id.nDisc() != 2)) {
       edm::LogWarning("EtlLocalRecoValidation") << "Unknown ETL DetId configuration: " << id;
       continue;
     }
@@ -285,15 +278,8 @@ void EtlLocalRecoValidation::analyze(const edm::Event& iEvent, const edm::EventS
     if (detId.discSide() == 1) {
       weight = -weight;
     }
-    if ((detId.zside() == -1) && (detId.nDisc() == 1)) {
-      idet = 0;
-    } else if ((detId.zside() == -1) && (detId.nDisc() == 2)) {
-      idet = 1;
-    } else if ((detId.zside() == 1) && (detId.nDisc() == 1)) {
-      idet = 2;
-    } else if ((detId.zside() == 1) && (detId.nDisc() == 2)) {
-      idet = 3;
-    } else {
+    idet = detId.zside()  + detId.nDisc();
+    if ((detId.zside() != 1 and detId.zside() != -1) or (detId.nDisc() != 1 and detId.nDisc() != 2)) {
       edm::LogWarning("EtlLocalRecoValidation") << "Unknown ETL DetId configuration: " << detId;
       continue;
     }
@@ -376,18 +362,11 @@ void EtlLocalRecoValidation::analyze(const edm::Event& iEvent, const edm::EventS
       if (cluId.discSide() == 1) {
         weight = -weight;
       }
-      if ((cluId.zside() == -1) && (cluId.nDisc() == 1)) {
-        idet = 0;
-      } else if ((cluId.zside() == -1) && (cluId.nDisc() == 2)) {
-        idet = 1;
-      } else if ((cluId.zside() == 1) && (cluId.nDisc() == 1)) {
-        idet = 2;
-      } else if ((cluId.zside() == 1) && (cluId.nDisc() == 2)) {
-        idet = 3;
-      } else {
-        edm::LogWarning("EtlLocalRecoValidation") << "Unknown ETL DetId configuration: " << cluId;
-        continue;
-      }
+    idet = cluId.zside()  + cluId.nDisc();
+    if ((cluId.zside() != 1 and cluId.zside() != -1) or (cluId.nDisc() != 1 and cluId.nDisc() != 2)) {
+      edm::LogWarning("EtlLocalRecoValidation") << "Unknown ETL DetId configuration: " << cluId;
+      continue;
+    }
 
       index++;
       LogDebug("EtlLocalRecoValidation") << "Cluster # " << index << " DetId " << cluId.rawId() << " idet " << idet;
@@ -440,19 +419,20 @@ void EtlLocalRecoValidation::analyze(const edm::Event& iEvent, const edm::EventS
           if (recHit.time() != cluster.hitTIME()[ihit])
             continue;
 
+          auto& SimHit = m_etlSimHits[idet][pixelId];
           // SIM hit's position in the module reference frame
-          Local3DPoint local_point_sim(convertMmToCm(m_etlSimHits[idet][pixelId].x),
-                                       convertMmToCm(m_etlSimHits[idet][pixelId].y),
-                                       convertMmToCm(m_etlSimHits[idet][pixelId].z));
+          Local3DPoint local_point_sim(convertMmToCm(SimHit.x),
+                                       convertMmToCm(SimHit.y),
+                                       convertMmToCm(SimHit.z));
 
           // Calculate the SIM cluster's position in the module reference frame
-          cluLocXSIM += local_point_sim.x() * m_etlSimHits[idet][pixelId].energy;
-          cluLocYSIM += local_point_sim.y() * m_etlSimHits[idet][pixelId].energy;
-          cluLocZSIM += local_point_sim.z() * m_etlSimHits[idet][pixelId].energy;
+          cluLocXSIM += local_point_sim.x() * SimHit.energy;
+          cluLocYSIM += local_point_sim.y() * SimHit.energy;
+          cluLocZSIM += local_point_sim.z() * SimHit.energy;
 
           // Calculate the SIM cluster energy and time
-          cluEneSIM += m_etlSimHits[idet][pixelId].energy;
-          cluTimeSIM += m_etlSimHits[idet][pixelId].time * m_etlSimHits[idet][pixelId].energy;
+          cluEneSIM += SimHit.energy;
+          cluTimeSIM += SimHit.time * SimHit.energy;
 
           break;
 
