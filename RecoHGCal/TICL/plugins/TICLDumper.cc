@@ -86,13 +86,13 @@ private:
   const edm::EDGetTokenT<std::vector<TICLCandidate>> ticl_candidates_token_;
   const edm::EDGetTokenT<std::vector<reco::Track>> tracks_token_;
   const edm::EDGetTokenT<std::vector<bool>> tracks_mask_token_;
-  const edm::EDGetTokenT<edm::ValueMap<float>> tracks_time_token_;
-  const edm::EDGetTokenT<edm::ValueMap<float>> tracks_time_quality_token_;
-  const edm::EDGetTokenT<edm::ValueMap<float>> tracks_time_err_token_;
-  const edm::EDGetTokenT<edm::ValueMap<float>> tracks_beta_token_;
-  const edm::EDGetTokenT<edm::ValueMap<float>> tracks_time_mtd_token_;
-  const edm::EDGetTokenT<edm::ValueMap<float>> tracks_time_mtd_err_token_;
-  const edm::EDGetTokenT<edm::ValueMap<GlobalPoint>> tracks_pos_mtd_token_;
+  edm::EDGetTokenT<edm::ValueMap<float>> tracks_time_token_;
+  edm::EDGetTokenT<edm::ValueMap<float>> tracks_time_quality_token_;
+  edm::EDGetTokenT<edm::ValueMap<float>> tracks_time_err_token_;
+  edm::EDGetTokenT<edm::ValueMap<float>> tracks_beta_token_;
+  edm::EDGetTokenT<edm::ValueMap<float>> tracks_time_mtd_token_;
+  edm::EDGetTokenT<edm::ValueMap<float>> tracks_time_mtd_err_token_;
+  edm::EDGetTokenT<edm::ValueMap<GlobalPoint>> tracks_pos_mtd_token_;
   const edm::EDGetTokenT<std::vector<double>> hgcaltracks_x_token_;
   const edm::EDGetTokenT<std::vector<double>> hgcaltracks_y_token_;
   const edm::EDGetTokenT<std::vector<double>> hgcaltracks_z_token_;
@@ -135,6 +135,7 @@ private:
   std::unique_ptr<GeomDet> interfaceDisk_[2];
   edm::ESHandle<MagneticField> bfield_;
   edm::ESHandle<Propagator> propagator_;
+  bool useMTDtiming_;
   bool saveLCs_;
   bool saveCLUE3DTracksters_;
   bool saveTrackstersMerged_;
@@ -749,13 +750,6 @@ TICLDumper::TICLDumper(const edm::ParameterSet& ps)
       layer_clusters_token_(consumes<std::vector<reco::CaloCluster>>(ps.getParameter<edm::InputTag>("layerClusters"))),
       ticl_candidates_token_(consumes<std::vector<TICLCandidate>>(ps.getParameter<edm::InputTag>("ticlcandidates"))),
       tracks_token_(consumes<std::vector<reco::Track>>(ps.getParameter<edm::InputTag>("tracks"))),
-      tracks_time_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTime"))),
-      tracks_time_quality_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTimeQual"))),
-      tracks_time_err_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTimeErr"))),
-      tracks_beta_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksBeta"))),
-      tracks_time_mtd_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTimeMtd"))),
-      tracks_time_mtd_err_token_(consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTimeMtdErr"))),
-      tracks_pos_mtd_token_(consumes<edm::ValueMap<GlobalPoint>>(ps.getParameter<edm::InputTag>("tracksPosMtd"))),
       tracksters_merged_token_(
           consumes<std::vector<ticl::Trackster>>(ps.getParameter<edm::InputTag>("trackstersmerged"))),
       muons_token_(consumes<std::vector<reco::Muon>>(ps.getParameter<edm::InputTag>("muons"))),
@@ -798,6 +792,7 @@ TICLDumper::TICLDumper(const edm::ParameterSet& ps)
       bfield_token_(esConsumes<MagneticField, IdealMagneticFieldRecord, edm::Transition::BeginRun>()),
       propagator_token_(
           esConsumes<Propagator, TrackingComponentsRecord, edm::Transition::BeginRun>(edm::ESInputTag("", propName_))),
+      useMTDtiming_(ps.getParameter<bool>("useMTDtiming")),
       saveLCs_(ps.getParameter<bool>("saveLCs")),
       saveCLUE3DTracksters_(ps.getParameter<bool>("saveCLUE3DTracksters")),
       saveTrackstersMerged_(ps.getParameter<bool>("saveTrackstersMerged")),
@@ -810,6 +805,16 @@ TICLDumper::TICLDumper(const edm::ParameterSet& ps)
   std::string detectorName_ = (detector_ == "HFNose") ? "HGCalHFNoseSensitive" : "HGCalEESensitive";
   hdc_token_ =
       esConsumes<HGCalDDDConstants, IdealGeometryRecord, edm::Transition::BeginRun>(edm::ESInputTag("", detectorName_));
+
+   if(useMTDtiming_) {
+      tracks_time_token_ = consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTime"));
+      tracks_time_quality_token_ = consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTimeQual"));
+      tracks_time_err_token_ = consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTimeErr"));
+      tracks_beta_token_ = consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksBeta"));
+      tracks_time_mtd_token_ = consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTimeMtd"));
+      tracks_time_mtd_err_token_ = consumes<edm::ValueMap<float>>(ps.getParameter<edm::InputTag>("tracksTimeMtdErr"));
+      tracks_pos_mtd_token_ = consumes<edm::ValueMap<GlobalPoint>>(ps.getParameter<edm::InputTag>("tracksPosMtd"));
+    }
 };
 
 TICLDumper::~TICLDumper() { clearVariables(); };
@@ -1211,33 +1216,27 @@ void TICLDumper::analyze(const edm::Event& event, const edm::EventSetup& setup) 
   const auto& tracks = *tracks_h;
 
   edm::Handle<edm::ValueMap<float>> trackTime_h;
-  event.getByToken(tracks_time_token_, trackTime_h);
-  const auto& trackTime = *trackTime_h;
-
   edm::Handle<edm::ValueMap<float>> trackTimeErr_h;
-  event.getByToken(tracks_time_err_token_, trackTimeErr_h);
-  const auto& trackTimeErr = *trackTimeErr_h;
-
   edm::Handle<edm::ValueMap<float>> trackBeta_h;
-  event.getByToken(tracks_beta_token_, trackBeta_h);
-  const auto& trackBeta = *trackBeta_h;
-
   edm::Handle<edm::ValueMap<float>> trackTimeQual_h;
-  event.getByToken(tracks_time_quality_token_, trackTimeQual_h);
-  const auto& trackTimeQual = *trackTimeQual_h;
-
   edm::Handle<edm::ValueMap<float>> trackTimeMtd_h;
-  event.getByToken(tracks_time_mtd_token_, trackTimeMtd_h);
-  const auto& trackTimeMtd = *trackTimeMtd_h;
-
   edm::Handle<edm::ValueMap<float>> trackTimeMtdErr_h;
-  event.getByToken(tracks_time_mtd_err_token_, trackTimeMtdErr_h);
-  const auto& trackTimeMtdErr = *trackTimeMtdErr_h;
-
   edm::Handle<edm::ValueMap<GlobalPoint>> trackPosMtd_h;
-  event.getByToken(tracks_pos_mtd_token_, trackPosMtd_h);
-  const auto& trackPosMtd = *trackPosMtd_h;
+   if(useMTDtiming_) {
+  event.getByToken(tracks_time_token_, trackTime_h);
 
+  event.getByToken(tracks_time_err_token_, trackTimeErr_h);
+
+  event.getByToken(tracks_beta_token_, trackBeta_h);
+
+  event.getByToken(tracks_time_quality_token_, trackTimeQual_h);
+
+  event.getByToken(tracks_time_mtd_token_, trackTimeMtd_h);
+
+  event.getByToken(tracks_time_mtd_err_token_, trackTimeMtdErr_h);
+
+  event.getByToken(tracks_pos_mtd_token_, trackPosMtd_h);
+}
   //Tracksters merged
   edm::Handle<std::vector<ticl::Trackster>> tracksters_merged_h;
   event.getByToken(tracksters_merged_token_, tracksters_merged_h);
@@ -2087,13 +2086,23 @@ void TICLDumper::analyze(const edm::Event& event, const edm::EventSetup& setup) 
       track_missing_outer_hits.push_back(track.missingOuterHits());
       track_missing_inner_hits.push_back(track.missingInnerHits());
       track_charge.push_back(track.charge());
-      track_time.push_back(trackTime[trackref]);
-      track_time_quality.push_back(trackTimeQual[trackref]);
-      track_time_err.push_back(trackTimeErr[trackref]);
-      track_beta.push_back(trackBeta[trackref]);
-      track_time_mtd.push_back(trackTimeMtd[trackref]);
-      track_time_mtd_err.push_back(trackTimeMtdErr[trackref]);
-      track_pos_mtd.push_back(trackPosMtd[trackref]);
+   if(useMTDtiming_) {
+      track_time.push_back((*trackTime_h)[trackref]);
+      track_time_quality.push_back((*trackTimeQual_h)[trackref]);
+      track_time_err.push_back((*trackTimeErr_h)[trackref]);
+      track_beta.push_back((*trackBeta_h)[trackref]);
+      track_time_mtd.push_back((*trackTimeMtd_h)[trackref]);
+      track_time_mtd_err.push_back((*trackTimeMtdErr_h)[trackref]);
+      track_pos_mtd.push_back((*trackPosMtd_h)[trackref]);
+    } else {
+      track_time.push_back(0.f);
+      track_time_quality.push_back(0.f);
+      track_time_err.push_back(-1.f);
+      track_beta.push_back(0.f);
+      track_time_mtd.push_back(0.f);
+      track_time_mtd_err.push_back(-1.f);
+      track_pos_mtd.push_back({0.f, 0.f, 0.f});
+    }
       track_nhits.push_back(tracks[i].recHitsSize());
       int muId = PFMuonAlgo::muAssocToTrack(trackref, *muons_h);
       if (muId != -1) {
@@ -2175,6 +2184,7 @@ void TICLDumper::fillDescriptions(edm::ConfigurationDescriptions& descriptions) 
   desc.add<std::string>("detector", "HGCAL");
   desc.add<std::string>("propagator", "PropagatorWithMaterial");
 
+  desc.add<bool>("useMTDtiming", true);
   desc.add<bool>("saveLCs", true);
   desc.add<bool>("saveCLUE3DTracksters", true);
   desc.add<bool>("saveTrackstersMerged", true);
