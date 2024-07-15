@@ -129,6 +129,94 @@ namespace alpaka {
 
 #endif  // ALPAKA_ACC_GPU_HIP_ENABLED
 
+#if defined(ALPAKA_ACC_SYCL_ENABLED) && defined(ALPAKA_SYCL_ONEAPI_CPU)
+namespace alpaka_cpu_sycl_async {
+  using namespace alpaka_common;
+
+  using Platform = alpaka::PlatformCpuSycl;
+  using Device = alpaka::DevCpuSycl;
+  using Queue = alpaka::QueueCpuSyclNonBlocking;
+  using Event = alpaka::EventCpuSycl;
+
+  template <typename TDim>
+  using Acc = alpaka::AccCpuSycl<TDim, Idx>;
+  using Acc1D = Acc<Dim1D>;
+  using Acc2D = Acc<Dim2D>;
+  using Acc3D = Acc<Dim3D>;
+
+}  // namespace alpaka_cpu_sycl_async
+
+#ifdef ALPAKA_HOST_ONLY
+
+namespace alpaka {
+
+  template <typename TDim, typename TIdx, typename TKernelFnObj, typename... TArgs>
+  class TaskKernelCpuSycl final {
+    static_assert(SYCL_LANGUAGE_VERSION,
+                  "You should move this files to a .dev.cc file under the alpaka/ subdirectory.");
+
+  public:
+    template <typename TWorkDiv>
+    ALPAKA_FN_HOST TaskKernelCpuSycl(TWorkDiv&& workDiv, TKernelFnObj const& kernelFnObj, TArgs&&... args) {}
+  };
+
+}  // namespace alpaka
+
+#endif  // ALPAKA_HOST_ONLY
+
+#ifdef ALPAKA_ACCELERATOR_NAMESPACE
+#define ALPAKA_DUPLICATE_NAMESPACE
+#else
+#define ALPAKA_ACCELERATOR_NAMESPACE alpaka_cpu_sycl_async
+#define ALPAKA_TYPE_SUFFIX SYCLCpuAsync
+#endif
+
+#endif  // ALPAKA_ACC_SYCL_ENABLED && ALPAKA_SYCL_ONEAPI_CPU
+
+#if defined(ALPAKA_ACC_SYCL_ENABLED) && defined(ALPAKA_SYCL_ONEAPI_GPU)
+namespace alpaka_intel_gpu_sycl_async {
+  using namespace alpaka_common;
+
+  using Platform = alpaka::PlatformGpuSyclIntel;
+  using Device = alpaka::DevGpuSyclIntel;
+  using Queue = alpaka::QueueGpuSyclIntelNonBlocking;
+  using Event = alpaka::EventGpuSyclIntel;
+
+  template <typename TDim>
+  using Acc = alpaka::AccGpuSyclIntel<TDim, Idx>;
+  using Acc1D = Acc<Dim1D>;
+  using Acc2D = Acc<Dim2D>;
+  using Acc3D = Acc<Dim3D>;
+
+}  // namespace alpaka_intel_gpu_sycl_async
+
+#ifdef ALPAKA_HOST_ONLY
+
+namespace alpaka {
+
+  template <typename TDim, typename TIdx, typename TKernelFnObj, typename... TArgs>
+  class TaskKernelCpuSycl final {
+    static_assert(SYCL_LANGUAGE_VERSION,
+                  "You should move this files to a .dev.cc file under the alpaka/ subdirectory.");
+
+  public:
+    template <typename TWorkDiv>
+    ALPAKA_FN_HOST TaskKernelCpuSycl(TWorkDiv&& workDiv, TKernelFnObj const& kernelFnObj, TArgs&&... args) {}
+  };
+
+}  // namespace alpaka
+
+#endif  // ALPAKA_HOST_ONLY
+
+#ifdef ALPAKA_ACCELERATOR_NAMESPACE
+#define ALPAKA_DUPLICATE_NAMESPACE
+#else
+#define ALPAKA_ACCELERATOR_NAMESPACE alpaka_intel_gpu_sycl_async
+#define ALPAKA_TYPE_SUFFIX SYCLIntelGpuAsync
+#endif
+
+#endif  // ALPAKA_ACC_SYCL_ENABLED  && ALPAKA_SYCL_ONEAPI_GPU
+
 #ifdef ALPAKA_ACC_CPU_B_SEQ_T_SEQ_ENABLED
 namespace alpaka_serial_sync {
   using namespace alpaka_common;

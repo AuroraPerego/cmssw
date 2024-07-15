@@ -33,6 +33,16 @@ namespace cms::alpakatools {
   struct requires_single_thread_per_block<alpaka::AccGpuHipRt<TDim, Idx>> : public std::false_type {};
 #endif  // ALPAKA_ACC_GPU_HIP_ENABLED
 
+#if defined(ALPAKA_ACC_SYCL_ENABLED) && defined(ALPAKA_SYCL_ONEAPI_CPU)
+  template <typename TDim>
+  struct requires_single_thread_per_block<alpaka::AccCpuSycl<TDim, Idx>> : public std::false_type {};
+#endif  // ALPAKA_ACC_SYCL_ENABLED && ALPAKA_SYCL_ONEAPI_CPU
+
+#if defined(ALPAKA_ACC_SYCL_ENABLED) && defined(ALPAKA_SYCL_ONEAPI_GPU)
+  template <typename TDim>
+  struct requires_single_thread_per_block<alpaka::AccGpuSyclIntel<TDim, Idx>> : public std::false_type {};
+#endif  // ALPAKA_ACC_SYCL_ENABLED && ALPAKA_SYCL_ONEAPI_GPU
+
 #ifdef ALPAKA_ACC_CPU_B_SEQ_T_THREADS_ENABLED
   template <typename TDim>
   struct requires_single_thread_per_block<alpaka::AccCpuThreads<TDim, Idx>> : public std::false_type {};
