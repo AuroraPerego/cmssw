@@ -11,9 +11,9 @@ SRC_DIR := $(CMSSW_BASE)/src/HeterogeneousTest/SYCLDevice/src
 TEST_DIR := $(CMSSW_BASE)/src/HeterogeneousTest/SYCLDevice/test
 UTIL_DIR := $(CMSSW_BASE)/src/HeterogeneousCore/SYCLUtilities/src
 
-SRCS := $(SRC_DIR)/DeviceAddition.cc \
-       $(TEST_DIR)/testDeviceAddition.cc \
-       $(UTIL_DIR)/requireDevices.cc
+SRCS := $(SRC_DIR)/DeviceAddition.sycl.cc \
+       $(TEST_DIR)/testDeviceAddition.sycl.cc \
+       $(UTIL_DIR)/requireDevices.sycl.cc
 
 # Object files
 OBJ_DIR = obj
@@ -21,9 +21,9 @@ OBJ_DIR = obj
 # Create the object directory if it doesn't exist
 $(shell mkdir -p $(OBJ_DIR))
 
-OBJ_FILES = $(OBJ_DIR)/DeviceAddition.cc.o \
-            $(OBJ_DIR)/testDeviceAddition.cc.o \
-            $(OBJ_DIR)/requireDevices.cc.o
+OBJ_FILES = $(OBJ_DIR)/DeviceAddition.sycl.cc.o \
+            $(OBJ_DIR)/testDeviceAddition.sycl.cc.o \
+            $(OBJ_DIR)/requireDevices.sycl.cc.o
 
 # Output binary
 EXE := SYCLtest
@@ -32,13 +32,13 @@ EXE := SYCLtest
 all: $(EXE)
 
 # Compile source files into object files
-$(OBJ_DIR)/%.cc.o: $(SRC_DIR)/%.cc
+$(OBJ_DIR)/%.sycl.cc.o: $(SRC_DIR)/%.sycl.cc
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
-$(OBJ_DIR)/%.cc.o: $(TEST_DIR)/%.cc
+$(OBJ_DIR)/%.sycl.cc.o: $(TEST_DIR)/%.sycl.cc
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
-$(OBJ_DIR)/%.cc.o: $(UTIL_DIR)/%.cc
+$(OBJ_DIR)/%.sycl.cc.o: $(UTIL_DIR)/%.sycl.cc
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 # Link object files into the final binary
