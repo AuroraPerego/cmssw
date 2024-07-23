@@ -1,7 +1,8 @@
-CXX := icpx
-GCC_TOOLCHAIN := /cvmfs/cms-ib.cern.ch/sw/x86_64/nweek-02845/el8_amd64_gcc12/external/gcc/12.3.1-40d504be6370b5a30e3947a6e575ca28
+# Compiler and flags
+CXX := $(shell scram tool tag icx-cxxcompiler CXX)
+GCC_TOOLCHAIN := $(shell scram tool tag gcc-cxxcompiler GCC_CXXCOMPILER_BASE)
 TARGET := x86_64-redhat-linux-gnu
-CXXFLAGS := -fsycl --std=c++17 -fsycl-targets=spir64_x86_64 --target=$(TARGET) --gcc-toolchain=$(GCC_TOOLCHAIN) -Wno-unknown-attributes
+CXXFLAGS := -fsycl --std=c++17 -fsycl-targets=spir64_x86_64,intel_gpu_acm_g10,intel_gpu_pvc --target=$(TARGET) --gcc-toolchain=$(GCC_TOOLCHAIN) -Wno-unknown-attributes
 
 # Include paths from external tools
 CATCH2 := $(shell scram tool tag catch2 INCLUDE)
@@ -43,6 +44,6 @@ $(SHARED_LIB): $(OBJ_FILES)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) $^ -shared -o $@
 
 clean:
-	rm -f $(OBJ_FILES) $(SHARED_LIB)
+	rm -rf $(OBJ_DIR) $(SHARED_LIB)
 
 .PHONY: all clean

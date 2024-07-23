@@ -1,9 +1,12 @@
 # Compiler and flags
-CXX := icpx
-GCC_TOOLCHAIN := /cvmfs/cms-ib.cern.ch/sw/x86_64/nweek-02845/el8_amd64_gcc12/external/gcc/12.3.1-40d504be6370b5a30e3947a6e575ca28
+CXX := $(shell scram tool tag icx-cxxcompiler CXX)
+GCC_TOOLCHAIN := $(shell scram tool tag gcc-cxxcompiler GCC_CXXCOMPILER_BASE)
 TARGET := x86_64-redhat-linux-gnu
-CXXFLAGS := -fsycl --std=c++17 -fsycl-targets=spir64_x86_64 --target=$(TARGET) --gcc-toolchain=$(GCC_TOOLCHAIN)
-CATCH2 := /cvmfs/cms.cern.ch/el8_amd64_gcc12/external/catch2/2.13.6-17102db92de47c6a473c6e67627c548a/include
+CXXFLAGS := -fsycl --std=c++17 -fsycl-targets=spir64_x86_64,intel_gpu_acm_g10,intel_gpu_pvc --target=$(TARGET) --gcc-toolchain=$(GCC_TOOLCHAIN)
+
+# Include paths from external tools
+CATCH2 := $(shell scram tool tag catch2 INCLUDE)
+
 INCLUDES := -I$(CMSSW_BASE)/src -I$(CATCH2)
 
 # Source files
@@ -47,7 +50,7 @@ $(EXE): $(OBJ_FILES)
 
 # Clean target
 clean:
-	rm -f $(OBJ_FILES) $(EXE)
+	rm -rf $(OBJ_DIR) $(EXE)
 
 # Phony targets
 .PHONY: all clean
