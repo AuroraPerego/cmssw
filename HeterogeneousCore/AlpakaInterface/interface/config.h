@@ -146,24 +146,6 @@ namespace alpaka_cpu_sycl_async {
 
 }  // namespace alpaka_cpu_sycl_async
 
-#ifdef ALPAKA_HOST_ONLY
-
-namespace alpaka {
-
-  template <typename TDim, typename TIdx, typename TKernelFnObj, typename... TArgs>
-  class TaskKernelCpuSycl final {
-    static_assert(SYCL_LANGUAGE_VERSION,
-                  "You should move this files to a .dev.cc file under the alpaka/ subdirectory.");
-
-  public:
-    template <typename TWorkDiv>
-    ALPAKA_FN_HOST TaskKernelCpuSycl(TWorkDiv&& workDiv, TKernelFnObj const& kernelFnObj, TArgs&&... args) {}
-  };
-
-}  // namespace alpaka
-
-#endif  // ALPAKA_HOST_ONLY
-
 #ifdef ALPAKA_ACCELERATOR_NAMESPACE
 #define ALPAKA_DUPLICATE_NAMESPACE
 #else
@@ -189,24 +171,6 @@ namespace alpaka_intel_gpu_sycl_async {
   using Acc3D = Acc<Dim3D>;
 
 }  // namespace alpaka_intel_gpu_sycl_async
-
-#ifdef ALPAKA_HOST_ONLY
-
-namespace alpaka {
-
-  template <typename TDim, typename TIdx, typename TKernelFnObj, typename... TArgs>
-  class TaskKernelCpuSycl final {
-    static_assert(SYCL_LANGUAGE_VERSION,
-                  "You should move this files to a .dev.cc file under the alpaka/ subdirectory.");
-
-  public:
-    template <typename TWorkDiv>
-    ALPAKA_FN_HOST TaskKernelCpuSycl(TWorkDiv&& workDiv, TKernelFnObj const& kernelFnObj, TArgs&&... args) {}
-  };
-
-}  // namespace alpaka
-
-#endif  // ALPAKA_HOST_ONLY
 
 #ifdef ALPAKA_ACCELERATOR_NAMESPACE
 #define ALPAKA_DUPLICATE_NAMESPACE
