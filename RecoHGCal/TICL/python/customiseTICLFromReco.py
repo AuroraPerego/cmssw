@@ -273,7 +273,7 @@ def customiseTICLForDumperHLT(process):
        #tracksTimeMtdErr = cms.InputTag('trackExtenderWithMTD', 'generalTracksigmatmtd'),
        #tracksPosMtd = cms.InputTag('trackExtenderWithMTD', 'generalTrackmtdpos'),
        trackstersmerged = cms.InputTag('ticlTrackstersMerge', '', 'HLT'),
-       muons = cms.InputTag('hltPhase2L3Muons'),
+       muons = cms.InputTag('muons1stStep'), #hltPhase2L3Muons', '', 'HLT'),
        simtrackstersSC = cms.InputTag('ticlSimTrackstersHLT'),
        simtrackstersCP = cms.InputTag('ticlSimTrackstersHLT', 'fromCPs'),
        simtrackstersPU = cms.InputTag('ticlSimTrackstersHLT', 'PU'),
