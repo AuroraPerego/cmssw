@@ -419,6 +419,13 @@ HLTDebugFEVT = cms.PSet(
         'keep *_hltScoutingPFPacker_*_*',
         'keep *_hltScoutingPrimaryVertexPacker_*_*',
         'keep *_hltScoutingTrackPacker_*_*',
+        'keep *_ticlSimTracksters_*_*',
+        'keep *_ticlSimTICLCandidates_*_*',
+        'keep *_ticlSimTrackstersFromCP_*_*',
+        'drop *_ticlTracksters*_*_*',
+        'keep *_ticlTrackstersCLUE3D*_*_*',
+        'keep *_hltTiclTracksterLinks_*_*',
+        'keep *_hltTiclCandidate_*_*',
         'keep edmTriggerResults_*_*_*'
     ) )
 )
