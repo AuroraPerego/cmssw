@@ -6,7 +6,7 @@
 
 namespace {
   constexpr const std::array<std::string_view, static_cast<short>(cms::alpakatools::Backend::size)> backendNames = {
-      {"SerialSync", "CudaAsync", "ROCmAsync", "TbbAsync"}};
+      {"SerialSync", "CudaAsync", "ROCmAsync", "TbbAsync", "SYCLCpuAsync", "SYCLIntelGpuAsync"}};
 }
 
 namespace cms::alpakatools {
