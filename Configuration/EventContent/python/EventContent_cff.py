@@ -689,6 +689,8 @@ phase2_common.toModify(FEVTDEBUGHLTEventContent,
 phase2_muon.toModify(FEVTDEBUGHLTEventContent, 
     outputCommands = FEVTDEBUGHLTEventContent.outputCommands + ['keep recoMuons_muons1stStep_*_*'])
 
+ticl_v5.toModify(FEVTDEBUGHLTEventContent, outputCommands=FEVTDEBUGHLTEventContent.outputCommands+TICLv5_FEVTHLT.outputCommands)
+
 from Configuration.ProcessModifiers.premix_stage2_cff import premix_stage2
 
 (premix_stage2 & phase2_tracker).toModify(FEVTDEBUGHLTEventContent, 

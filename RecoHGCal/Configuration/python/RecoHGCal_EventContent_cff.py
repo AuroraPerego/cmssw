@@ -33,8 +33,7 @@ TICLv5_RECO = cms.PSet(
     outputCommands = cms.untracked.vstring(
         [
             'drop *_ticlTracksters*_*_*',
-            'keep *_ticlTrackstersCLUE3DEM_*_*',
-            'keep *_ticlTrackstersCLUE3DHAD_*_*',
+            'keep *_ticlTrackstersCLUE3DHigh_*_*',
             'keep *_ticlTracksterLinks_*_*',
             'keep *_ticlCandidate_*_*',
         ]
@@ -65,7 +64,19 @@ TICLv5_FEVT = cms.PSet(
 
 TICLv5_FEVT.outputCommands.extend(TICLv5_RECO.outputCommands)
 
+TICLv5_FEVTHLT = cms.PSet(
+    outputCommands = cms.untracked.vstring(
+        [
+            'drop *_ticlTracksters*_*_*',
+            'keep *_ticlTrackstersCLUE3DHigh_*_*',
+            'keep *_hltTiclTracksterLinks_*_*',
+            'keep *_hltTiclCandidate_*_*',
+            'keep *_pfTICL_*_*',
+        ]
+    )
+)
 
+TICLv5_FEVTHLT.outputCommands.extend(TICLv5_FEVT.outputCommands)
 
 
 
@@ -109,7 +120,7 @@ def customiseForTICLv5EventContent(process):
     if hasattr(process, 'FEVTDEBUGEventContent'):
         cleanOutputAndSet(process.FEVTDEBUGEventContent, TICLv5_FEVT.outputCommands)
     if hasattr(process, 'FEVTDEBUGHLToutput'):
-        cleanOutputAndSet(process.FEVTDEBUGHLToutput, TICLv5_FEVT.outputCommands)
+        cleanOutputAndSet(process.FEVTDEBUGHLToutput, TICLv5_FEVTHLT.outputCommands)
     if hasattr(process, 'FEVTEventContent'):
         cleanOutputAndSet(process.FEVTEventContent, TICLv5_FEVT.outputCommands)
 
