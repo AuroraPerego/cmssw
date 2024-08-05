@@ -55,7 +55,7 @@ vertexAssociatorByPositionAndTracks4phase2HLTTracks = _VertexAssociatorByPositio
 )
 
 def _modifyFullPVanalysisForPhase2(pvanalysis):
-    pvanalysis.vertexRecoCollections = ["offlinePrimaryVertices::HLT"]
+    pvanalysis.vertexRecoCollections = ["hltOfflinePrimaryVertices"]
     pvanalysis.trackAssociatorMap = "tpToHLTphase2TrackAssociation"
     pvanalysis.vertexAssociator   = "vertexAssociatorByPositionAndTracks4phase2HLTTracks"
 
