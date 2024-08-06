@@ -44,10 +44,12 @@ def customiseTICLv5FromReco(process, enableDumper = False):
                             # FP 07/2024 new associators:
                             process.layerClusterToCLUE3DTracksterAssociation, process.layerClusterToTracksterMergeAssociation,
                             process.layerClusterToSimTracksterAssociation, process.layerClusterToSimTracksterFromCPsAssociation,
+                            process.layerClusterToSimTracksterAssociation2Hits, process.layerClusterToSimTracksterFromCPsAssociation2Hits,
                             process.hitToTrackstersAssociationLinking, process.hitToTrackstersAssociationPR,
                             process.hitToSimTracksterAssociation, process.hitToSimTracksterFromCPsAssociation,
                             process.tracksterSimTracksterAssociationByHitsLinking, process.tracksterSimTracksterAssociationByHitsPR,
                             process.tracksterSimTracksterFromCPsAssociationLinking, process.tracksterSimTracksterAssociationLinking,
+                            process.tracksterSimTracksterFromCPsAssociationLinking2Hits, process.tracksterSimTracksterAssociationLinking2Hits, process.tracksterSimTracksterFromCPsAssociationPR2Hits, process.tracksterSimTracksterAssociationPR2Hits, process.tracksterSimTracksterAssociationFromCPsSuperclustering2Hits, process.tracksterSimTracksterAssociationSuperclustering2Hits,
                             process.tracksterSimTracksterFromCPsAssociationPR, process.tracksterSimTracksterAssociationPR,
                             process.hitToSimClusterCaloParticleAssociator
                             )
@@ -55,7 +57,7 @@ def customiseTICLv5FromReco(process, enableDumper = False):
     if(enableDumper):
         process.ticlDumper = ticlDumper
         process.TFileService = cms.Service("TFileService",
-                                           fileName=cms.string("histo.root")
+                                           fileName=cms.string("histoFromReco.root")
                                            )
 
         process.FEVTDEBUGHLToutput_step = cms.EndPath(process.ticlDumper)

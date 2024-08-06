@@ -9,6 +9,15 @@ layerClusterSimTracksterAssociation = cms.EDProducer("LCToSimTSAssociatorEDProdu
     label_scl = cms.InputTag("mix","MergedCaloTruth"),
     associator_sc = cms.InputTag('layerClusterSimClusterAssociationProducer'),
 )
+layerClusterSimTracksterAssociation2Hits = cms.EDProducer("LCToSimTSAssociatorEDProducer",
+    label_lc = cms.InputTag("hgcalMergeLayerClusters"),
+    label_simTst = cms.InputTag("ticlSimTracksters2Hits"),
+    associator = cms.InputTag('lcSimTSAssocByEnergyScoreProducer'),
+    label_cp = cms.InputTag("mix","MergedCaloTruth"),
+    associator_cp = cms.InputTag('layerClusterCaloParticleAssociationProducer'),
+    label_scl = cms.InputTag("mix","MergedCaloTruth"),
+    associator_sc = cms.InputTag('layerClusterSimClusterAssociationProducer'),
+)
 
 from Configuration.ProcessModifiers.premix_stage2_cff import premix_stage2
 premix_stage2.toModify(layerClusterSimTracksterAssociation,

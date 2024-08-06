@@ -63,7 +63,7 @@
 
 // Helper class for geometry, magnetic field, etc
 using TracksterToTracksterMap =
-      ticl::AssociationMap<ticl::mapWithFractionAndScore, std::vector<ticl::Trackster>, std::vector<ticl::Trackster>>;
+    ticl::AssociationMap<ticl::mapWithFractionAndScore, std::vector<ticl::Trackster>, std::vector<ticl::Trackster>>;
 class DetectorTools {
 public:
   DetectorTools(const HGCalDDDConstants& hgcons,
@@ -111,7 +111,9 @@ public:
   enum class TracksterType {
     Trackster,       ///< Regular trackster (from RECO)
     SimTracksterCP,  ///< SimTrackster from CaloParticle
-    SimTracksterSC   ///< SimTrackster from SimCluster
+    SimTracksterSC,   ///< SimTrackster from SimCluster
+    SimTrackster2HitsCP,  ///< SimTrackster 2Hits from CaloParticle
+    SimTrackster2HitsSC   ///< SimTrackster 2Hits from SimCluster
   };
 
   static TracksterType tracksterTypeFromString(std::string str) {
@@ -121,6 +123,10 @@ public:
       return TracksterType::SimTracksterCP;
     if (str == "SimTracksterSC")
       return TracksterType::SimTracksterSC;
+    if (str == "SimTrackster2HitsCP")
+      return TracksterType::SimTrackster2HitsCP;
+    if (str == "SimTrackster2HitsSC")
+      return TracksterType::SimTrackster2HitsSC;
     throw std::runtime_error("TICLDumper : TracksterDumperHelper : Invalid trackster type " + str);
   }
 
@@ -520,7 +526,7 @@ public:
     for (size_t i = 0; i < tracksters.size(); ++i) {
       const auto ts_vec = tsRecoSimSCMap.at(i);
       if (!ts_vec.empty()) {
-        for (const auto& [ts_id, sharedEnergyAndScore] : ts_vec){ 
+        for (const auto& [ts_id, sharedEnergyAndScore] : ts_vec) {
           recoToSim[i].push_back(ts_id);
           recoToSim_score[i].push_back(sharedEnergyAndScore.second);
           recoToSim_sharedE[i].push_back(sharedEnergyAndScore.first);
@@ -535,7 +541,7 @@ public:
     for (size_t i = 0; i < simTracksters.size(); ++i) {
       const auto ts_vec = tsSimToRecoSCMap.at(i);
       if (!ts_vec.empty()) {
-        for (const auto& [ts_id, sharedEnergyAndScore] : ts_vec){ 
+        for (const auto& [ts_id, sharedEnergyAndScore] : ts_vec) {
           simToReco[i].push_back(ts_id);
           simToReco_score[i].push_back(sharedEnergyAndScore.second);
           simToReco_sharedE[i].push_back(sharedEnergyAndScore.first);
@@ -1376,7 +1382,7 @@ void TICLDumper::fillDescriptions(edm::ConfigurationDescriptions& descriptions) 
           true,
           edm::Comment("Type of trackster. Trackster=regular trackster (from RECO). SimTracksterCP=Simtrackster "
                        "from CaloParticle. SimTracksterSC=Simtrackster from SimCluster")),
-      edm::allowedValues<std::string>("Trackster", "SimTracksterCP", "SimTracksterSC"));
+      edm::allowedValues<std::string>("Trackster", "SimTracksterCP", "SimTracksterSC", "SimTrackster2HitsCP", "SimTrackster2HitsSC"));
   desc.addVPSet("tracksterCollections", tracksterDescValidator)->setComment("Trackster collections to dump");
 
   desc.add<edm::InputTag>("trackstersInCand", edm::InputTag("ticlTrackstersCLUE3DHigh"));

@@ -16,13 +16,29 @@ filteredLayerClustersSimTracksters = _filteredLayerClustersProducer.clone(
 ticlSimTracksters = _simTrackstersProducer.clone(
     computeLocalTime = cms.bool(False)
 )
+
+filteredLayerClustersSimTracksters2Hits = _filteredLayerClustersProducer.clone(
+    clusterFilter = "ClusterFilterByAlgoAndSize",
+    min_cluster_size = 2, # inclusive
+    iteration_label = "ticlSimTracksters2Hits"
+)
+
+ticlSimTracksters2Hits = _simTrackstersProducer.clone(
+    filtered_mask = "filteredLayerClustersSimTracksters2Hits:ticlSimTracksters2Hits",
+    computeLocalTime = cms.bool(False)
+)
 from Configuration.ProcessModifiers.ticl_v5_cff import ticl_v5
 ticl_v5.toModify(ticlSimTracksters, computeLocalTime = cms.bool(True))
+ticl_v5.toModify(ticlSimTracksters2Hits, computeLocalTime = cms.bool(True))
 
 from Configuration.ProcessModifiers.premix_stage2_cff import premix_stage2
 premix_stage2.toModify(ticlSimTracksters,
     simclusters = "mixData:MergedCaloTruth",
     caloparticles = "mixData:MergedCaloTruth",
 )
+premix_stage2.toModify(ticlSimTracksters2Hits,
+    simclusters = "mixData:MergedCaloTruth",
+    caloparticles = "mixData:MergedCaloTruth",
+)
 
-ticlSimTrackstersTask = cms.Task(filteredLayerClustersSimTracksters, ticlSimTracksters)
+ticlSimTrackstersTask = cms.Task(filteredLayerClustersSimTracksters, ticlSimTracksters, filteredLayerClustersSimTracksters2Hits, ticlSimTracksters2Hits)

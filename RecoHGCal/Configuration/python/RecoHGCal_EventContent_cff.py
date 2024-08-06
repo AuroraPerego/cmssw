@@ -22,15 +22,16 @@ TICL_RECO = cms.PSet(
        'keep *_ticlTrackstersHFNoseMerge_*_*',] +
       ['keep *_pfTICL_*_*'] +
       ['keep CaloParticles_mix_*_*', 'keep SimClusters_mix_*_*'] +
-      ['keep *_layerClusterSimClusterAssociationProducer_*_*','keep *_layerClusterCaloParticleAssociationProducer_*_*', 'keep *_layerClusterSimTracksterAssociationProducer_*_*'] +
-      ['keep *_tracksterSimTracksterAssociation*_*_*' , 'keep *_tracksterSimTracksterFromCPsAssociation*_*_*' ]
+      ['keep *_layerClusterSimClusterAssociationProducer_*_*','keep *_layerClusterCaloParticleAssociationProducer_*_*', 'keep *_layerClusterSimTracksterAssociationProducer_*_*', 'keep *_layerClusterSimTracksterAssociationProducer2Hits_*_*'] +
+      ['keep *_tracksterSimTracksterAssociation*_*_*' , 'keep *_tracksterSimTracksterFromCPsAssociation*_*_*' ] +
+      ['keep *_tracksterSimTracksterAssociation2Hits*_*_*' , 'keep *_tracksterSimTracksterFromCPsAssociation2Hits*_*_*' ] +
+      ['keep *_ticlSimTracksters2Hits_*_*'] 
       )
     )
 
 TICLv5_RECO = cms.PSet(
     outputCommands = cms.untracked.vstring(
         [
-            'drop *_ticlTracksters*_*_*',
             'keep *_ticlTrackstersCLUE3DHigh_*_*',
             'keep *_ticlTracksterLinks_*_*',
             'keep *_ticlTracksterLinksSuperclustering*_*_*',
@@ -47,6 +48,7 @@ TICL_RECO.outputCommands.extend(TICL_AOD.outputCommands)
 TICL_FEVT = cms.PSet(
     outputCommands = cms.untracked.vstring(
       'keep *_ticlSimTracksters_*_*',
+      'keep *_ticlSimTracksters2Hits_*_*',
       'keep *_ticlSimTICLCandidates_*_*',
       'keep *_ticlSimTrackstersFromCP_*_*',
       'keep *_SimTau*_*_*'
@@ -56,10 +58,13 @@ TICL_FEVT.outputCommands.extend(TICL_RECO.outputCommands)
 TICLv5_FEVT = cms.PSet(
     outputCommands = cms.untracked.vstring(
       'keep *_ticlSimTracksters_*_*',
+      'keep *_ticlSimTracksters2Hits_*_*',
       'keep *_ticlSimTICLCandidates_*_*',
       'keep *_ticlSimTrackstersFromCP_*_*',
       'keep *_tracksterSimTracksterAssociationLinkingSuperclustering_*_*',
+      'keep *_tracksterSimTracksterAssociationLinkingSuperclustering2Hits_*_*',
       'keep *_tracksterSimTracksterAssociationPRSuperclustering_*_*', 
+      'keep *_tracksterSimTracksterAssociationPRSuperclustering2Hits_*_*', 
       )
     )
 
@@ -85,8 +90,11 @@ def customiseHGCalOnlyEventContent(process):
                                             'keep *_layerClusterCaloParticleAssociationProducer_*_*',
                                             'keep *_randomEngineStateProducer_*_*',
                                             'keep *_layerClusterSimTracksterAssociationProducer_*_*',
+                                            'keep *_layerClusterSimTracksterAssociationProducer2Hits_*_*',
                                             'keep *_tracksterSimTracksterAssociation*_*_*',
                                             'keep *_tracksterSimTracksterFromCPsAssociation*_*_*',
+                                            'keep *_tracksterSimTracksterAssociation2Hits*_*_*',
+                                            'keep *_tracksterSimTracksterFromCPsAssociation2Hits*_*_*'
                                             ])
 
     if hasattr(process, 'FEVTDEBUGEventContent'):
