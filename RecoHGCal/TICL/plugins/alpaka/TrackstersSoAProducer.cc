@@ -13,16 +13,20 @@
 
 #include "HeterogeneousCore/AlpakaCore/interface/alpaka/stream/EDProducer.h"
 
+#include "DataFormats/HGCalReco/interface/alpaka/HGCalSoAClustersDeviceCollection.h"
+
 namespace ALPAKA_ACCELERATOR_NAMESPACE {
 
   class TrackstersSoAProducer : public stream::EDProducer<> {
     public:
-      TrackstersSoAProducer(edm::ParameterSet const& config) {}
+      TrackstersSoAProducer(edm::ParameterSet const& config)
+      : deviceTokenSoAClusters_(consumes(config.getParameter<edm::InputTag>("layerClusters"))) {}
       ~TrackstersSoAProducer() override = default;
 
       static void fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
         // hgcalMultiClusters
         edm::ParameterSetDescription desc;
+        desc.add<edm::InputTag>("layerClusters",edm::InputTag("hltHgcalSoALayerClustersProducer"));
         descriptions.addWithDefaultLabel(desc);
       }
 
@@ -31,7 +35,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
       }
 
     private:
-
+      device::EDGetToken<HGCalSoAClustersDeviceCollection> const deviceTokenSoAClusters_;
   };
 
 }
