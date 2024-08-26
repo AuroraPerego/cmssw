@@ -42,7 +42,7 @@ namespace {
         std::sqrt(point2.x() * point2.x() + point2.y() * point2.y()) * std::abs(point1.z()) / std::abs(point2.z());
     float delta_phi = reco::deltaPhi(point1.Phi(), point2.Phi());
     float projective_distance = (r1 - r2_at_z1) * (r1 - r2_at_z1) + r2_at_z1 * r2_at_z1 * delta_phi * delta_phi;
-    LogDebug("TracksterLinkingbySkeletons") << "Computing distance between point : " << point1 << " And point "
+      LogDebug("TracksterLinkingbySkeletons") <<"Computing distance between point : " << point1 << " And point "
                                             << point2 << " Distance " << projective_distance << std::endl;
     return projective_distance;
   }
@@ -205,16 +205,16 @@ bool TracksterLinkingbySkeletons::areCompatible(const ticl::Trackster &myTrackst
   //do not start links from small/bad tracksters
   float zVal_interface = rhtools_.getPositionLayer(rhtools_.lastLayerEE()).z();
   if (!isGoodTrackster(myTrackster, mySkeleton, min_num_lcs_, min_trackster_energy_, pca_quality_th_)) {
-    LogDebug("TracksterLinkingbySkeletons") << "Inner Trackster with energy " << myTrackster.raw_energy() << " Num LCs "
+      LogDebug("TracksterLinkingbySkeletons") <<"Inner Trackster with energy " << myTrackster.raw_energy() << " Num LCs "
                                             << myTrackster.vertices().size() << " NOT GOOD " << std::endl;
     return false;
   } else {
-    LogDebug("TracksterLinkingbySkeletons") << "Inner Trackster wi energy " << myTrackster.raw_energy() << " Num LCs "
+      LogDebug("TracksterLinkingbySkeletons") <<"Inner Trackster wi energy " << myTrackster.raw_energy() << " Num LCs "
                                             << myTrackster.vertices().size() << " IS GOOD " << std::endl;
     float proj_distance = projective_distance(mySkeleton[1], otherSkeleton[1]);
     auto isEE = mySkeleton[1].z() <= zVal_interface ? 0 : 1;
     bool areAlignedInProjectiveSpace = proj_distance < max_distance_projective_sqr_[isEE];
-    LogDebug("TracksterLinkingbySkeletons")
+    std::cout
         << "\t Trying to compare with outer Trackster with energy " << otherTrackster.raw_energy() << " Num LCS "
         << otherTrackster.vertices().size() << " Projective distance " << proj_distance << " areAlignedProjective "
         << areAlignedInProjectiveSpace << " TH " << max_distance_projective_sqr_[isEE] << std::endl;
@@ -226,15 +226,15 @@ bool TracksterLinkingbySkeletons::areCompatible(const ticl::Trackster &myTrackst
         auto dotProdSkeletons =
             ((mySkeleton[2] - mySkeleton[0]).Unit()).Dot((otherSkeleton[2] - otherSkeleton[0]).Unit());
         bool alignedSkeletons = dotProdSkeletons > dot_prod_th_;
-        LogDebug("TracksterLinkingbySkeletons")
+        std::cout
             << "\t Outer Trackster is Good, checking for skeleton alignment " << alignedSkeletons << " dotProd "
             << dotProdSkeletons << " Threshold " << dot_prod_th_ << std::endl;
         if (alignedSkeletons)
-          LogDebug("TracksterLinkingbySkeletons") << "\t\t Linked! " << std::endl;
+            LogDebug("TracksterLinkingbySkeletons") <<"\t\t Linked! " << std::endl;
         return alignedSkeletons;
       } else {
         // we measure the distance between the two closest nodes in the two skeletons
-        LogDebug("TracksterLinkingbySkeletons")
+        std::cout
             << "\t Outer Trackster is not aligned,  check skeletons distances " << std::endl;
         int myClosestPoint = -1;
         int otherClosestPoint = -1;
@@ -250,31 +250,31 @@ bool TracksterLinkingbySkeletons::areCompatible(const ticl::Trackster &myTrackst
           }
         }
         if (minDistance_z < min_distance_z_[isEE]) {
-          LogDebug("TracksterLinkingbySkeletons")
+          std::cout
               << "\t Trackster have distance in Z " << minDistance_z
               << "Checking if they are aligned in projective space "
               << projective_distance(mySkeleton[myClosestPoint], otherSkeleton[otherClosestPoint]) << " TH "
               << max_distance_projective_sqr_[isEE] << std::endl;
           if (projective_distance(mySkeleton[myClosestPoint], otherSkeleton[otherClosestPoint]) <
               max_distance_projective_sqr_[isEE]) {
-            LogDebug("TracksterLinkingbySkeletons") << "\t\t Linked! " << std::endl;
+              LogDebug("TracksterLinkingbySkeletons") <<"\t\t Linked! " << std::endl;
           }
           return projective_distance(mySkeleton[myClosestPoint], otherSkeleton[otherClosestPoint]) <
                  max_distance_projective_sqr_[isEE];
         } else {
-          LogDebug("TracksterLinkingbySkeletons") << "\t\t Not Linked Distance Z " << minDistance_z << std::endl;
+            LogDebug("TracksterLinkingbySkeletons") <<"\t\t Not Linked Distance Z " << minDistance_z << std::endl;
           return false;
         }
       }
     } else {
-      LogDebug("TracksterLinkingbySkeletons")
+      std::cout
           << "\t Outer Trackster is NOT GOOD,  check projective space alignment " << areAlignedInProjectiveSpace
           << " proj_distance " << max_distance_projective_sqr_[isEE] << std::endl;
       if (areAlignedInProjectiveSpace) {
-        LogDebug("TracksterLinkingbySkeletons") << "\t\t Linked! " << std::endl;
+          LogDebug("TracksterLinkingbySkeletons") <<"\t\t Linked! " << std::endl;
         return true;
       } else {
-        LogDebug("TracksterLinkingbySkeletons")
+        std::cout
             << "\t Not aligned in projective space, check distance between closest points in the two skeletons "
             << std::endl;
         // we measure the distance between the two closest nodes in the two skeletons
@@ -293,20 +293,20 @@ bool TracksterLinkingbySkeletons::areCompatible(const ticl::Trackster &myTrackst
           }
         }
         float d = projective_distance(mySkeleton[myClosestPoint], otherSkeleton[otherClosestPoint]);
-        LogDebug("TracksterLinkingbySkeletons")
+        std::cout
             << "\t\t Distance between closest points " << d << " TH " << 10.f << " Z Distance " << minDistance_z
             << " TH " << max_distance_projective_sqr_closest_points_[isEE] << std::endl;
         if (d < max_distance_projective_sqr_closest_points_[isEE] and
             minDistance_z < max_z_distance_closest_points_[isEE]) {
-          LogDebug("TracksterLinkingbySkeletons") << "\t\t\t Linked! " << d << std::endl;
+            LogDebug("TracksterLinkingbySkeletons") <<"\t\t\t Linked! " << d << std::endl;
           return true;
         } else {
-          LogDebug("TracksterLinkingbySkeletons") << "Distance between closest point " << d << " Distance in z "
+            LogDebug("TracksterLinkingbySkeletons") <<"Distance between closest point " << d << " Distance in z "
                                                   << max_z_distance_closest_points_[isEE] << std::endl;
           bool isInCyl = isInCylinder(mySkeleton, otherSkeleton, cylinder_radius_sqr_[isEE]);
-          LogDebug("TracksterLinkingbySkeletons") << "Two Points are in Cylinder  " << isInCylinder << std::endl;
+            LogDebug("TracksterLinkingbySkeletons") <<"Two Points are in Cylinder  " << isInCyl << std::endl;
           if (isInCyl) {
-            LogDebug("TracksterLinkingbySkeletons") << "\t\t\t Linked! " << d << std::endl;
+              LogDebug("TracksterLinkingbySkeletons") <<"\t\t\t Linked! " << d << std::endl;
           }
           return isInCyl;
         }
@@ -350,18 +350,9 @@ void TracksterLinkingbySkeletons::linkTracksters(
     allNodes.emplace_back(it);
   }
 
-  auto isEMTrackster = [](const ticl::Trackster &trackster) {
-    return trackster.id_probability(Trackster::ParticleType::photon) +
-               trackster.id_probability(Trackster::ParticleType::electron) >=
-           0.5f;
-  };
   // loop over tracksters sorted by energy and link them
   for (auto const &t_idx : sortedTracksters) {
     auto const &trackster = tracksters[t_idx];
-    if (isEMTrackster(trackster)) {
-      maskReceivedLink[t_idx] = 0; //do not allow to receive link
-      continue;  //if EM CLUE3D Trackster, do not try to link further
-    }
     auto const &skeleton = skeletons[t_idx];
 
     auto const bary = trackster.barycenter();
@@ -383,10 +374,10 @@ void TracksterLinkingbySkeletons::linkTracksters(
           if (maskReceivedLink[n] == 0 or allNodes[t_idx].isInnerNeighbour(n))
             continue;
           if (isGoodTrackster(trackster, skeleton, min_num_lcs_, min_trackster_energy_, pca_quality_th_)) {
-            LogDebug("TracksterLinkingbySkeletons")
+            std::cout
                 << "Trying to Link Trackster " << t_idx << " With Trackster " << n << std::endl;
             if (areCompatible(trackster, tracksters[n], skeleton, skeletons[n])) {
-              LogDebug("TracksterLinkingbySkeletons")
+              std::cout
                   << "\t==== LINK: Trackster " << t_idx << " Linked with Trackster " << n << std::endl;
               maskReceivedLink[n] = 0;
               allNodes[t_idx].addOuterNeighbour(n);
@@ -399,20 +390,20 @@ void TracksterLinkingbySkeletons::linkTracksters(
     }
   }
 
-  LogDebug("TracksterLinkingbySkeletons") << "****************  FINAL GRAPH **********************" << std::endl;
+    LogDebug("TracksterLinkingbySkeletons") <<"****************  FINAL GRAPH **********************" << std::endl;
   for (auto const &node : allNodes) {
     if (isRootTracksters[node.getId()]) {
-      LogDebug("TracksterLinkingbySkeletons")
+      std::cout
           << "ISROOT "
           << " Node " << node.getId() << " position " << tracksters[node.getId()].barycenter() << " energy "
           << tracksters[node.getId()].raw_energy() << std::endl;
     } else {
-      LogDebug("TracksterLinkingbySkeletons")
+      std::cout
           << "Node " << node.getId() << " position " << tracksters[node.getId()].barycenter() << " energy "
           << tracksters[node.getId()].raw_energy() << std::endl;
     }
   }
-  LogDebug("TracksterLinkingbySkeletons") << "********************************************************" << std::endl;
+    LogDebug("TracksterLinkingbySkeletons") <<"********************************************************" << std::endl;
 
   TICLGraph graph(allNodes, isRootTracksters);
 
@@ -420,7 +411,7 @@ void TracksterLinkingbySkeletons::linkTracksters(
   auto const &components = graph.findSubComponents();
   linkedTracksterIdToInputTracksterId.resize(components.size());
   for (auto const &comp : components) {
-    LogDebug("TracksterLinkingbySkeletons") << "Component " << ic << " Node: ";
+      LogDebug("TracksterLinkingbySkeletons") <<"Component " << ic << " Node: ";
     std::vector<unsigned int> linkedTracksters;
     Trackster outTrackster;
     if (comp.size() == 1) {
@@ -429,14 +420,15 @@ void TracksterLinkingbySkeletons::linkTracksters(
       }
     }
     for (auto const &node : comp) {
-      LogDebug("TracksterLinkingbySkeletons") << node << " ";
+        LogDebug("TracksterLinkingbySkeletons") <<node << " ";
       linkedTracksterIdToInputTracksterId[ic].push_back(node);
       outTrackster.mergeTracksters(input.tracksters[node]);
     }
     linkedTracksters.push_back(resultTracksters.size());
+      LogDebug("TracksterLinkingbySkeletons") <<"Out Trackster " << outTrackster.raw_energy() << std::endl;
     resultTracksters.push_back(outTrackster);
     linkedResultTracksters.push_back(linkedTracksters);
-    LogDebug("TracksterLinkingbySkeletons") << "\n";
+      LogDebug("TracksterLinkingbySkeletons") <<"\n";
     ++ic;
   }
 }  // linkTracksters
