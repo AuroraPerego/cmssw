@@ -610,10 +610,9 @@ private:
   const edm::EDGetTokenT<std::vector<reco::Muon>> muons_token_;
   const edm::EDGetTokenT<edm::ValueMap<std::pair<float, float>>> clustersTime_token_;
   const edm::EDGetTokenT<std::vector<int>> tracksterSeeds_token_;
-  const edm::EDGetTokenT<std::vector<std::vector<unsigned int>>> superclustering_linkedResultTracksters_token;
-  const edm::EDGetTokenT<reco::SuperClusterCollection> recoSuperClusters_token;
-  const edm::EDGetTokenT<reco::CaloClusterCollection> recoSuperClusters_caloClusters_token;
-  const edm::EDGetTokenT<std::vector<ticl::Trackster>> recoSuperClusters_sourceTracksters_token;
+  edm::EDGetTokenT<std::vector<std::vector<unsigned int>>> superclustering_linkedResultTracksters_token;
+  edm::EDGetTokenT<reco::SuperClusterCollection> recoSuperClusters_token;
+  edm::EDGetTokenT<std::vector<ticl::Trackster>> recoSuperClusters_sourceTracksters_token;
   edm::ESGetToken<CaloGeometry, CaloGeometryRecord> caloGeometry_token_;
   const edm::EDGetTokenT<std::vector<ticl::Trackster>> simTracksters_SC_token_;  // needed for simticlcandidate
   const edm::EDGetTokenT<std::vector<TICLCandidate>> simTICLCandidate_token_;
@@ -871,14 +870,6 @@ TICLDumper::TICLDumper(const edm::ParameterSet& ps)
       muons_token_(consumes<std::vector<reco::Muon>>(ps.getParameter<edm::InputTag>("muons"))),
       clustersTime_token_(
           consumes<edm::ValueMap<std::pair<float, float>>>(ps.getParameter<edm::InputTag>("layer_clustersTime"))),
-      superclustering_linkedResultTracksters_token(
-          consumes<std::vector<std::vector<unsigned int>>>(ps.getParameter<edm::InputTag>("superclustering"))),
-      recoSuperClusters_token(
-          consumes<reco::SuperClusterCollection>(ps.getParameter<edm::InputTag>("recoSuperClusters"))),
-      recoSuperClusters_caloClusters_token(
-          consumes<reco::CaloClusterCollection>(ps.getParameter<edm::InputTag>("recoSuperClusters"))),
-      recoSuperClusters_sourceTracksters_token(consumes<std::vector<ticl::Trackster>>(
-          ps.getParameter<edm::InputTag>("recoSuperClusters_sourceTracksterCollection"))),
       caloGeometry_token_(esConsumes<CaloGeometry, CaloGeometryRecord, edm::Transition::BeginRun>()),
       simTracksters_SC_token_(
           consumes<std::vector<ticl::Trackster>>(ps.getParameter<edm::InputTag>("simtrackstersSC"))),
@@ -923,6 +914,17 @@ TICLDumper::TICLDumper(const edm::ParameterSet& ps)
         consumes<std::vector<ticl::Trackster>>(associationPset.getParameter<edm::InputTag>("tracksterCollection")));
     associations_simTracksterCollection_.push_back(
         consumes<std::vector<ticl::Trackster>>(associationPset.getParameter<edm::InputTag>("simTracksterCollection")));
+  }
+
+  if (saveSuperclustering_) {
+      superclustering_linkedResultTracksters_token =
+          consumes<std::vector<std::vector<unsigned int>>>(ps.getParameter<edm::InputTag>("superclustering"));
+  }
+  if (saveRecoSuperclusters_) {
+      recoSuperClusters_sourceTracksters_token = consumes<std::vector<ticl::Trackster>>(
+          ps.getParameter<edm::InputTag>("recoSuperClusters_sourceTracksterCollection"));
+      recoSuperClusters_token =
+          consumes<reco::SuperClusterCollection>(ps.getParameter<edm::InputTag>("recoSuperClusters"));
   }
 };
 
@@ -1130,7 +1132,6 @@ void TICLDumper::analyze(const edm::Event& event, const edm::EventSetup& setup) 
   // recoSuperClusters
   if (saveRecoSuperclusters_) {
     reco::SuperClusterCollection const& recoSuperClusters = event.get(recoSuperClusters_token);
-    // reco::CaloClusterCollection const& recoCaloClusters = event.get(recoSuperClusters_caloClusters_token);
     std::vector<ticl::Trackster> const& recoSuperClusters_sourceTracksters =
         event.get(recoSuperClusters_sourceTracksters_token);
 
@@ -1432,12 +1433,12 @@ void TICLDumper::fillDescriptions(edm::ConfigurationDescriptions& descriptions) 
   desc.add<std::string>("detector", "HGCAL");
   desc.add<std::string>("propagator", "PropagatorWithMaterial");
 
-  desc.add<bool>("saveLCs", true);
+  desc.add<bool>("saveLCs", false);
   desc.add<bool>("saveTICLCandidate", true);
   desc.add<bool>("saveSimTICLCandidate", true);
   desc.add<bool>("saveTracks", true);
-  desc.add<bool>("saveSuperclustering", true);
-  desc.add<bool>("saveRecoSuperclusters", true)
+  desc.add<bool>("saveSuperclustering", false);
+  desc.add<bool>("saveRecoSuperclusters", false)
       ->setComment("Save superclustering Egamma collections (as reco::SuperCluster)");
   descriptions.add("ticlDumper", desc);
 }
