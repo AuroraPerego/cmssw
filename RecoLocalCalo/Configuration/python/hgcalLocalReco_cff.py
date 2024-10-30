@@ -12,19 +12,38 @@ from RecoParticleFlow.PFClusterProducer.particleFlowClusterHGC_cfi import *
 from RecoLocalCalo.HGCalRecProducers.hgcalMultiClusters_cfi import *
 from RecoLocalCalo.HGCalRecProducers.hgcalLayerClusters_cff import hgcalLayerClustersHFNose, hgcalLayerClustersEE, hgcalLayerClustersHSi, hgcalLayerClustersHSci, hgcalMergeLayerClusters
 
-hgcalLocalRecoTask = cms.Task( HGCalUncalibRecHit,
+from RecoLocalCalo.HGCalRecProducers.hgcalHeterogeneousModules_cfi import hgcalSoARecHits, hgcalSoARecHitsLayerClusters, hgcalSoALayerClusters, hgcalLayerClustersFromSoA
+
+hgcalLocalRecoTask1 = cms.Task( HGCalUncalibRecHit,
                                        HGCalRecHit,
-                                       recHitMapProducer,
-                                       hgcalLayerClustersEE,
-                                       hgcalLayerClustersHSi,
+                                       recHitMapProducer)
+
+hgcalLocalRecoTask2 = cms.Task( hgcalLayerClustersHSi,
                                        hgcalLayerClustersHSci,
                                        hgcalMergeLayerClusters,
                                        hgcalMultiClusters,
                                        particleFlowRecHitHGC,
                                        particleFlowClusterHGCal )
 
+hgcalLocalRecoTask = cms.Task(hgcalLocalRecoTask1,
+                              hgcalLayerClustersEE,
+                              hgcalLocalRecoTask2)
+
+_heterogeneous_hgcalLocalRecoTask = cms.Task(hgcalLocalRecoTask1,
+                                         hgcalSoARecHits,
+                                         hgcalSoARecHitsLayerClusters,
+                                         hgcalSoALayerClusters,
+                                         hgcalLayerClustersFromSoA,
+                                         hgcalLocalRecoTask2)
+
 _hfnose_hgcalLocalRecoTask = hgcalLocalRecoTask.copy()
 _hfnose_hgcalLocalRecoTask.add(hgcalLayerClustersHFNose)
+
+from Configuration.ProcessModifiers.alpaka_cff import alpaka
+alpaka.toReplaceWith(hgcalLocalRecoTask, _heterogeneous_hgcalLocalRecoTask)
+alpaka.toModify(hgcalMergeLayerClusters,
+         layerClustersEE = cms.InputTag("hgcalLayerClustersFromSoA",),
+         time_layerclustersEE = cms.InputTag("hgcalLayerClustersFromSoA", "timeLayerCluster"))
 
 from Configuration.Eras.Modifier_phase2_hfnose_cff import phase2_hfnose
 phase2_hfnose.toReplaceWith(
