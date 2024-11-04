@@ -189,6 +189,7 @@ void HGCalCLUEAlgoT<T, STRATEGY>::calculateLocalDensity(const T& lt,
   auto& cellsOnLayer = cells_[layerId];
   unsigned int numberOfCells = cellsOnLayer.detid.size();
   for (unsigned int i = 0; i < numberOfCells; i++) {
+    std::cout << __FILE__ << " : " << __LINE__ << std::endl;
     lt.searchInTheBox(cellsOnLayer.dim1[i] - delta,
                       cellsOnLayer.dim1[i] + delta,
                       cellsOnLayer.dim2[i] - delta,
@@ -200,6 +201,7 @@ void HGCalCLUEAlgoT<T, STRATEGY>::calculateLocalDensity(const T& lt,
                       }
 
     );
+    std::cout << __FILE__ << " : " << __LINE__ << std::endl;
     LogDebug("HGCalCLUEAlgo") << "Debugging calculateLocalDensity: \n"
                               << "  cell: " << i << " eta: " << cellsOnLayer.dim1[i] << " phi: " << cellsOnLayer.dim2[i]
                               << " energy: " << cellsOnLayer.weight[i] << " density: " << cellsOnLayer.rho[i] << "\n";
@@ -215,6 +217,7 @@ void HGCalCLUEAlgoT<T, STRATEGY>::calculateLocalDensity(const T& lt,
   for (unsigned int i = 0; i < numberOfCells; i++) {
     cellsOnLayer.rho[i] += cellsOnLayer.weight[i];
     float northeast(0), northwest(0), southeast(0), southwest(0), all(0);
+    std::cout << __FILE__ << " : " << __LINE__ << std::endl;
     lt.searchInTheBox(
         cellsOnLayer.dim1[i] - delta,
         cellsOnLayer.dim1[i] + delta,
@@ -253,6 +256,7 @@ void HGCalCLUEAlgoT<T, STRATEGY>::calculateLocalDensity(const T& lt,
                                       << " northwest: " << northwest << " southwest: " << southwest << "\n";
           }
         });
+    std::cout << __FILE__ << " : " << __LINE__ << std::endl;
   float neighborsval = (std::max(northeast, northwest) > std::max(southeast, southwest))
                            ? std::max(northeast, northwest)
                            : std::max(southeast, southwest);
@@ -285,6 +289,7 @@ void HGCalCLUEAlgoT<T, STRATEGY>::calculateDistanceToHigher(const T& lt, const u
     float i_delta = maxDelta;
     int i_nearestHigher = -1;
     auto range = outlierDeltaFactor_ * delta;
+    std::cout << __FILE__ << " : " << __LINE__ << std::endl;
     lt.searchInTheBox(cellsOnLayer.dim1[i] - range,
                       cellsOnLayer.dim1[i] + range,
                       cellsOnLayer.dim2[i] - range,
@@ -301,6 +306,7 @@ void HGCalCLUEAlgoT<T, STRATEGY>::calculateDistanceToHigher(const T& lt, const u
                           i_nearestHigher = otherId;
                         }
                       });
+    std::cout << __FILE__ << " : " << __LINE__ << std::endl;
     bool foundNearestHigherInSearchBox = (i_delta != maxDelta);
     if (foundNearestHigherInSearchBox) {
       cellsOnLayer.delta[i] = i_delta;

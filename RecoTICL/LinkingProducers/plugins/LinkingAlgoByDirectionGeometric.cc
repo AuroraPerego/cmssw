@@ -97,6 +97,7 @@ void LinkingAlgoByDirectionGeometric::findTrackstersInWindow(
 
     std::vector<unsigned> in_delta;
     std::vector<float> distances2;
+    std::cout << __FILE__ << " : " << __LINE__ << std::endl;
     tile.searchInTheBox(eta_min, eta_max, seed_phi - delta, seed_phi + delta, [&](unsigned int t_i) {
       // calculate actual distances of tracksters to the seed for a more accurate cut
       auto sep2 = (tracksterPropPoints[t_i].Eta() - seed_eta) * (tracksterPropPoints[t_i].Eta() - seed_eta) +
@@ -106,6 +107,7 @@ void LinkingAlgoByDirectionGeometric::findTrackstersInWindow(
         distances2.push_back(sep2);
       }
     });
+    std::cout << __FILE__ << " : " << __LINE__ << std::endl;
 
     // sort tracksters found in ascending order of their distances from the seed
     std::vector<unsigned> indices(in_delta.size());

@@ -317,21 +317,23 @@ void TracksterLinkingbySkeletons::linkTracksters(
     float eta_max = std::min(abs(bary.eta()) + del_, TileConstants::maxDim1);
     int tileIndex = bary.eta() > 0.f;
     const auto &tiles = tracksterTile[tileIndex];
+    std::array<int, 4> search_box = tiles.getSearchBox(eta_min, eta_max, bary.phi() - del_, bary.phi() + del_);
+    if (search_box[2] > search_box[3]) {
+      search_box[3] += tiles.nRows;
+    }
 
- //   if (search_box[2] > search_box[3]) {
- //     search_box[3] += tiles.nRows;
- //   }
-
-    tiles.searchInTheBox(eta_min, eta_max, bary.phi() - del_, bary.phi() + del_, [&](unsigned int n) {
-          if (t_idx == n)
-            return;
+    for (int eta_i = search_box[0]; eta_i <= search_box[1]; ++eta_i) {
+      for (int phi_i = search_box[2]; phi_i <= search_box[3]; ++phi_i) {
+        auto &neighbours = tiles[tiles.getGlobalBinByBin(eta_i, (phi_i % tiles.nRows))];
+        for (auto n : neighbours) {
+          if ((int)t_idx == n)
+            continue;
           if (maskReceivedLink[n] == 0 or allNodes[t_idx].isInnerNeighbour(n))
-            return;
-          if (isGoodTrackster(
-                  tracksters[t_idx], skeletons[t_idx], min_num_lcs_, min_trackster_energy_, pca_quality_th_)) {
+            continue;
+          if (isGoodTrackster(trackster, skeleton, min_num_lcs_, min_trackster_energy_, pca_quality_th_)) {
             LogDebug("TracksterLinkingbySkeletons")
                 << "Trying to Link Trackster " << t_idx << " With Trackster " << n << std::endl;
-            if (areCompatible(tracksters[t_idx], tracksters[n], skeletons[t_idx], skeletons[n])) {
+            if (areCompatible(trackster, tracksters[n], skeleton, skeletons[n])) {
               LogDebug("TracksterLinkingbySkeletons")
                   << "\t==== LINK: Trackster " << t_idx << " Linked with Trackster " << n << std::endl;
               maskReceivedLink[n] = 0;
@@ -340,8 +342,10 @@ void TracksterLinkingbySkeletons::linkTracksters(
               isRootTracksters[n] = 0;
             }
           }
-    });
-
+        }
+      }
+    }
+    std::cout << __FILE__ << " : " << __LINE__ << std::endl;
   }
 
   LogDebug("TracksterLinkingbySkeletons") << "****************  FINAL GRAPH **********************" << std::endl;

@@ -103,6 +103,7 @@ public:
 
   template <typename TFunc, typename... TArgs>
   void searchInTheBox(float dim1Min, float dim1Max, float dim2Min, float dim2Max, TFunc func, TArgs... args) const {
+    std::cout << __LINE__ << std::endl;
     std::array<int, 4> search_box = getSearchBox(dim1Min, dim1Max, dim2Min, dim2Max);
     for (int dim1Bin = search_box[0]; dim1Bin < search_box[1] + 1; ++dim1Bin) {
       for (int dim2Bin = search_box[2]; dim2Bin < search_box[3] + 1; ++dim2Bin) {
@@ -142,6 +143,7 @@ public:
         dim2BinMax += nRows;
       }
     }
+    std::cout << __LINE__ << std::endl;
     return std::array<int, 4>({{dim1BinMin, dim1BinMax, dim2BinMin, dim2BinMax}});
   }
 
