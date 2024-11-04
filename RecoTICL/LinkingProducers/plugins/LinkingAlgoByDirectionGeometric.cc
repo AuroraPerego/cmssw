@@ -10,7 +10,7 @@
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateTransform.h"
 
 #include "RecoParticleFlow/PFProducer/interface/PFMuonAlgo.h"
-#include "DataFormats/HGCalReco/interface/Trackster.h"
+#include "DataFormats/TICL/interface/Trackster.h"
 
 using namespace ticl;
 

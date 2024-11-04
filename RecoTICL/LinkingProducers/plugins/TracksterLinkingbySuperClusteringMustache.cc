@@ -7,8 +7,8 @@
 #include "FWCore/ParameterSet/interface/allowedValues.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
-#include "DataFormats/HGCalReco/interface/TICLLayerTile.h"
-#include "DataFormats/HGCalReco/interface/Trackster.h"
+#include "DataFormats/TICL/interface/TICLLayerTile.h"
+#include "DataFormats/TICL/interface/Trackster.h"
 #include "RecoEcal/EgammaCoreTools/interface/Mustache.h"
 #include "RecoTICL/LinkingProducers/plugins/TracksterLinkingbySuperClusteringMustache.h"
 

@@ -1,7 +1,7 @@
 <use name="CommonTools/Utils"/>
 <use name="DataFormats/CaloRecHit"/>
 <use name="DataFormats/Common"/>
-<use name="DataFormats/HGCalReco"/>
+<use name="DataFormats/TICL"/>
 <use name="DataFormats/ParticleFlowReco"/>
 <use name="DataFormats/TrackReco"/>
 <use name="FWCore/Framework"/>

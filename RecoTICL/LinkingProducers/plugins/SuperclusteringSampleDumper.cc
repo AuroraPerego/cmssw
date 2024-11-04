@@ -27,7 +27,7 @@
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
 #include "DataFormats/Math/interface/deltaPhi.h"
-#include "DataFormats/HGCalReco/interface/Trackster.h"
+#include "DataFormats/TICL/interface/Trackster.h"
 #include "SimDataFormats/CaloAnalysis/interface/CaloParticle.h"
 #include "SimDataFormats/Associations/interface/TracksterToSimTracksterAssociator.h"
 

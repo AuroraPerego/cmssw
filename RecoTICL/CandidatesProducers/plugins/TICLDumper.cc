@@ -24,8 +24,8 @@
 
 #include "DataFormats/Provenance/interface/EventID.h"
 #include "DataFormats/CaloRecHit/interface/CaloCluster.h"
-#include "DataFormats/HGCalReco/interface/Trackster.h"
-#include "DataFormats/HGCalReco/interface/TICLCandidate.h"
+#include "DataFormats/TICL/interface/Trackster.h"
+#include "DataFormats/TICL/interface/TICLCandidate.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"

@@ -1,62 +1,75 @@
-#ifndef DataFormats_TICL_Common_h
-#define DataFormats_TICL_Common_h
+#ifndef DataFormats_HGCalReco_Common_h
+#define DataFormats_HGCalReco_Common_h
 
 #include <vector>
 #include <array>
 #include <cstdint>
 
+#include "DataFormats/HGCalReco/interface/Trackster.h"
+
 namespace ticl {
-  struct TileConstantsGlobal_EtaPhi {
-  static constexpr float tileSize = 0.15f;
-  static constexpr float minDim1 = -3.f;
-  static constexpr float maxDim1 = 3.f;
-  static constexpr float minDim2 = -M_PI;
-  static constexpr float maxDim2 = M_PI;
-  static constexpr bool wrapped = true;
+  struct TileConstants {
+    static constexpr float minEta = 1.5f;
+    static constexpr float maxEta = 3.2f;
+    static constexpr int nEtaBins = 34;
+    static constexpr int nPhiBins = 126;
+    static constexpr int nLayers = 104;
+    static constexpr int iterations = 4;
+    static constexpr int nBins = nEtaBins * nPhiBins;
   };
 
-  struct TileConstantsEndcapNeg_EtaPhi {
-    static constexpr float tileSize = 0.15f;
-    static constexpr float minDim1 = -3.f;
-    static constexpr float maxDim1 = -1.5f;
-    static constexpr float minDim2 = -M_PI;
-    static constexpr float maxDim2 = M_PI;
-    static constexpr bool wrapped = true;
-
+  struct TileConstantsHFNose {
+    static constexpr float minEta = 3.0f;
+    static constexpr float maxEta = 4.2f;
+    static constexpr int nEtaBins = 24;
+    static constexpr int nPhiBins = 126;
+    static constexpr int nLayers = 16;  // 8x2
+    static constexpr int iterations = 4;
+    static constexpr int nBins = nEtaBins * nPhiBins;
   };
-
-    struct TileConstantsEndcapPos_EtaPhi {
-    static constexpr float tileSize = 0.15f;
-    static constexpr float minDim1 = 1.5f;
-    static constexpr float maxDim1 = 3.f;
-    static constexpr float minDim2 = -M_PI;
-    static constexpr float maxDim2 = M_PI;
-    static constexpr bool wrapped = true;
-
-  };
-
-  struct TileConstantsBarrel_EtaPhi {
-    static constexpr float tileSize = 3*0.087f;
-    static constexpr float minDim1 = -1.5f;
-    static constexpr float maxDim1 = 1.5f;
-    static constexpr float minDim2 = -M_PI;
-    static constexpr float maxDim2 = M_PI;
-             static constexpr bool wrapped = true;
-  };
-
-
-  struct TileConstantsEndcap_XY {
-  static constexpr float tileSize = 5.f;
-    static constexpr float minDim1 = -285.f;
-    static constexpr float maxDim1 = 285.f;
-    static constexpr float minDim2 = -285.f;
-    static constexpr float maxDim2 = 285.f;
-    static constexpr bool wrapped = false;
-
-  };
-
 
 }  // namespace ticl
 
+namespace ticl {
+  typedef std::vector<std::pair<unsigned int, float> > TICLClusterFilterMask;
+}  // namespace ticl
 
-#endif 
+namespace ticl {
+
+  //constants
+  constexpr double mpion = 0.13957;
+  constexpr float mpion2 = mpion * mpion;
+  typedef math::XYZVectorF Vector;
+
+  inline Trackster::ParticleType tracksterParticleTypeFromPdgId(int pdgId, int charge) {
+    if (pdgId == 111) {
+      return Trackster::ParticleType::neutral_pion;
+    } else {
+      pdgId = std::abs(pdgId);
+      if (pdgId == 22) {
+        return Trackster::ParticleType::photon;
+      } else if (pdgId == 11) {
+        return Trackster::ParticleType::electron;
+      } else if (pdgId == 13) {
+        return Trackster::ParticleType::muon;
+      } else {
+        bool isHadron = (pdgId > 100 and pdgId < 900) or (pdgId > 1000 and pdgId < 9000);
+        if (isHadron) {
+          if (charge != 0) {
+            return Trackster::ParticleType::charged_hadron;
+          } else {
+            return Trackster::ParticleType::neutral_hadron;
+          }
+        } else {
+          return Trackster::ParticleType::unknown;
+        }
+      }
+    }
+  }
+
+  // verbosity levels for ticl algorithms
+  enum VerbosityLevel { None = 0, Basic, Advanced, Expert, Guru };
+
+}  // namespace ticl
+
+#endif  // DataFormats_HGCalReco_Common_h

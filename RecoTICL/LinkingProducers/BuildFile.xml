@@ -1,4 +1,4 @@
-<use name="DataFormats/HGCalReco"/>
+<use name="DataFormats/TICL"/>
 <use name="FWCore/MessageLogger"/>
 <export>
   <lib name="1"/>

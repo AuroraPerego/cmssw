@@ -13,7 +13,7 @@
 #include <Math/VectorUtil.h>
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
-#include "DataFormats/HGCalReco/interface/Trackster.h"
+#include "DataFormats/TICL/interface/Trackster.h"
 
 namespace ticl {
 
