@@ -34,8 +34,8 @@ public:
   bool noVertex() const { return ivert == -1; }
 
   /// index of the corresponding Generator particle in the Event container (-1 if no Genpart)
-  int genpartIndex() const { return igenpart; }
-  bool noGenpart() const { return igenpart == -1; }
+  int genpartIndex() const { return isPrimary() ? igenpart : -1; }
+  bool noGenpart() const { return isPrimary() ? igenpart == -1 : true; }
 
   const math::XYZVectorD& trackerSurfacePosition() const { return tkposition; }
 
@@ -61,6 +61,14 @@ public:
   const math::XYZTLorentzVectorF& getMomentumAtBoundary() const { return momentumAtBoundary_; }
   int getIDAtBoundary() const { return idAtBoundary_; }
 
+  bool isFromBackScattering() const { return (trackInfo_ >> 0) & 1; }
+  void setFromBackScattering() { trackInfo_ |= 1 << 0; }
+
+  bool isPrimary() const { return (trackInfo_ >> 1) & 1; }
+  void setIsPrimary() { trackInfo_ |= 1 << 1; }
+  void setGenParticleID(const int idx) { igenpart = idx; }
+  int getPrimaryID() const { return igenpart; }
+
 private:
   int ivert;
   int igenpart;
@@ -72,6 +80,7 @@ private:
   int idAtBoundary_;
   math::XYZTLorentzVectorF positionAtBoundary_;
   math::XYZTLorentzVectorF momentumAtBoundary_;
+  uint8_t trackInfo_; // 0 = isFromBackScattering, 1 = isPrimary
 };
 
 #include <iosfwd>
