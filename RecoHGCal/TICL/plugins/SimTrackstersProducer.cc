@@ -254,6 +254,18 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
   evt.getByToken(caloparticles_token_, caloParticles_h);
   const auto& caloparticles = *caloParticles_h;
 
+  std::cout << "SIMCLUSTERS\n";
+  for (const auto& sc : simclusters)
+    std::cout << sc << "\n";
+
+  auto sc_in_cp = 0;
+  std::cout << "CALOPARTICLES\n";
+  for (const auto& cp : caloparticles) {
+    std::cout << cp << "\n";
+    sc_in_cp =+ cp.simClusters().size();
+  }
+  std::cout << "SIMCLUSTERS: " << simclusters.size() << " and IN CALOPARTICLES: " << sc_in_cp << "\n";
+
   edm::Handle<MtdSimTracksterCollection> MTDSimTracksters_h;
   evt.getByToken(MTDSimTrackstersToken_, MTDSimTracksters_h);
 

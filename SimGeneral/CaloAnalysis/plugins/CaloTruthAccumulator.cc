@@ -167,7 +167,7 @@ namespace {
       if (!vertex_property.simTrack)
         return;
       auto trackIdx = vertex_property.simTrack->trackId();
-      IfLogDebug(DEBUG, messageCategoryGraph_)
+      std::cout
           << " Found " << simHitBarcodeToIndex_.count(trackIdx) << " associated simHits" << std::endl;
       if (simHitBarcodeToIndex_.count(trackIdx)) {
         output_.pSimClusters->emplace_back(*vertex_property.simTrack);
@@ -187,9 +187,9 @@ namespace {
       auto vertex_property = get(vertex_name, g, src);
       if (src == 0 or (vertex_property.simTrack == nullptr)) {
         auto edge_property = get(edge_weight, g, e);
-        IfLogDebug(DEBUG, messageCategoryGraph_) << "Considering CaloParticle: " << edge_property.simTrack->trackId();
+        std::cout << "Considering CaloParticle: " << edge_property.simTrack->trackId() << "\n";
         if (selector_(edge_property)) {
-          IfLogDebug(DEBUG, messageCategoryGraph_) << "Adding CaloParticle: " << edge_property.simTrack->trackId();
+          std::cout << "Adding CaloParticle: " << edge_property.simTrack->trackId() << "\n";
           output_.pCaloParticles->emplace_back(*(edge_property.simTrack));
           caloParticles_.sc_start_.push_back(output_.pSimClusters->size());
         }
@@ -261,6 +261,7 @@ CaloTruthAccumulator::CaloTruthAccumulator(const edm::ParameterSet &config,
 }
 
 void CaloTruthAccumulator::initializeEvent(edm::Event const &event, edm::EventSetup const &setup) {
+  std::cout << "initializeEvent\n";
   output_.pSimClusters = std::make_unique<SimClusterCollection>();
   output_.pCaloParticles = std::make_unique<CaloParticleCollection>();
 
@@ -316,7 +317,7 @@ void CaloTruthAccumulator::accumulate(edm::Event const &event, edm::EventSetup c
   edm::Handle<edm::HepMCProduct> hepmc;
   event.getByLabel(hepMCproductLabel_, hepmc);
 
-  edm::LogInfo(messageCategory_) << " CaloTruthAccumulator::accumulate (signal)";
+  std::cout << " CaloTruthAccumulator::accumulate (signal)"<< "\n";
   accumulateEvent(event, setup, hepmc);
 }
 
@@ -327,17 +328,17 @@ void CaloTruthAccumulator::accumulate(PileUpEventPrincipal const &event,
       event.bunchCrossing() <= static_cast<int>(maximumSubsequentBunchCrossing_)) {
     // simply create empty handle as we do not have a HepMCProduct in PU anyway
     edm::Handle<edm::HepMCProduct> hepmc;
-    edm::LogInfo(messageCategory_) << " CaloTruthAccumulator::accumulate (pileup) bunchCrossing="
-                                   << event.bunchCrossing();
+    std::cout << " CaloTruthAccumulator::accumulate (pileup) bunchCrossing="
+                                   << event.bunchCrossing() << "\n";
     accumulateEvent(event, setup, hepmc);
   } else {
-    edm::LogInfo(messageCategory_) << "Skipping pileup event for bunch crossing " << event.bunchCrossing();
+    std::cout << "Skipping pileup event for bunch crossing " << event.bunchCrossing() << "\n";
   }
 }
 
 void CaloTruthAccumulator::finalizeEvent(edm::Event &event, edm::EventSetup const &setup) {
-  edm::LogInfo(messageCategory_) << "Adding " << output_.pSimClusters->size() << " SimParticles and "
-                                 << output_.pCaloParticles->size() << " CaloParticles to the event.";
+  std::cout << "Adding " << output_.pSimClusters->size() << " SimParticles and "
+                                 << output_.pCaloParticles->size() << " CaloParticles to the event.\n";
 
   // We need to normalize the hits and energies into hits and fractions (since
   // we have looped over all pileup events)
@@ -374,11 +375,14 @@ void CaloTruthAccumulator::finalizeEvent(edm::Event &event, edm::EventSetup cons
 
   // now fill the calo particles
   for (unsigned i = 0; i < output_.pCaloParticles->size(); ++i) {
+    std::cout << "Adding to CP " << i << " sim clusters: ";
     auto &cp = (*output_.pCaloParticles)[i];
     for (unsigned j = m_caloParticles.sc_start_[i]; j < m_caloParticles.sc_stop_[i]; ++j) {
       edm::Ref<SimClusterCollection> ref(scHandle, j);
+      std::cout <<  j << ", ";
       cp.addSimCluster(ref);
     }
+    std::cout << "\n";
   }
 
   event.put(std::move(output_.pCaloParticles), "MergedCaloTruth");
@@ -393,18 +397,26 @@ template <class T>
 void CaloTruthAccumulator::accumulateEvent(const T &event,
                                            const edm::EventSetup &setup,
                                            const edm::Handle<edm::HepMCProduct> &hepMCproduct) {
+  std::cout << "accumulateEvent\n";
   edm::Handle<std::vector<reco::GenParticle>> hGenParticles;
   edm::Handle<std::vector<int>> hGenParticleIndices;
 
+  std::cout << __LINE__ << "\n";
   event.getByLabel(simTrackLabel_, hSimTracks);
+  std::cout << __LINE__ << "\n";
   event.getByLabel(simVertexLabel_, hSimVertices);
+  std::cout << __LINE__ << "\n";
 
   event.getByLabel(genParticleLabel_, hGenParticles);
+  std::cout << __LINE__ << "\n";
   event.getByLabel(genParticleLabel_, hGenParticleIndices);
+  std::cout << __LINE__ << "\n";
 
   std::vector<std::pair<DetId, const PCaloHit *>> simHitPointers;
   std::unordered_map<int, std::map<int, float>> simTrackDetIdEnergyMap;
+  std::cout << __LINE__ << "\n";
   fillSimHits(simHitPointers, simTrackDetIdEnergyMap, event, setup);
+  std::cout << __LINE__ << "\n";
 
   // Clear maps from previous event fill them for this one
   m_simHitBarcodeToIndex.clear();
@@ -412,15 +424,16 @@ void CaloTruthAccumulator::accumulateEvent(const T &event,
     m_simHitBarcodeToIndex.emplace(simHitPointers[i].second->geantTrackId(), i);
   }
 
+  std::cout << __LINE__ << "\n";
   auto const &tracks = *hSimTracks;
   auto const &vertices = *hSimVertices;
   std::unordered_map<int, int> trackid_to_track_index;
   DecayChain decay;
   int idx = 0;
 
-  IfLogDebug(DEBUG, messageCategory_) << " TRACKS" << std::endl;
+  std::cout << " TRACKS" << std::endl;
   for (auto const &t : tracks) {
-    IfLogDebug(DEBUG, messageCategory_) << " " << idx << "\t" << t.trackId() << "\t" << t << std::endl;
+    std::cout << " " << idx << "\t" << t.trackId() << "\t" << t << std::endl;
     trackid_to_track_index[t.trackId()] = idx;
     idx++;
   }
@@ -454,9 +467,9 @@ void CaloTruthAccumulator::accumulateEvent(const T &event,
   idx = 0;
   std::vector<int> used_sim_tracks(tracks.size(), 0);
   std::vector<int> collapsed_vertices(vertices.size(), 0);
-  IfLogDebug(DEBUG, messageCategory_) << " VERTICES" << std::endl;
+  std::cout << " VERTICES" << std::endl;
   for (auto const &v : vertices) {
-    IfLogDebug(DEBUG, messageCategory_) << " " << idx++ << "\t" << v << std::endl;
+    std::cout << " " << idx++ << "\t" << v << std::endl;
     if (v.parentIndex() != -1) {
       auto trk_idx = trackid_to_track_index[v.parentIndex()];
       auto origin_vtx = tracks[trk_idx].vertIndex();

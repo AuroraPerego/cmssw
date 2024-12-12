@@ -22,7 +22,7 @@ void TrackInformation::setCrossedBoundary(const G4Track* track) {
 }
 
 void TrackInformation::Print() const {
-  LogDebug("TrackInformation") << " TrackInformation : storeTrack = " << storeTrack_ << "\n"
+	std::cout << " TrackInformation : storeTrack = " << storeTrack_ << "\n"
                                << "                    hasHits = " << hasHits_ << "\n"
                                << "                    isPrimary = " << isPrimary_ << "\n"
                                << "                    isGeneratedSecondary = " << isGeneratedSecondary_ << "\n"
@@ -37,5 +37,5 @@ void TrackInformation::Print() const {
                                << "                    isBTLlooper = " << isBTLlooper() << "\n"
                                << "                    isInTrkFromBackscattering = " << isInTrkFromBackscattering()
                                << "\n"
-                               << "                    isExtSecondary = " << isExtSecondary();
+                               << "                    isExtSecondary = " << isExtSecondary()<< "\n";
 }
