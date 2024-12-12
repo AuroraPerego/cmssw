@@ -51,12 +51,13 @@ public:
                               int idAtBoundary,
                               math::XYZTLorentzVectorF positionAtBoundary,
                               math::XYZTLorentzVectorF momentumAtBoundary) {
-    crossedBoundary_ = crossedBoundary;
+    if (crossedBoundary)
+      trackInfo_ |= 1 << 2;
     idAtBoundary_ = idAtBoundary;
     positionAtBoundary_ = positionAtBoundary;
     momentumAtBoundary_ = momentumAtBoundary;
   }
-  bool crossedBoundary() const { return crossedBoundary_; }
+  bool crossedBoundary() const { return (trackInfo_ >> 2) & 1; }
   const math::XYZTLorentzVectorF& getPositionAtBoundary() const { return positionAtBoundary_; }
   const math::XYZTLorentzVectorF& getMomentumAtBoundary() const { return momentumAtBoundary_; }
   int getIDAtBoundary() const { return idAtBoundary_; }
@@ -76,11 +77,10 @@ private:
   math::XYZVectorD tkposition;
   math::XYZTLorentzVectorD tkmomentum;
 
-  bool crossedBoundary_;
   int idAtBoundary_;
   math::XYZTLorentzVectorF positionAtBoundary_;
   math::XYZTLorentzVectorF momentumAtBoundary_;
-  uint8_t trackInfo_; // 0 = isFromBackScattering, 1 = isPrimary
+  uint8_t trackInfo_; // 0 = isFromBackScattering, 1 = isPrimary, 2 = crossedBoundary
 };
 
 #include <iosfwd>
