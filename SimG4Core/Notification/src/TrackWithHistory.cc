@@ -27,7 +27,8 @@ TrackWithHistory::TrackWithHistory(const G4Track* g4trk, int pID) {
   auto p = g4trk->GetCreatorProcess();
   procType_ = (nullptr != p) ? p->GetProcessSubType() : 0;
   TrackInformation* trkinfo = static_cast<TrackInformation*>(g4trk->GetUserInformation());
-  storeTrack_ = trkinfo->storeTrack();
+  if (trkinfo->storeTrack())
+    trackInfo_ |= 1 << 3;
   auto vgprimary = g4trk->GetDynamicParticle()->GetPrimaryParticle();
   // GetPrimaryParticle() returns the pointer to the corresponding G4PrimaryParticle object
   // if this particle is a primary particle OR is defined as a
@@ -37,7 +38,7 @@ TrackWithHistory::TrackWithHistory(const G4Track* g4trk, int pID) {
     auto priminfo = static_cast<GenParticleInfo*>(vgprimary->GetUserInformation());
     if (nullptr != priminfo) {
       genParticleID_ = priminfo->id();
-      isPrimary_ = true;
+      trackInfo_ |= 1 << 1; // set isPrimary
     }
   }
 
@@ -55,11 +56,11 @@ TrackWithHistory::TrackWithHistory(const G4PrimaryParticle* ptr, int trackID, co
   totalEnergy_ = ptr->GetTotalEnergy();
   vertexPosition_ = math::XYZVectorD(pos.x(), pos.y(), pos.z());
   time_ = time;
-  storeTrack_ = true;
+  trackInfo_ |= 1 << 3;
   auto priminfo = static_cast<GenParticleInfo*>(ptr->GetUserInformation());
   if (nullptr != priminfo) {
     genParticleID_ = priminfo->id();
-    isPrimary_ = true;
+    trackInfo_ |= 1 << 1; // set isPrimary
   }
   weight_ = 10000. * genParticleID_;
 }

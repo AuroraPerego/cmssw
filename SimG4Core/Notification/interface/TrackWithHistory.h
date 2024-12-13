@@ -27,7 +27,7 @@ public:
   int trackID() const { return trackID_; }
   int particleID() const { return pdgID_; }
   int parentID() const { return parentID_; }
-  int genParticleID() const { return isPrimary_ ? genParticleID_ : -1; }
+  int genParticleID() const { return isPrimary() ? genParticleID_ : -1; }
   int vertexID() const { return vertexID_; }
   int processType() const { return procType_; }
   int getIDAtBoundary() const { return idAtBoundary_; }
@@ -40,10 +40,10 @@ public:
   double totalEnergy() const { return totalEnergy_; }
   double time() const { return time_; }
   double weight() const { return weight_; }
-  void setToBeSaved() { saved_ = true; }
-  bool storeTrack() const { return storeTrack_; }
-  bool saved() const { return saved_; }
-  bool crossedBoundary() const { return crossedBoundary_; }
+  void setToBeSaved() { trackInfo_ |= 1 << 4;; }
+  bool storeTrack() const { return (trackInfo_ >> 3) & 1; }
+  bool saved() const { return (trackInfo_ >> 4) & 1; }
+  bool crossedBoundary() const { return (trackInfo_ >> 2) & 1; }
 
   const math::XYZVectorD &momentum() const { return momentum_; }
   const math::XYZVectorD &vertexPosition() const { return vertexPosition_; }
@@ -52,7 +52,7 @@ public:
   void setCrossedBoundaryPosMom(int id,
                                 const math::XYZTLorentzVectorF &position,
                                 const math::XYZTLorentzVectorF &momentum) {
-    crossedBoundary_ = true;
+    trackInfo_ |= 1 << 2;
     idAtBoundary_ = id;
     positionAtBoundary_ = position;
     momentumAtBoundary_ = momentum;
@@ -67,10 +67,11 @@ public:
     tkSurfacePosition_ = pos;
     tkSurfaceMomentum_ = mom;
   }
-  bool isFromBackScattering() const { return isFromBackScattering_; }
-  void setFromBackScattering() { isFromBackScattering_ = true; }
-  bool isPrimary() const { return isPrimary_; }
-  void setIsPrimary() { isPrimary_ = true; }
+  bool isFromBackScattering() const { return (trackInfo_ >> 0) & 1; }
+  void setFromBackScattering() { trackInfo_ |= 1 << 0; }
+
+  bool isPrimary() const { return (trackInfo_ >> 1) & 1; }
+  void setIsPrimary() { trackInfo_ |= 1 << 1; }
   int getPrimaryID() const { return genParticleID_; }
 
 private:
@@ -90,11 +91,7 @@ private:
   math::XYZTLorentzVectorF momentumAtBoundary_{math::XYZTLorentzVectorF(0.f, 0.f, 0.f, 0.f)};
   math::XYZVectorD tkSurfacePosition_{math::XYZVectorD(0., 0., 0.)};
   math::XYZTLorentzVectorD tkSurfaceMomentum_{math::XYZTLorentzVectorD(0., 0., 0., 0.)};
-  bool storeTrack_{false};
-  bool saved_{false};
-  bool crossedBoundary_{false};
-  bool isFromBackScattering_{false};
-  bool isPrimary_{false};
+  uint8_t trackInfo_; // 0 = isFromBackScattering, 1 = isPrimary, 2 = crossedBoundary, 3 = storeTrack, 4 = saved
 };
 
 extern G4ThreadLocal G4Allocator<TrackWithHistory> *fpTrackWithHistoryAllocator;
