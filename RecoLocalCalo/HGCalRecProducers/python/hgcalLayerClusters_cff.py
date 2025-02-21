@@ -12,6 +12,7 @@ from SimCalorimetry.HGCalSimProducers.hgcalDigitizer_cfi import fC_per_ele, HGCA
 hgcalLayerClustersEE = hgcalLayerClusters_.clone(
     detector = 'EE',
     recHits = "HGCalRecHit:HGCEERecHits",
+    simHits = "g4SimHits:HGCHitsEE",
     plugin = dict(
         dEdXweights = HGCalRecHit.layerWeights.value(),
         #With the introduction of 7 regional factors (6 for silicon plus 1 for scintillator),
@@ -31,6 +32,7 @@ hgcalLayerClustersEE = hgcalLayerClusters_.clone(
 hgcalLayerClustersHSi = hgcalLayerClusters_.clone(
     detector = 'FH',
     recHits = "HGCalRecHit:HGCHEFRecHits",
+    simHits = "g4SimHits:HGCHitsHEfront",
     plugin = dict(
         dEdXweights = HGCalRecHit.layerWeights.value(),
         #With the introduction of 7 regional factors (6 for silicon plus 1 for scintillator),
@@ -50,6 +52,7 @@ hgcalLayerClustersHSi = hgcalLayerClusters_.clone(
 hgcalLayerClustersHSci = hgcalLayerClusters_.clone(
     detector = 'BH',
     recHits = "HGCalRecHit:HGCHEBRecHits",
+    simHits = "g4SimHits:HGCHitsHEback",
     plugin = dict(
         dEdXweights = HGCalRecHit.layerWeights.value(),
         #With the introduction of 7 regional factors (6 for silicon plus 1 for scintillator),
@@ -69,6 +72,7 @@ hgcalLayerClustersHSci = hgcalLayerClusters_.clone(
 hgcalLayerClustersHFNose = hgcalLayerClusters_.clone(
     detector = 'HFNose',
     recHits = "HGCalRecHit:HGCHFNoseRecHits",
+    simHits = "g4SimHits:HGCHitsHEback",
     nHitsTime = 3,
     plugin = dict(
         dEdXweights = HGCalRecHit.layerNoseWeights.value(),

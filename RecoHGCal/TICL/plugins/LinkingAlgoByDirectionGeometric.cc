@@ -149,20 +149,10 @@ bool LinkingAlgoByDirectionGeometric::timeAndEnergyCompatible(float &total_raw_e
   // compatible if trackster time is within 3sigma of
   // track time; compatible if either: no time assigned
   // to trackster or track time quality is below threshold
+  // return energyCompatible;
 
-  float tsT = trackster.time() - 0.07;
-  // linking : trackster is hadronic if its barycenter is in CE-H
-//    auto isHadron = [&](const Trackster &t) -> bool {
-//        auto boundary_z = rhtools_.getPositionLayer(rhtools_.lastLayerEE()).z();
-//           return (std::abs(t.barycenter().Z()) > boundary_z);
-//            };
-               
-//correct the time shift
-//if (isHadron(trackster))
-//  tsT -= 0.068;
-//else
-//  tsT -= 0.057;
-
+  float tsT = trackster.time();
+  //float tsT = trackster.time() - 0.072; // rechit
   float tsTErr = trackster.timeError();
 
   bool timeCompatible = false;
@@ -173,7 +163,8 @@ bool LinkingAlgoByDirectionGeometric::timeAndEnergyCompatible(float &total_raw_e
 
     const auto deltaSoverV = std::sqrt((barycenter.x()-tkMtdPos.x())*(barycenter.x()-tkMtdPos.x()) + 
                                        (barycenter.y()-tkMtdPos.y())*(barycenter.y()-tkMtdPos.y()) +
-                                       (barycenter.z()-tkMtdPos.z())*(barycenter.z()-tkMtdPos.z())) / (tkBeta * 29.9792458);
+                                       (barycenter.z()-tkMtdPos.z())*(barycenter.z()-tkMtdPos.z())) / (0.96 * 29.9792458);
+                                       //(barycenter.z()-tkMtdPos.z())*(barycenter.z()-tkMtdPos.z())) / (tkBeta * 29.9792458);
 
     const auto deltaT = tsT - tkT;
 
@@ -196,9 +187,18 @@ bool LinkingAlgoByDirectionGeometric::timeAndEnergyCompatible(float &total_raw_e
 ///    if (!(timeCompatible))
 ///     std::cout << "time compatibility : delta time " << tkT -tsT << " err " << std::sqrt(2)*tkTErr << "\n";
 //  }
-    // 
+//
+//
+//
+//// if (LinkingAlgoBase::algo_verbosity_ > VerbosityLevel::Advanced) {
+/////    if (!(energyCompatible))
+/////     std::cout 
+/////          << "energy compatibility : track p " << track.p() << " trackster energy " << trackster.raw_energy() << " total_raw_energy " << total_raw_energy << " track.p() + threshold " << track.p() + threshold <<  "\n";
+/////    if (!(timeCompatible))
+/////     std::cout << "time compatibility : delta time " << tkT -tsT << " err " << std::sqrt(2)*tkTErr << "\n";
+////  }
+//    // 
   return energyCompatible && timeCompatible;
-  // return energyCompatible;
 }
 
 void LinkingAlgoByDirectionGeometric::recordTrackster(const unsigned ts,  //trackster index

@@ -29,6 +29,7 @@
 
 #include "DataFormats/ParticleFlowReco/interface/PFCluster.h"
 #include "DataFormats/Common/interface/ValueMap.h"
+#include "SimDataFormats/CaloHit/interface/PCaloHit.h"
 
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 
@@ -60,6 +61,7 @@ public:
 
 private:
   edm::EDGetTokenT<HGCRecHitCollection> hits_token_;
+  edm::EDGetTokenT<std::vector<PCaloHit>> simhits_token_;
 
   reco::CaloCluster::AlgoId algoId_;
 
@@ -97,7 +99,8 @@ private:
    * @param[in] hitsAndFraction all hits in the cluster
    * @return counted time
   */
-  std::pair<float, float> calculateTime(std::unordered_map<uint32_t, const HGCRecHit*>& hitmap,
+  std::pair<float, float> calculateTime(std::unordered_map<uint32_t, const PCaloHit*>& simhitmap, 
+                                        std::unordered_map<uint32_t, const HGCRecHit*>& hitmap,
                                         const std::vector<std::pair<DetId, float>>& hitsAndFractions,
                                         size_t sizeCluster);
 };
@@ -110,6 +113,7 @@ HGCalLayerClusterProducer::HGCalLayerClusterProducer(const edm::ParameterSet& ps
       caloGeomToken_(consumesCollector().esConsumes<CaloGeometry, CaloGeometryRecord>()) {
   setAlgoId();  //sets algo id according to detector type
   hits_token_ = consumes<HGCRecHitCollection>(ps.getParameter<edm::InputTag>("recHits"));
+  simhits_token_ = consumes<std::vector<PCaloHit>>(ps.getParameter<edm::InputTag>("simHits"));
 
   auto pluginPSet = ps.getParameter<edm::ParameterSet>("plugin");
   if (detector_ == "HFNose") {
@@ -137,6 +141,7 @@ void HGCalLayerClusterProducer::fillDescriptions(edm::ConfigurationDescriptions&
   desc.add<edm::ParameterSetDescription>("plugin", pluginDesc);
   desc.add<std::string>("detector", "EE")->setComment("options EE, FH, BH,  HFNose; other value defaults to EE");
   desc.add<edm::InputTag>("recHits", edm::InputTag("HGCalRecHit", "HGCEERecHits"));
+  desc.add<edm::InputTag>("simHits", edm::InputTag("g4SimHits","HGCHitsEE"));
   desc.add<std::string>("timeClname", "timeLayerCluster");
   desc.add<unsigned int>("nHitsTime", 3);
   descriptions.add("hgcalLayerClusters", desc);
@@ -197,6 +202,7 @@ math::XYZPoint HGCalLayerClusterProducer::calculatePosition(
 }
 
 std::pair<float, float> HGCalLayerClusterProducer::calculateTime(
+    std::unordered_map<uint32_t, const PCaloHit*>& simhitmap,
     std::unordered_map<uint32_t, const HGCRecHit*>& hitmap,
     const std::vector<std::pair<DetId, float>>& hitsAndFractions,
     size_t sizeCluster) {
@@ -214,7 +220,15 @@ std::pair<float, float> HGCalLayerClusterProducer::calculateTime(
       //check on timeError to exclude scintillator
       if (rhTimeE < 0.)
         continue;
-      timeClhits.push_back(rechit->time());
+      // auto recHitdDetId = rechit->id().rawId();
+      if (auto simhitFound = simhitmap.find(hit.first); simhitFound != simhitmap.end()){
+        timeClhits.push_back(simhitFound->second->time());
+	//std::cout << "sh " << simhitFound->second->time() << " rh " << rechit->time() << "+/-" << rhTimeE << std::endl;
+      }else{
+        timeClhits.push_back(rechit->time());
+        //std::cout <<" rh " << rechit->time() << "+/-" << rhTimeE << std::endl;
+      }
+
       timeErrorClhits.push_back(1. / (rhTimeE * rhTimeE));
     }
     hgcalsimclustertime::ComputeClusterTime timeEstimator;
@@ -224,7 +238,7 @@ std::pair<float, float> HGCalLayerClusterProducer::calculateTime(
 }
 void HGCalLayerClusterProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
   edm::Handle<HGCRecHitCollection> hits;
-
+  edm::Handle<std::vector<PCaloHit>> simhits;
   std::unique_ptr<std::vector<reco::BasicCluster>> clusters(new std::vector<reco::BasicCluster>);
 
   edm::ESHandle<CaloGeometry> geom = es.getHandle(caloGeomToken_);
@@ -242,6 +256,13 @@ void HGCalLayerClusterProducer::produce(edm::Event& evt, const edm::EventSetup& 
     hitmap[it.detid().rawId()] = &(it);
   }
 
+  std::unordered_map<uint32_t, const PCaloHit*> simhitmap;
+  evt.getByToken(simhits_token_, simhits);
+  for (auto const& it : *simhits) {
+    simhitmap[it.id()] = &(it);
+  }
+  
+
   algo_->makeClusters();
   *clusters = algo_->getClusters(false);
 
@@ -252,7 +273,7 @@ void HGCalLayerClusterProducer::produce(edm::Event& evt, const edm::EventSetup& 
     const reco::CaloCluster& sCl = (*clusters)[i];
     (*clusters)[i].setPosition(calculatePosition(hitmap, sCl.hitsAndFractions()));
     if (detector_ != "BH") {
-      times.push_back(calculateTime(hitmap, sCl.hitsAndFractions(), sCl.size()));
+      times.push_back(calculateTime(simhitmap, hitmap, sCl.hitsAndFractions(), sCl.size()));
     } else {
       times.push_back(std::pair<float, float>(-99., -1.));
     }
