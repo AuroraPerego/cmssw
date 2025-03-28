@@ -82,6 +82,7 @@ void SimTrackManager::addTrack(TrackWithHistory* iTrack, const G4Track* track, b
     // to give -1 if the track is not a primary.
     if (not iTrack->isPrimary())
       iTrack->setGenParticleID(info->mcTruthID());
+    iTrack->setLastStoredAncestor(info->idLastStoredAncestor());
     m_trackContainer.push_back(iTrack);
     const auto& v = track->GetStep()->GetPostStepPoint()->GetPosition();
     std::pair<int, math::XYZVectorD> p(iTrack->trackID(),
@@ -193,13 +194,19 @@ void SimTrackManager::reallyStoreTracks() {
 
 int SimTrackManager::getOrCreateVertex(TrackWithHistory* trkH, int iParentID) {
   int parent = -1;
+  int lastStoreID = -1;
   for (auto const& trk : m_trackContainer) {
     int id = trk->trackID();
     if (id == iParentID) {
       parent = id;
       break;
     }
+    if (id == trkH->lastStoredAncestor())
+      lastStoreID = id;
   }
+
+  if (parent == -1 and !trkH->isPrimary() and lastStoreID != trkH->trackID())
+    parent = lastStoreID;
 
   VertexMap::const_iterator iterator = m_vertexMap.find(parent);
   if (iterator != m_vertexMap.end()) {
