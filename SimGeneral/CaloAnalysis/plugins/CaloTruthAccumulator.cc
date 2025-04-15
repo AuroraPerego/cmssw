@@ -357,6 +357,7 @@ void CaloTruthAccumulator::finalizeEvent(edm::Event &event, edm::EventSetup cons
     std::sort(totalEnergies->begin(), totalEnergies->end());
     event.put(std::move(totalEnergies), "MergedCaloTruth");
   } else {
+    std::cout << "SIMCLUSTERS:\n";
     for (auto &sc : *(output_.pSimClusters)) {
       auto hitsAndEnergies = sc.hits_and_fractions();
       sc.clearHitsAndFractions();
@@ -372,21 +373,29 @@ void CaloTruthAccumulator::finalizeEvent(edm::Event &event, edm::EventSetup cons
         sc.addRecHitAndFraction(hAndE.first, fraction);
         sc.addHitEnergy(hAndE.second);
       }
+      std::cout << sc << std::endl;
     }
   }
 
   // save the SimCluster orphan handle so we can fill the calo particles
   auto scHandle = event.put(std::move(output_.pSimClusters), "MergedCaloTruth");
 
+  uint32_t nsc = 0;
   // now fill the calo particles
+  std::cout << "CALOPARTICLES:\n";
   for (unsigned i = 0; i < output_.pCaloParticles->size(); ++i) {
     auto &cp = (*output_.pCaloParticles)[i];
     for (unsigned j = m_caloParticles.sc_start_[i]; j < m_caloParticles.sc_stop_[i]; ++j) {
       edm::Ref<SimClusterCollection> ref(scHandle, j);
       cp.addSimCluster(ref);
+      nsc++;
     }
+    std::cout << cp << std::endl;
   }
 
+  std::cout << "there are " << (*scHandle).size() << " simclusters and " << nsc << " are in cps\n";
+  if (nsc != (*scHandle).size())
+    std::cout << "ERROR: there are orphan clusters\n";
   event.put(std::move(output_.pCaloParticles), "MergedCaloTruth");
 
   calo_particles().swap(m_caloParticles);
@@ -408,6 +417,12 @@ void CaloTruthAccumulator::accumulateEvent(const T &event,
   event.getByLabel(genParticleLabel_, hGenParticles);
   event.getByLabel(genParticleLabel_, hGenParticleIndices);
 
+  std::cout << "GENPARTICLES:\n";
+  for (size_t i = 0; i < (*hGenParticles).size(); ++i) {
+    auto const& gp = (*hGenParticles)[i];
+    std::cout << (*hGenParticleIndices)[i] << "\t" << gp.pdgId() << "\t" << gp.momentum() << "\t" << gp.vertex() << "\n";
+  }
+
   std::vector<std::pair<DetId, const PCaloHit *>> simHitPointers;
   std::unordered_map<int, std::map<int, float>> simTrackDetIdEnergyMap;
   fillSimHits(simHitPointers, simTrackDetIdEnergyMap, event, setup);
@@ -424,9 +439,9 @@ void CaloTruthAccumulator::accumulateEvent(const T &event,
   DecayChain decay;
   int idx = 0;
 
-  IfLogDebug(DEBUG, messageCategory_) << " TRACKS" << std::endl;
+  std::cout << " TRACKS" << std::endl;
   for (auto const &t : tracks) {
-    IfLogDebug(DEBUG, messageCategory_) << " " << idx << "\t" << t.trackId() << "\t" << t << std::endl;
+    std::cout << " " << idx << "\t" << t.trackId() << "\t" << t << std::endl;
     trackid_to_track_index[t.trackId()] = idx;
     idx++;
   }
@@ -466,9 +481,9 @@ void CaloTruthAccumulator::accumulateEvent(const T &event,
   idx = 0;
   std::vector<int> used_sim_tracks(tracks.size(), 0);
   std::vector<int> collapsed_vertices(vertices.size(), 0);
-  IfLogDebug(DEBUG, messageCategory_) << " VERTICES" << std::endl;
+  std::cout << " VERTICES" << std::endl;
   for (auto const &v : vertices) {
-    IfLogDebug(DEBUG, messageCategory_) << " " << idx++ << "\t" << v << std::endl;
+    std::cout << " " << idx++ << "\t" << v << std::endl;
     if (v.parentIndex() != -1) {
       auto trk_idx = trackid_to_track_index[v.parentIndex()];
       auto origin_vtx = tracks[trk_idx].vertIndex();

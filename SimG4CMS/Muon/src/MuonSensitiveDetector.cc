@@ -241,8 +241,10 @@ void MuonSensitiveDetector::createHit(const G4Step* aStep) {
   if (thePabs > ePersistentCutGeV_ || (thePID == 13 && allMuonsPersistent_)) {
     TrackInformation* info = cmsTrackInformation(theTrack);
     info->setStoreTrack();
-    if (info->idLastStoredAncestor() == theTrack->GetParentID())
+    if (info->idLastStoredAncestor() == theTrack->GetParentID()) {
+      std::cout << "MUON: overwriting id " << info->idLastStoredAncestor() << " with " << theTrack->GetTrackID() << "\n";
       info->setIdLastStoredAncestor(theTrack->GetTrackID());
+    }
   }
 
 #ifdef EDM_ML_DEBUG

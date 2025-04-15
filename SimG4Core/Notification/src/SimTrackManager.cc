@@ -205,6 +205,7 @@ int SimTrackManager::getOrCreateVertex(TrackWithHistory* trkH, int iParentID) {
       lastStoreID = id;
   }
 
+  std::cout << "prim " << trkH->isPrimary() <<  " trk ID " << trkH->trackID() << " parent " << parent << " lastStored " << trkH->lastStoredAncestor() << "\n";
   if (parent == -1 and !trkH->isPrimary() and lastStoreID != trkH->trackID())
     parent = lastStoreID;
 

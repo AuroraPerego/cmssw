@@ -249,26 +249,25 @@ void OscarMTProducer::produce(edm::Event& e, const edm::EventSetup& es) {
   evt->load(*p1);
   evt->load(*p2);
 
+  m_verbose = 3;
   if (0 < m_verbose) {
-    edm::LogVerbatim("SimG4CoreApplication")
-        << "Produced " << p2->size() << " SimVertices: position(cm), time(s), parentID, vertexID, processType";
+    std::cout << "Produced " << p2->size() << " SimVertices: position(cm), time(s), parentID, vertexID, processType\n";
     if (1 < m_verbose) {
       int nn = p2->size();
       for (int i = 0; i < nn; ++i) {
-        edm::LogVerbatim("Vertex") << " " << i << ". " << (*p2)[i] << " " << (*p2)[i].processType();
+        std::cout << " " << i << ". " << (*p2)[i] << " " << (*p2)[i].processType() << "\n";
       }
     }
-    edm::LogVerbatim("SimG4CoreApplication")
-        << "Produced " << p1->size()
+    std::cout << "Produced " << p1->size()
         << " SimTracks: G4 Id, pdg, 4-momentum(GeV), vertexID, mcTruthID, crossedBoundary -> trackID at boundary, from "
-           "backscattering, isPrimary -> getPrimary";
+           "backscattering, isPrimary -> getPrimary\n";
     if (1 < m_verbose) {
       int nn = p1->size();
       for (int i = 0; i < nn; ++i) {
-        edm::LogVerbatim("Track") << " " << i << ". " << (*p1)[i].trackId() << ", " << (*p1)[i] << ", "
+        std::cout << " " << i << ". " << (*p1)[i].trackId() << ", " << (*p1)[i] << ", "
                                   << (*p1)[i].crossedBoundary() << "-> " << (*p1)[i].getIDAtBoundary() << ", "
                                   << (*p1)[i].isFromBackScattering() << ", " << (*p1)[i].isPrimary() << "-> "
-                                  << (*p1)[i].getPrimaryID();
+                                  << (*p1)[i].getPrimaryID() << "\n";
       }
     }
   }

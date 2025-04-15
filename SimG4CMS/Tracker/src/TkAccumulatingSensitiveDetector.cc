@@ -153,8 +153,10 @@ void TkAccumulatingSensitiveDetector::update(const BeginOfTrack* bot) {
     if (gTrack->GetKineticEnergy() > energyCut) {
       info = cmsTrackInformation(gTrack);
       info->setStoreTrack();
-      if (info->idLastStoredAncestor() == gTrack->GetParentID())
+      if (info->idLastStoredAncestor() == gTrack->GetParentID()) {
+        std::cout << "TRACKER: overwriting id " << info->idLastStoredAncestor() << " with " << gTrack->GetTrackID() << "\n";
         info->setIdLastStoredAncestor(gTrack->GetTrackID());
+      }
     }
     //
     // Save History?
