@@ -204,6 +204,10 @@ int SimTrackManager::getOrCreateVertex(TrackWithHistory* trkH, int iParentID) {
       lastStoreID = id;
   }
 
+  std::cout << "prim " << trkH->isPrimary() <<  " trk ID " << trkH->trackID() << " parent " << parent << " lastStored " << trkH->getPrimaryID() << "\n";
+  if (parent == -1 and !trkH->isPrimary() and lastStoreID != trkH->trackID())
+    parent = lastStoreID;
+
   VertexMap::const_iterator iterator = m_vertexMap.find(parent);
   if (iterator != m_vertexMap.end()) {
     // loop over saved vertices
