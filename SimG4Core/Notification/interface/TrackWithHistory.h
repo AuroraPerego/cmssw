@@ -27,7 +27,6 @@ public:
   int trackID() const { return trackID_; }
   int particleID() const { return pdgID_; }
   int parentID() const { return parentID_; }
-  int lastStoredAncestor() const { return lastStoredAncestor_; }
   int genParticleID() const { return isPrimary_ ? genParticleID_ : -1; }
   int vertexID() const { return vertexID_; }
   int processType() const { return procType_; }
@@ -35,7 +34,6 @@ public:
 
   void setTrackID(int i) { trackID_ = i; }
   void setParentID(int i) { parentID_ = i; }
-  void setLastStoredAncestor(int i) { lastStoredAncestor_ = i; }
   void setVertexID(int i) { vertexID_ = i; }
   void setGenParticleID(int i) { genParticleID_ = i; }
 
@@ -79,7 +77,6 @@ private:
   int trackID_;
   int pdgID_;
   int parentID_;
-  int lastStoredAncestor_;
   int genParticleID_{-1};
   int vertexID_{-1};
   int idAtBoundary_{-1};

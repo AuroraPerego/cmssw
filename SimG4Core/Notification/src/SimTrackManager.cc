@@ -76,13 +76,12 @@ void SimTrackManager::addTrack(TrackWithHistory* iTrack, const G4Track* track, b
     auto info = static_cast<const TrackInformation*>(track->GetUserInformation());
     if (info->isInTrkFromBackscattering())
       iTrack->setFromBackScattering();
-    // set there for the *non-primary* tracks the genParticle ID associated with the G4Track
-    // for the primaries this is done in the TrackWithHistory constructor.
+    // set there for the *non-primary* tracks the G4Track ID of the last stored ancestor
+    // for the primaries the genparticle id is saved in the TrackWithHistory constructor.
     // In the constructor of TrackWithHistory the info isPrimary is saved and used
     // to give -1 if the track is not a primary.
     if (not iTrack->isPrimary())
-      iTrack->setGenParticleID(info->mcTruthID());
-    iTrack->setLastStoredAncestor(info->idLastStoredAncestor());
+      iTrack->setGenParticleID(info->idLastStoredAncestor());
     m_trackContainer.push_back(iTrack);
     const auto& v = track->GetStep()->GetPostStepPoint()->GetPosition();
     std::pair<int, math::XYZVectorD> p(iTrack->trackID(),
@@ -201,13 +200,9 @@ int SimTrackManager::getOrCreateVertex(TrackWithHistory* trkH, int iParentID) {
       parent = id;
       break;
     }
-    if (id == trkH->lastStoredAncestor())
+    if (id == trkH->getPrimaryID())
       lastStoreID = id;
   }
-
-  std::cout << "prim " << trkH->isPrimary() <<  " trk ID " << trkH->trackID() << " parent " << parent << " lastStored " << trkH->lastStoredAncestor() << "\n";
-  if (parent == -1 and !trkH->isPrimary() and lastStoreID != trkH->trackID())
-    parent = lastStoreID;
 
   VertexMap::const_iterator iterator = m_vertexMap.find(parent);
   if (iterator != m_vertexMap.end()) {
