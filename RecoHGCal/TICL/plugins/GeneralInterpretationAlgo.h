@@ -6,6 +6,7 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "RecoHGCal/TICL/interface/TICLInterpretationAlgoBase.h"
+#include "FWCore/Utilities/interface/FileInPath.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/GeometrySurface/interface/BoundDisk.h"
 
@@ -41,7 +42,7 @@ namespace ticl {
                                 const std::vector<std::pair<Vector, unsigned>> &seedingCollection,
                                 const std::array<TICLLayerTile, 2> &tracksterTiles,
                                 const std::vector<Vector> &tracksterPropPoints,
-                                float delta,
+                                int surface,
                                 unsigned trackstersSize,
                                 std::vector<std::vector<unsigned>> &resultCollection,
                                 bool useMask);
@@ -62,6 +63,8 @@ namespace ticl {
     const float del_tk_ts_int_;
     const float timing_quality_threshold_;
 
+    float cuts_[2][3][3];
+
     const HGCalDDDConstants *hgcons_;
 
     std::unique_ptr<GeomDet> firstDisk_[2];
@@ -71,6 +74,8 @@ namespace ticl {
 
     edm::ESHandle<MagneticField> bfield_;
     edm::ESHandle<Propagator> propagator_;
+
+    const edm::FileInPath lookup_;
   };
 
 }  // namespace ticl
