@@ -13,7 +13,8 @@ GeneralInterpretationAlgo::GeneralInterpretationAlgo(const edm::ParameterSet &co
     : TICLInterpretationAlgoBase(conf, cc),
       del_tk_ts_layer1_(conf.getParameter<double>("delta_tk_ts_layer1")),
       del_tk_ts_int_(conf.getParameter<double>("delta_tk_ts_interface")),
-      timing_quality_threshold_(conf.getParameter<double>("timing_quality_threshold")) {}
+      timing_quality_threshold_(conf.getParameter<double>("timing_quality_threshold")),
+      lookup_(conf.getParameter<edm::FileInPath>("linking_table")) {}
 
 void GeneralInterpretationAlgo::initialize(const HGCalDDDConstants *hgcons,
                                            const hgcal::RecHitTools rhtools,
@@ -25,6 +26,27 @@ void GeneralInterpretationAlgo::initialize(const HGCalDDDConstants *hgcons,
 
   bfield_ = bfieldH;
   propagator_ = propH;
+
+  float energy, m1, q1, m2, q2;
+  int nLines;
+  std::ifstream file;
+  file.open(lookup_.fullPath().c_str());
+  if (file.is_open()) {
+    file >> nLines;
+    for (int i = 0; i < nLines; ++i) {
+      file >> energy >> m1 >> q1 >> m2 >> q2;
+      cuts_[0][i][0] = energy;
+      cuts_[0][i][1] = m1;
+      cuts_[0][i][2] = q1;
+      cuts_[1][i][0] = energy;
+      cuts_[1][i][1] = m2;
+      cuts_[1][i][2] = q2;
+    }
+  } else {
+    std::cout << "[TICLGeneralInterpretationAlgo] Look up table file can not be found in " << lookup_.fullPath().c_str() << std::endl;
+  }
+
+  file.close();
 }
 
 void GeneralInterpretationAlgo::buildLayers() {
@@ -87,7 +109,7 @@ void GeneralInterpretationAlgo::findTrackstersInWindow(const MultiVectorManager<
                                                        const std::vector<std::pair<Vector, unsigned>> &seedingCollection,
                                                        const std::array<TICLLayerTile, 2> &tracksterTiles,
                                                        const std::vector<Vector> &tracksterPropPoints,
-                                                       const float delta,
+                                                       int surface,
                                                        unsigned trackstersSize,
                                                        std::vector<std::vector<unsigned>> &resultCollection,
                                                        bool useMask = false) {
@@ -97,12 +119,21 @@ void GeneralInterpretationAlgo::findTrackstersInWindow(const MultiVectorManager<
   // indices found close to the i-th object in the seedingCollection.
   // If specified, Tracksters are masked once found as close to an object.
   std::vector<int> mask(trackstersSize, 0);
-  const float delta2 = delta * delta;
 
   for (auto &i : seedingCollection) {
     float seed_eta = i.first.Eta();
     float seed_phi = i.first.Phi();
     unsigned seedId = i.second;
+
+    const float seed_energy = tracksters[seedId].raw_energy();
+    int energy_column = 0;
+    if (seed_energy > cuts_[surface][1][0])
+      energy_column = 1;
+    if (seed_energy > cuts_[surface][2][0])
+      energy_column = 2;
+    const float delta = cuts_[surface][energy_column][1] * std::abs(seed_eta) + cuts_[surface][energy_column][2];
+    const float delta2 = delta * delta;
+
     auto sideZ = seed_eta > 0;  //forward or backward region
     const TICLLayerTile &tile = tracksterTiles[sideZ];
     float eta_min = std::max(std::fabs(seed_eta) - delta, (float)TileConstants::minEta);
@@ -297,12 +328,12 @@ void GeneralInterpretationAlgo::makeCandidates(const Inputs &input,
   // step 1: tracks -> all tracksters, at firstLayerEE
   std::vector<std::vector<unsigned>> tsNearTk(tracks.size());
   findTrackstersInWindow(
-      tracksters, trackPColl, tracksterPropTiles, tsAllProp, del_tk_ts_layer1_, tracksters.size(), tsNearTk);
+      tracksters, trackPColl, tracksterPropTiles, tsAllProp, 0, tracksters.size(), tsNearTk);
 
   // step 2: tracks -> all tracksters, at lastLayerEE
   std::vector<std::vector<unsigned>> tsNearTkAtInt(tracks.size());
   findTrackstersInWindow(
-      tracksters, tkPropIntColl, tsPropIntTiles, tsAllPropInt, del_tk_ts_int_, tracksters.size(), tsNearTkAtInt);
+      tracksters, tkPropIntColl, tsPropIntTiles, tsAllPropInt, 1, tracksters.size(), tsNearTkAtInt);
 
   std::vector<unsigned int> chargedHadronsFromTk;
   std::vector<std::vector<unsigned int>> trackstersInTrackIndices;
@@ -410,5 +441,6 @@ void GeneralInterpretationAlgo::fillPSetDescription(edm::ParameterSetDescription
   desc.add<double>("delta_tk_ts_layer1", 0.02);
   desc.add<double>("delta_tk_ts_interface", 0.03);
   desc.add<double>("timing_quality_threshold", 0.5);
+  desc.add<edm::FileInPath>("linking_table", edm::FileInPath("RecoHGCal/TICL/data/linking_table.dat"));
   TICLInterpretationAlgoBase::fillPSetDescription(desc);
 }

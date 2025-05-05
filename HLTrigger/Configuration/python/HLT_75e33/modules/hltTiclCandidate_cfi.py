@@ -13,6 +13,7 @@ hltTiclCandidate = cms.EDProducer("TICLCandidateProducer",
         delta_tk_ts_interface = cms.double(0.03),
         delta_tk_ts_layer1 = cms.double(0.02),
         timing_quality_threshold = cms.double(0.5),
+        linking_table = cms.FileInPath('RecoHGCal/TICL/data/linking_table.dat'),
         type = cms.string('General')
     ),
     layer_clusters = cms.InputTag("hltHgcalMergeLayerClusters"),
