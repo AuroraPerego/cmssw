@@ -123,7 +123,8 @@ Vector GeneralInterpretationAlgo::propagateTrackster(const Trackster &t,
   return tPoint;
 }
 
-void GeneralInterpretationAlgo::findTrackstersInWindow(const MultiVectorManager<Trackster> &tracksters,
+void GeneralInterpretationAlgo::findTrackstersInWindow(std::vector<reco::Track> const &tracks,
+                                                       const MultiVectorManager<Trackster> &tracksters,
                                                        const std::vector<std::pair<Vector, unsigned>> &seedingCollection,
                                                        const std::array<TICLLayerTile, 2> &tracksterTiles,
                                                        const std::vector<Vector> &tracksterPropPoints,
@@ -143,7 +144,7 @@ void GeneralInterpretationAlgo::findTrackstersInWindow(const MultiVectorManager<
     float seed_phi = i.first.Phi();
     unsigned seedId = i.second;
 
-    const float seed_energy = tracksters[seedId].raw_energy();
+    const float seed_energy = tracks[seedId].p();
     int energy_column = 0;
     if (seed_energy > cuts_[surface][1][0])
       energy_column = 1;
@@ -346,13 +347,12 @@ void GeneralInterpretationAlgo::makeCandidates(const Inputs &input,
 
   // step 1: tracks -> all tracksters, at firstLayerEE
   std::vector<std::vector<unsigned>> tsNearTk(tracks.size());
-  findTrackstersInWindow(
-      tracksters, trackPColl, tracksterPropTiles, tsAllProp, 0, tracksters.size(), tsNearTk);
+  findTrackstersInWindow(tracks, tracksters, trackPColl, tracksterPropTiles, tsAllProp, 0, tracksters.size(), tsNearTk);
 
   // step 2: tracks -> all tracksters, at lastLayerEE
   std::vector<std::vector<unsigned>> tsNearTkAtInt(tracks.size());
   findTrackstersInWindow(
-      tracksters, tkPropIntColl, tsPropIntTiles, tsAllPropInt, 1, tracksters.size(), tsNearTkAtInt);
+      tracks, tracksters, tkPropIntColl, tsPropIntTiles, tsAllPropInt, 1, tracksters.size(), tsNearTkAtInt);
 
   std::vector<unsigned int> chargedHadronsFromTk;
   std::vector<std::vector<unsigned int>> trackstersInTrackIndices;
