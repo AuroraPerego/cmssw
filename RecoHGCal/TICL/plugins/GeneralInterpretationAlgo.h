@@ -38,7 +38,8 @@ namespace ticl {
                               float zVal,
                               std::array<TICLLayerTile, 2> &tracksterTiles);
 
-    void findTrackstersInWindow(const MultiVectorManager<Trackster> &tracksters,
+    void findTrackstersInWindow(const std::vector<reco::Track> &tracks,
+                                const MultiVectorManager<Trackster> &tracksters,
                                 const std::vector<std::pair<Vector, unsigned>> &seedingCollection,
                                 const std::array<TICLLayerTile, 2> &tracksterTiles,
                                 const std::vector<Vector> &tracksterPropPoints,
