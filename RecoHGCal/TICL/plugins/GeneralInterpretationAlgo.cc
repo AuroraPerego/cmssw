@@ -35,6 +35,7 @@ void GeneralInterpretationAlgo::initialize(const HGCalDDDConstants *hgcons,
     file >> nLines;
     for (int i = 0; i < nLines; ++i) {
       file >> energy >> m1 >> q1 >> m2 >> q2;
+      std::cout << m1 << " " << q1 << " " << m2 << " " << q2 << "\n";
       cuts_[0][i][0] = energy;
       cuts_[0][i][1] = m1;
       cuts_[0][i][2] = q1;
@@ -43,10 +44,27 @@ void GeneralInterpretationAlgo::initialize(const HGCalDDDConstants *hgcons,
       cuts_[1][i][2] = q2;
     }
   } else {
-    std::cout << "[TICLGeneralInterpretationAlgo] Look up table file can not be found in " << lookup_.fullPath().c_str() << std::endl;
+    std::cout << "[TICLGeneralInterpretationAlgo] Look up table file can not be found in " << lookup_.fullPath().c_str()
+              << std::endl;
   }
 
   file.close();
+
+  std::cout << "print table 1\n";
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      std::cout << "cuts_[" << i << "][" << j << "] = ";
+      std::cout << cuts_[0][i][j] << "\n";
+    }
+  }
+  std::cout << "print table 2\n";
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      std::cout << "cuts_[" << i << "][" << j << "] = ";
+      std::cout << cuts_[1][i][j] << "\n";
+    }
+  }
+  std::cout << "end of print table\n";
 }
 
 void GeneralInterpretationAlgo::buildLayers() {
@@ -132,6 +150,7 @@ void GeneralInterpretationAlgo::findTrackstersInWindow(const MultiVectorManager<
     if (seed_energy > cuts_[surface][2][0])
       energy_column = 2;
     const float delta = cuts_[surface][energy_column][1] * std::abs(seed_eta) + cuts_[surface][energy_column][2];
+    std::cout << "energy " << seed_energy << " eta " << seed_eta << " delta " << delta << "\n";
     const float delta2 = delta * delta;
 
     auto sideZ = seed_eta > 0;  //forward or backward region
