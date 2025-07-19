@@ -8,6 +8,8 @@
 #include <sstream>
 #include <variant>
 
+//DataFormats/Math/interface/AlgebraicROOTObjects.h
+
 #include <memory>  // unique_ptr
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/PluginDescription.h"
@@ -291,11 +293,11 @@ public:
 
         simtrackster_timeBoundary.push_back(trackster_iterator->boundaryTime());
 
-        /* SimTracksters can be built from either a CaloParticle or a SimCluster 
+        /* SimTracksters can be built from either a CaloParticle or a SimCluster
         The SimTrackster "fromCP" collection is built solely from CaloParticle (all CPs that have association to reco in HGCAL)
         SimTrackster "from SC" is built from either :
            - a CaloParticle (when the CaloParticle first SimTrack has crossedBoundary=True)
-           - a SimCluster (other cases) 
+           - a SimCluster (other cases)
         Thus trackster.seedIndex() can point to either CaloParticle or SimCluster collection (check seedID to differentiate)
         */
         using CaloObjectVariant = std::variant<CaloParticle, SimCluster>;
@@ -343,6 +345,7 @@ public:
           if (tsos.isValid()) {
             const auto& globalPos = tsos.globalPosition();
             const auto& globalMom = tsos.globalMomentum();
+
             simtrackster_track_boundaryX.push_back(globalPos.x());
             simtrackster_track_boundaryY.push_back(globalPos.y());
             simtrackster_track_boundaryZ.push_back(globalPos.z());
@@ -723,6 +726,9 @@ private:
   std::vector<float> track_hgcal_eta;
   std::vector<float> track_hgcal_phi;
   std::vector<float> track_hgcal_pt;
+  std::vector<float> track_hgcal_ptErr;
+  std::vector<float> track_hgcal_etaErr;
+  std::vector<float> track_hgcal_phiErr;
   std::vector<float> track_pt;
   std::vector<float> track_p;
   std::vector<int> track_quality;
@@ -832,6 +838,9 @@ void TICLDumper::clearVariables() {
   track_hgcal_py.clear();
   track_hgcal_pz.clear();
   track_hgcal_pt.clear();
+  track_hgcal_ptErr.clear();
+  track_hgcal_etaErr.clear();
+  track_hgcal_phiErr.clear();
   track_quality.clear();
   track_pt.clear();
   track_p.clear();
@@ -1032,6 +1041,9 @@ void TICLDumper::beginJob() {
     tracks_tree_->Branch("track_hgcal_eta", &track_hgcal_eta);
     tracks_tree_->Branch("track_hgcal_phi", &track_hgcal_phi);
     tracks_tree_->Branch("track_hgcal_pt", &track_hgcal_pt);
+    tracks_tree_->Branch("track_hgcal_ptErr", &track_hgcal_ptErr);
+    tracks_tree_->Branch("track_hgcal_etaErr", &track_hgcal_etaErr);
+    tracks_tree_->Branch("track_hgcal_phiErr", &track_hgcal_phiErr);
     tracks_tree_->Branch("track_pt", &track_pt);
     tracks_tree_->Branch("track_p", &track_p);
     tracks_tree_->Branch("track_missing_outer_hits", &track_missing_outer_hits);
@@ -1335,6 +1347,14 @@ void TICLDumper::analyze(const edm::Event& event, const edm::EventSetup& setup) 
     if (tsos.isValid()) {
       const auto& globalPos = tsos.globalPosition();
       const auto& globalMom = tsos.globalMomentum();
+
+      // x,y,z, px,py,pz
+      AlgebraicSymMatrix66 const errors = tsos.cartesianError().matrix();
+      const float partialPterror = errors[3][3] * std::pow(globalMom.x(), 2) + errors[4][4] * std::pow(globalMom.y(), 2);
+      const float pterror = std::sqrt(partialPterror) / globalMom.perp();
+      const float phierror = std::sqrt(tsos.curvilinearError().matrix()[2][2]);
+      const float etaerror = std::sqrt(tsos.curvilinearError().matrix()[1][1]) * std::abs(std::sin(globalMom.theta()));
+
       track_id.push_back(i);
       track_hgcal_x.push_back(globalPos.x());
       track_hgcal_y.push_back(globalPos.y());
@@ -1345,6 +1365,9 @@ void TICLDumper::analyze(const edm::Event& event, const edm::EventSetup& setup) 
       track_hgcal_py.push_back(globalMom.y());
       track_hgcal_pz.push_back(globalMom.z());
       track_hgcal_pt.push_back(globalMom.perp());
+      track_hgcal_ptErr.push_back(pterror);
+      track_hgcal_etaErr.push_back(etaerror);
+      track_hgcal_phiErr.push_back(phierror);
       track_pt.push_back(track.pt());
       track_p.push_back(track.p());
       track_quality.push_back(track.quality(reco::TrackBase::highPurity));
