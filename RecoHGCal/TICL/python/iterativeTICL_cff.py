@@ -44,46 +44,46 @@ ticlTracksterLinks = _tracksterLinksProducer.clone(
       pca_quality_th = cms.double(0.85),
       dot_prod_th = cms.double(0.97),
       lower_boundary = cms.vdouble(
-        20, 
-        10 
-      ),  
+        20,
+        10
+      ),
       upper_boundary = cms.vdouble(
-        150,  
+        150,
         100
-      ),  
+      ),
       upper_distance_projective_sqr = cms.vdouble(
-        30, 
-        60  
-      ),  
+        30,
+        60
+      ),
       lower_distance_projective_sqr = cms.vdouble(
-        30, 
-        60  
-      ),  
+        30,
+        60
+      ),
       min_distance_z = cms.vdouble(
-        35, 
-        35  
-      ),  
+        35,
+        35
+      ),
       upper_distance_projective_sqr_closest_points = cms.vdouble(
-        5, 
-        30  
-      ),  
+        5,
+        30
+      ),
       lower_distance_projective_sqr_closest_points = cms.vdouble(
-        10, 
-        50  
-      ),  
+        10,
+        50
+      ),
       max_z_distance_closest_points = cms.vdouble(
         35,
         35
       ),
       cylinder_radius_sqr = cms.vdouble(
-        9, 
-        15  
-      ),  
+        9,
+        15
+      ),
       deltaRxy = cms.double(4.),
       algo_verbosity = cms.int32(0),
       type = cms.string('Skeletons')
-    
-    ),  
+
+    ),
     regressionAndPid = cms.bool(True),
     inferenceAlgo = cms.string('TracksterInferenceByPFN'),
     pluginInferenceAlgoTracksterInferenceByDNN = cms.PSet(
@@ -115,7 +115,12 @@ ticlTracksterLinks = _tracksterLinksProducer.clone(
         type = cms.string('TracksterInferenceByPFN')
     )
 )
-ticlCandidate = _ticlCandidateProducer.clone()
+ticlCandidate = _ticlCandidateProducer.clone(
+    interpretationDescPSet = cms.PSet(
+        onnxWindowPath = cms.FileInPath('RecoHGCal/TICL/data/ticlv5/onnx_models/window/dynamic_window.onnx'),
+        nFeatures = cms.int32(7)
+    )
+)
 mtdSoA = _mtdSoAProducer.clone()
 
 pfTICL = _pfTICLProducer.clone()
@@ -148,7 +153,7 @@ ticlIterLabels_v5 = ["ticlTrackstersCLUE3DHigh", "ticlTracksterLinks", "ticlCand
 '''
 
 ticlTracksterMergeTask = cms.Task(ticlTrackstersMerge)
-ticlTracksterLinksTask = cms.Task(ticlTracksterLinks, ticlSuperclusteringTask) 
+ticlTracksterLinksTask = cms.Task(ticlTracksterLinks, ticlSuperclusteringTask)
 
 
 mergeTICLTask = cms.Task(ticlLayerTileTask

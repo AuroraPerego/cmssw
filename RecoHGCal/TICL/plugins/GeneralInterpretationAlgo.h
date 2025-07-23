@@ -8,6 +8,7 @@
 #include "RecoHGCal/TICL/interface/TICLInterpretationAlgoBase.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/GeometrySurface/interface/BoundDisk.h"
+#include "PhysicsTools/ONNXRuntime/interface/ONNXRuntime.h"
 
 namespace ticl {
 
@@ -41,7 +42,7 @@ namespace ticl {
                                 const std::vector<std::pair<Vector, unsigned>> &seedingCollection,
                                 const std::array<TICLLayerTile, 2> &tracksterTiles,
                                 const std::vector<Vector> &tracksterPropPoints,
-                                float delta,
+                                const std::vector<float> deltas,
                                 unsigned trackstersSize,
                                 std::vector<std::vector<unsigned>> &resultCollection,
                                 bool useMask);
@@ -58,9 +59,13 @@ namespace ticl {
 
     const float tkEnergyCut_ = 2.0f;
     const float maxDeltaT_ = 3.0f;
-    const float del_tk_ts_layer1_;
-    const float del_tk_ts_int_;
     const float timing_quality_threshold_;
+
+    const int nFeatures_;
+    const std::unique_ptr<cms::Ort::ONNXRuntime> onnxRuntimeInstance_;
+    const std::vector<std::string> inputNames_;
+    const std::vector<std::string> outputNames_;
+    const cms::Ort::ONNXRuntime *onnxSession_;
 
     const HGCalDDDConstants *hgcons_;
 

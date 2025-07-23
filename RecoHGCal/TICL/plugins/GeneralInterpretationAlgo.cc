@@ -11,9 +11,14 @@ GeneralInterpretationAlgo::~GeneralInterpretationAlgo() {}
 
 GeneralInterpretationAlgo::GeneralInterpretationAlgo(const edm::ParameterSet &conf, edm::ConsumesCollector cc)
     : TICLInterpretationAlgoBase(conf, cc),
-      del_tk_ts_layer1_(conf.getParameter<double>("delta_tk_ts_layer1")),
-      del_tk_ts_int_(conf.getParameter<double>("delta_tk_ts_interface")),
-      timing_quality_threshold_(conf.getParameter<double>("timing_quality_threshold")) {}
+      timing_quality_threshold_(conf.getParameter<double>("timing_quality_threshold")),
+      nFeatures_(conf.getParameter<int>("nFeatures")),
+      onnxRuntimeInstance_(std::make_unique<cms::Ort::ONNXRuntime>(
+          conf.getParameter<edm::FileInPath>("onnxWindowPath").fullPath().c_str())),
+      inputNames_(conf.getParameter<std::vector<std::string>>("inputNames")),
+      outputNames_(conf.getParameter<std::vector<std::string>>("outputNames")) {
+  onnxSession_ = onnxRuntimeInstance_.get();
+}
 
 void GeneralInterpretationAlgo::initialize(const HGCalDDDConstants *hgcons,
                                            const hgcal::RecHitTools rhtools,
@@ -87,7 +92,7 @@ void GeneralInterpretationAlgo::findTrackstersInWindow(const MultiVectorManager<
                                                        const std::vector<std::pair<Vector, unsigned>> &seedingCollection,
                                                        const std::array<TICLLayerTile, 2> &tracksterTiles,
                                                        const std::vector<Vector> &tracksterPropPoints,
-                                                       const float delta,
+                                                       const std::vector<float> deltas,
                                                        unsigned trackstersSize,
                                                        std::vector<std::vector<unsigned>> &resultCollection,
                                                        bool useMask = false) {
@@ -97,9 +102,11 @@ void GeneralInterpretationAlgo::findTrackstersInWindow(const MultiVectorManager<
   // indices found close to the i-th object in the seedingCollection.
   // If specified, Tracksters are masked once found as close to an object.
   std::vector<int> mask(trackstersSize, 0);
-  const float delta2 = delta * delta;
 
+  auto index = 0;
   for (auto &i : seedingCollection) {
+    const float delta = deltas[index];
+    const float delta2 = delta * delta;
     float seed_eta = i.first.Eta();
     float seed_phi = i.first.Phi();
     unsigned seedId = i.second;
@@ -144,7 +151,7 @@ void GeneralInterpretationAlgo::findTrackstersInWindow(const MultiVectorManager<
           mask[t_i] = 1;
       }
     }
-
+    index++;
   }  // seeding collection loop
 }
 
@@ -220,9 +227,13 @@ void GeneralInterpretationAlgo::makeCandidates(const Inputs &input,
   // to look for potential linkages in the appropriate tiles
   std::vector<std::pair<Vector, unsigned>> trackPColl;     // propagated track points and index of track in collection
   std::vector<std::pair<Vector, unsigned>> tkPropIntColl;  // tracks propagated to lastLayerEE
+  cms::Ort::FloatArrays inputData_(1);
+  cms::Ort::FloatArrays inputDataInt_(1);
 
   trackPColl.reserve(tracks.size());
   tkPropIntColl.reserve(tracks.size());
+  inputData_[0].reserve(tracks.size());
+  inputDataInt_[0].reserve(tracks.size());
 
   std::array<TICLLayerTile, 2> tracksterPropTiles = {};  // all Tracksters, propagated to layer 1
   std::array<TICLLayerTile, 2> tsPropIntTiles = {};      // all Tracksters, propagated to lastLayerEE
@@ -251,18 +262,49 @@ void GeneralInterpretationAlgo::makeCandidates(const Inputs &input,
     const auto &tsos = prop.propagate(fts, firstDisk_[iSide]->surface());
     if (tsos.isValid()) {
       Vector trackP(tsos.globalPosition().x(), tsos.globalPosition().y(), tsos.globalPosition().z());
+      const auto &globalMom = tsos.globalMomentum();
+      AlgebraicSymMatrix66 const errors = tsos.cartesianError().matrix();  // x,y,z,px,py,pz
+      const float partialPterror =
+          errors[3][3] * std::pow(globalMom.x(), 2) + errors[4][4] * std::pow(globalMom.y(), 2);
+      const float pterror = std::sqrt(partialPterror) / globalMom.perp();
+      const float phierror = std::sqrt(tsos.curvilinearError().matrix()[2][2]);
+      const float etaerror = std::sqrt(tsos.curvilinearError().matrix()[1][1]) * std::abs(std::sin(globalMom.theta()));
       trackPColl.emplace_back(trackP, i);
+      inputData_[0].emplace_back(trackP.Eta());
+      inputData_[0].emplace_back(etaerror);
+      inputData_[0].emplace_back(trackP.Phi());
+      inputData_[0].emplace_back(phierror);
+      inputData_[0].emplace_back(tsos.globalMomentum().perp());
+      inputData_[0].emplace_back(pterror);
+      inputData_[0].emplace_back(tk.missingOuterHits());
     }
     // to lastLayerEE
     const auto &tsos_int = prop.propagate(fts, interfaceDisk_[iSide]->surface());
     if (tsos_int.isValid()) {
       Vector trackP(tsos_int.globalPosition().x(), tsos_int.globalPosition().y(), tsos_int.globalPosition().z());
+      const auto &globalMom = tsos_int.globalMomentum();
+      AlgebraicSymMatrix66 const errors = tsos_int.cartesianError().matrix();  // x,y,z,px,py,pz
+      const float partialPterror =
+          errors[3][3] * std::pow(globalMom.x(), 2) + errors[4][4] * std::pow(globalMom.y(), 2);
+      const float pterror = std::sqrt(partialPterror) / globalMom.perp();
+      const float phierror = std::sqrt(tsos_int.curvilinearError().matrix()[2][2]);
+      const float etaerror =
+          std::sqrt(tsos_int.curvilinearError().matrix()[1][1]) * std::abs(std::sin(globalMom.theta()));
       tkPropIntColl.emplace_back(trackP, i);
+      inputDataInt_[0].emplace_back(trackP.Eta());
+      inputDataInt_[0].emplace_back(etaerror);
+      inputDataInt_[0].emplace_back(trackP.Phi());
+      inputDataInt_[0].emplace_back(phierror);
+      inputDataInt_[0].emplace_back(tsos_int.globalMomentum().perp());
+      inputDataInt_[0].emplace_back(pterror);
+      inputDataInt_[0].emplace_back(tk.missingOuterHits());
     }
   }  // Tracks
   tkPropIntColl.shrink_to_fit();
   trackPColl.shrink_to_fit();
   candidateTrackIds.shrink_to_fit();
+  inputData_[0].shrink_to_fit();
+  inputDataInt_[0].shrink_to_fit();
 
   // Propagate tracksters
 
@@ -294,15 +336,27 @@ void GeneralInterpretationAlgo::makeCandidates(const Inputs &input,
 
   }  // TS
 
-  // step 1: tracks -> all tracksters, at firstLayerEE
-  std::vector<std::vector<unsigned>> tsNearTk(tracks.size());
-  findTrackstersInWindow(
-      tracksters, trackPColl, tracksterPropTiles, tsAllProp, del_tk_ts_layer1_, tracksters.size(), tsNearTk);
+  // run inference to find delta
+  int64_t batchSize = trackPColl.size();
 
-  // step 2: tracks -> all tracksters, at lastLayerEE
+  std::vector<std::vector<unsigned>> tsNearTk(tracks.size());
+  if (batchSize) {
+    auto result = onnxSession_->run(inputNames_, inputData_, {}, outputNames_, batchSize);
+
+    // step 1: tracks -> all tracksters, at firstLayerEE
+    findTrackstersInWindow(
+        tracksters, trackPColl, tracksterPropTiles, tsAllProp, result[0], tracksters.size(), tsNearTk);
+  }
+
+  batchSize = tkPropIntColl.size();
   std::vector<std::vector<unsigned>> tsNearTkAtInt(tracks.size());
-  findTrackstersInWindow(
-      tracksters, tkPropIntColl, tsPropIntTiles, tsAllPropInt, del_tk_ts_int_, tracksters.size(), tsNearTkAtInt);
+  if (batchSize) {
+    auto result = onnxSession_->run(inputNames_, inputDataInt_, {}, outputNames_, batchSize);
+
+    // step 2: tracks -> all tracksters, at lastLayerEE
+    findTrackstersInWindow(
+        tracksters, tkPropIntColl, tsPropIntTiles, tsAllPropInt, result[0], tracksters.size(), tsNearTkAtInt);
+  }
 
   std::vector<unsigned int> chargedHadronsFromTk;
   std::vector<std::vector<unsigned int>> trackstersInTrackIndices;
@@ -404,11 +458,11 @@ void GeneralInterpretationAlgo::makeCandidates(const Inputs &input,
 };
 
 void GeneralInterpretationAlgo::fillPSetDescription(edm::ParameterSetDescription &desc) {
-  desc.add<std::string>("cutTk",
-                        "1.48 < abs(eta) < 3.0 && pt > 1. && quality(\"highPurity\") && "
-                        "hitPattern().numberOfLostHits(\"MISSING_OUTER_HITS\") < 5");
-  desc.add<double>("delta_tk_ts_layer1", 0.02);
-  desc.add<double>("delta_tk_ts_interface", 0.03);
+  desc.add<edm::FileInPath>("onnxWindowPath",
+                            edm::FileInPath("RecoHGCal/TICL/data/ticlv5/onnx_models/window/dynamic_window.onnx"));
+  desc.add<std::vector<std::string>>("inputNames", {"input"});
+  desc.add<std::vector<std::string>>("outputNames", {"output"});
+  desc.add<int>("nFeatures", 7);
   desc.add<double>("timing_quality_threshold", 0.5);
   TICLInterpretationAlgoBase::fillPSetDescription(desc);
 }
