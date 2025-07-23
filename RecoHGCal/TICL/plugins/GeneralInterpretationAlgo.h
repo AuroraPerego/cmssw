@@ -64,7 +64,7 @@ namespace ticl {
     const float del_tk_ts_int_;
     const float timing_quality_threshold_;
 
-    float cuts_[2][3][3];
+    float cuts_[2][4][4];
 
     const HGCalDDDConstants *hgcons_;
 

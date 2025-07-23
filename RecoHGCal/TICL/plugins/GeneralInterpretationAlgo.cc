@@ -27,44 +27,27 @@ void GeneralInterpretationAlgo::initialize(const HGCalDDDConstants *hgcons,
   bfield_ = bfieldH;
   propagator_ = propH;
 
-  float energy, m1, q1, m2, q2;
+  float energy, v, m, q;
   int nLines;
   std::ifstream file;
   file.open(lookup_.fullPath().c_str());
   if (file.is_open()) {
     file >> nLines;
     for (int i = 0; i < nLines; ++i) {
-      file >> energy >> m1 >> q1 >> m2 >> q2;
-      std::cout << m1 << " " << q1 << " " << m2 << " " << q2 << "\n";
+      file >> energy >> v >> m >> q;
       cuts_[0][i][0] = energy;
-      cuts_[0][i][1] = m1;
-      cuts_[0][i][2] = q1;
+      cuts_[0][i][1] = v;
+      cuts_[0][i][2] = m;
+      cuts_[0][i][3] = q;
       cuts_[1][i][0] = energy;
-      cuts_[1][i][1] = m2;
-      cuts_[1][i][2] = q2;
+      cuts_[1][i][1] = v+0.005;
+      cuts_[1][i][2] = m;
+      cuts_[1][i][3] = q+0.005;
     }
   } else {
-    std::cout << "[TICLGeneralInterpretationAlgo] Look up table file can not be found in " << lookup_.fullPath().c_str()
-              << std::endl;
+    edm::LogError("GeneralInterpretationAlgo") << "Look up table file can not be found in " << lookup_.fullPath().c_str();
   }
-
   file.close();
-
-  std::cout << "print table 1\n";
-  for (int i = 0; i < 3; ++i) {
-    for (int j = 0; j < 3; ++j) {
-      std::cout << "cuts_[" << i << "][" << j << "] = ";
-      std::cout << cuts_[0][i][j] << "\n";
-    }
-  }
-  std::cout << "print table 2\n";
-  for (int i = 0; i < 3; ++i) {
-    for (int j = 0; j < 3; ++j) {
-      std::cout << "cuts_[" << i << "][" << j << "] = ";
-      std::cout << cuts_[1][i][j] << "\n";
-    }
-  }
-  std::cout << "end of print table\n";
 }
 
 void GeneralInterpretationAlgo::buildLayers() {
@@ -144,14 +127,19 @@ void GeneralInterpretationAlgo::findTrackstersInWindow(std::vector<reco::Track> 
     float seed_phi = i.first.Phi();
     unsigned seedId = i.second;
 
-    const float seed_energy = tracks[seedId].p();
-    int energy_column = 0;
+    const float seed_energy = tracks[seedId].pt();
+    int energy_column = 0; // < 30
+    if (seed_energy > cuts_[surface][0][0])
+      energy_column = 1; // 30 - 75
     if (seed_energy > cuts_[surface][1][0])
-      energy_column = 1;
+      energy_column = 2; // 75 - 150
     if (seed_energy > cuts_[surface][2][0])
-      energy_column = 2;
-    const float delta = cuts_[surface][energy_column][1] * std::abs(seed_eta) + cuts_[surface][energy_column][2];
-    std::cout << "energy " << seed_energy << " eta " << seed_eta << " delta " << delta << "\n";
+      energy_column = 2; // > 150
+    float delta = 0.f;
+    if (std::abs(seed_eta) < 2.2)
+      delta = cuts_[surface][energy_column][1];
+    else
+      delta = cuts_[surface][energy_column][2] * std::abs(seed_eta) + cuts_[surface][energy_column][3];
     const float delta2 = delta * delta;
 
     auto sideZ = seed_eta > 0;  //forward or backward region
