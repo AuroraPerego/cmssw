@@ -414,11 +414,28 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
           }
         }
       }
+      const auto& tp = (*ipos->second);
+      if (trackIdx == -1 and tp.decayVertices().size()) {
+        const auto& iTV = tp.decayVertices()[0];
+        for (auto iTP = iTV->daughterTracks_begin(); iTP != iTV->daughterTracks_end(); ++iTP) {
+          auto kpos = TPtoRecoTrackMap.find((*iTP));
+          if (kpos != TPtoRecoTrackMap.end()) {
+            auto& associatedRecoTracks = kpos->val;
+            if (!associatedRecoTracks.empty()) {
+              // associated reco tracks are sorted by decreasing quality
+              if (associatedRecoTracks[0].second > qualityCutTrack_) {
+                trackIdx = &(*associatedRecoTracks[0].first) - &recoTracks[0];
+                quality = associatedRecoTracks[0].second;
+              }
+            }
+          }
+        }
+      }
     }
     return {trackIdx, quality};
   };
 
-  // Creating the map from TrackingParticle to SimTrackstersFromCP
+  // Set the reco track id to SimTrackstersFromCP
   auto& simTrackstersFromCP = *result_fromCP;
   for (unsigned int i = 0; i < simTrackstersFromCP.size(); ++i) {
     if (simTrackstersFromCP[i].vertices().empty())
@@ -433,8 +450,7 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
   }
 
   auto& simTracksters = *result;
-  // Creating the map from TrackingParticle to SimTrackster
-  std::unordered_map<unsigned int, std::vector<unsigned int>> TPtoSimTracksterMap;
+  // Set the reco track id to simTracksters
   for (unsigned int i = 0; i < simTracksters.size(); ++i) {
     const auto& simTrack = (simTracksters[i].seedID() == caloParticles_h.id())
                                ? caloparticles[simTracksters[i].seedIndex()].g4Tracks()[0]
