@@ -578,6 +578,13 @@ void TICLCandidateValidator::fillCandidateHistos(const edm::Event& event,
       continue;
 
     const auto& simCand = simTICLCandidates[simCand_idx];
+
+    // if simCand does not have the track and has pdg id charged skip this
+    // it means we have not recontruct the track
+    // if associated cand is neutral then this is correct
+    if (simCand.charge() == 0 and (std::abs(simCand.pdgId()) == 211 or std::abs(simCand.pdgId()) == 11))
+      continue;
+
     if (simCand.trackPtr().get() != nullptr) {
       const auto simCandTrackIdx = simCand.trackPtr().get() - edm::Ptr<reco::Track>(recoTracks_h, 0).get();
       if (simCandTrackIdx != candTrackIdx) {
@@ -589,11 +596,11 @@ void TICLCandidateValidator::fillCandidateHistos(const edm::Event& event,
         continue;
       }
     } else {
-      // fake += 1
-      histograms.h_num_fake_chg_energy_candidate_track[index]->Fill(cand.rawEnergy());
-      histograms.h_num_fake_chg_pt_candidate_track[index]->Fill(cand.pt());
-      histograms.h_num_fake_chg_eta_candidate_track[index]->Fill(cand.eta());
-      histograms.h_num_fake_chg_phi_candidate_track[index]->Fill(cand.phi());
+        // fake += 1
+        histograms.h_num_fake_chg_energy_candidate_track[index]->Fill(cand.rawEnergy());
+        histograms.h_num_fake_chg_pt_candidate_track[index]->Fill(cand.pt());
+        histograms.h_num_fake_chg_eta_candidate_track[index]->Fill(cand.eta());
+        histograms.h_num_fake_chg_phi_candidate_track[index]->Fill(cand.phi());
       continue;
     }
 
