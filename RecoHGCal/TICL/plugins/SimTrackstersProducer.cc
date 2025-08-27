@@ -398,9 +398,8 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
 
   makePUTrackster(inputClusterMask, *output_mask, *resultPU, caloParticles_h.id(), 0);
 
-  auto simTrackToRecoTrack = [&](UniqueSimTrackId simTkId) -> std::pair<int, float> {
-    int trackIdx = -1;
-    float quality = 0.f;
+  auto simTrackToRecoTrack = [&](UniqueSimTrackId simTkId) -> std::vector<int> {
+    std::vector<int> trackIdx;
     auto ipos = simTrackToTPMap.mapping.find(simTkId);
     if (ipos != simTrackToTPMap.mapping.end()) {
       auto jpos = TPtoRecoTrackMap.find((ipos->second));
@@ -409,13 +408,12 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
         if (!associatedRecoTracks.empty()) {
           // associated reco tracks are sorted by decreasing quality
           if (associatedRecoTracks[0].second > qualityCutTrack_) {
-            trackIdx = &(*associatedRecoTracks[0].first) - &recoTracks[0];
-            quality = associatedRecoTracks[0].second;
+            trackIdx.push_back(&(*associatedRecoTracks[0].first) - &recoTracks[0]);
           }
         }
       }
       const auto& tp = (*ipos->second);
-      if (trackIdx == -1 and tp.decayVertices().size()) {
+      if (trackIdx.empty() and tp.decayVertices().size()) { // trackIdx.empty() ci vuole??
         const auto& iTV = tp.decayVertices()[0];
         for (auto iTP = iTV->daughterTracks_begin(); iTP != iTV->daughterTracks_end(); ++iTP) {
           auto kpos = TPtoRecoTrackMap.find((*iTP));
@@ -424,15 +422,14 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
             if (!associatedRecoTracks.empty()) {
               // associated reco tracks are sorted by decreasing quality
               if (associatedRecoTracks[0].second > qualityCutTrack_) {
-                trackIdx = &(*associatedRecoTracks[0].first) - &recoTracks[0];
-                quality = associatedRecoTracks[0].second;
+                trackIdx.push_back(&(*associatedRecoTracks[0].first) - &recoTracks[0]);
               }
             }
           }
         }
       }
     }
-    return {trackIdx, quality};
+    return trackIdx;
   };
 
   // Set the reco track id to SimTrackstersFromCP
@@ -442,10 +439,10 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
       continue;
     const auto& simTrack = caloparticles[simTrackstersFromCP[i].seedIndex()].g4Tracks()[0];
     UniqueSimTrackId simTkIds(simTrack.trackId(), simTrack.eventId());
-    auto bestAssociatedRecoTrack = simTrackToRecoTrack(simTkIds);
-    if (bestAssociatedRecoTrack.first != -1 and bestAssociatedRecoTrack.second > qualityCutTrack_) {
-      auto trackIndex = bestAssociatedRecoTrack.first;
-      simTrackstersFromCP[i].setTrackIdx(trackIndex);
+    auto bestAssociatedRecoTracks = simTrackToRecoTrack(simTkIds);
+    if (not bestAssociatedRecoTracks.empty()) {
+      for (auto const trackIndex : bestAssociatedRecoTracks)
+        simTrackstersFromCP[i].addTrackIdx(trackIndex);
     }
   }
 
@@ -456,10 +453,10 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
                                ? caloparticles[simTracksters[i].seedIndex()].g4Tracks()[0]
                                : simclusters[simTracksters[i].seedIndex()].g4Tracks()[0];
     UniqueSimTrackId simTkIds(simTrack.trackId(), simTrack.eventId());
-    auto bestAssociatedRecoTrack = simTrackToRecoTrack(simTkIds);
-    if (bestAssociatedRecoTrack.first != -1 and bestAssociatedRecoTrack.second > qualityCutTrack_) {
-      auto trackIndex = bestAssociatedRecoTrack.first;
-      simTracksters[i].setTrackIdx(trackIndex);
+    auto bestAssociatedRecoTracks = simTrackToRecoTrack(simTkIds);
+    if (not bestAssociatedRecoTracks.empty()) {
+      for (auto const trackIndex : bestAssociatedRecoTracks)
+        simTracksters[i].addTrackIdx(trackIndex);
     }
   }
 
@@ -481,12 +478,14 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
                        : SimClusterToCaloParticleMap[simTrackster.seedIndex()];
     auto const& tCP = (*result_fromCP)[cp_index];
     if (!tCP.vertices().empty()) {
-      auto trackIndex = tCP.trackIdx();
+      auto trackIndices = tCP.trackIdxs();
 
       auto& cand = (*result_ticlCandidates)[cp_index];
       cand.addTrackster(edm::Ptr<Trackster>(simTracksters_h, i));
-      if (trackIndex != -1 && caloparticles[cp_index].charge() != 0)
-        cand.setTrackPtr(edm::Ptr<reco::Track>(recoTracks_h, trackIndex));
+      if (not trackIndices.empty() && caloparticles[cp_index].charge() != 0) {
+        for (const auto trackIndex : trackIndices)
+          cand.addTrackPtr(edm::Ptr<reco::Track>(recoTracks_h, trackIndex));
+      }
       toKeep.push_back(cp_index);
     }
   }
