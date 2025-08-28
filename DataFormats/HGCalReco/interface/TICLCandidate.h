@@ -71,6 +71,7 @@ public:
       }
     } else {
       //candidate from track only
+      trackPtrs_.push_back(trackPtr);
       auto const& tk = trackPtr.get();
       setPdgId(211 * tk->charge());
       setCharge(tk->charge());
