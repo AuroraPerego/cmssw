@@ -341,7 +341,8 @@ void TICLCandidateValidator::fillCandidateHistos(const edm::Event& event,
   chargedCandidates.shrink_to_fit();
   neutralCandidates.shrink_to_fit();
 
-  auto firstTs = (edm::Ptr<ticl::Trackster>(Tracksters_h, 0)).get();
+  auto firstTs = edm::Ptr<ticl::Trackster>(Tracksters_h, 0).get();
+  auto firstTrack = edm::Ptr<reco::Track>(recoTracks_h, 0).get();
   for (const auto i : chargedCandidates) {
     const auto& simCand = simTICLCandidates[i];
     auto index = std::log2(int(ticl::tracksterParticleTypeFromPdgId(simCand.pdgId(), 1)));
@@ -349,15 +350,14 @@ void TICLCandidateValidator::fillCandidateHistos(const edm::Event& event,
      * 13 (type 2) becomes 1
      * 211 (type 4) becomes 2
      */
-    int32_t simCandTrackIdx = -1;
-    if (simCand.trackPtr().get() != nullptr)
-      simCandTrackIdx = simCand.trackPtr().get() - edm::Ptr<reco::Track>(recoTracks_h, 0).get();
-    else {
-      // no reco track, but simCand is charged
-      continue;
+
+    std::vector<int32_t> simCandTrackIdx;
+    for (const auto& track : simCand.trackPtrs()) {
+      if (track.get()->pt() < 1 or track.get()->missingOuterHits() > 5 or
+        not track.get()->quality(reco::TrackBase::highPurity))
+        simCandTrackIdx.push_back(track.get() - firstTrack);
     }
-    if (simCand.trackPtr().get()->pt() < 1 or simCand.trackPtr().get()->missingOuterHits() > 5 or
-        not simCand.trackPtr().get()->quality(reco::TrackBase::highPurity))
+    if (simCandTrackIdx.empty())
       continue;
 
     // +1 to all denominators
@@ -399,8 +399,8 @@ void TICLCandidateValidator::fillCandidateHistos(const edm::Event& event,
     }
 
     if (recoCand.trackPtr().get() != nullptr) {
-      const auto candTrackIdx = recoCand.trackPtr().get() - edm::Ptr<reco::Track>(recoTracks_h, 0).get();
-      if (simCandTrackIdx == candTrackIdx) {
+      const auto candTrackIdx = recoCand.trackPtr().get() - firstTrack;
+      if (std::find(simCandTrackIdx.begin(), simCandTrackIdx.end(), candTrackIdx) != simCandTrackIdx.end()) {
         // +1 to track num
         histograms.h_num_chg_energy_candidate_track[index]->Fill(simCand.rawEnergy());
         histograms.h_num_chg_pt_candidate_track[index]->Fill(simCand.pt());
@@ -534,7 +534,7 @@ void TICLCandidateValidator::fillCandidateHistos(const edm::Event& event,
      * 211 (type 4) becomes 2
      */
     int32_t candTrackIdx = -1;
-    candTrackIdx = cand.trackPtr().get() - edm::Ptr<reco::Track>(recoTracks_h, 0).get();
+    candTrackIdx = cand.trackPtr().get() - firstTrack;
 
     if (cand.tracksters().empty())
       continue;
@@ -575,9 +575,14 @@ void TICLCandidateValidator::fillCandidateHistos(const edm::Event& event,
       continue;
 
     const auto& simCand = simTICLCandidates[simCand_idx];
-    if (simCand.trackPtr().get() != nullptr) {
-      const auto simCandTrackIdx = simCand.trackPtr().get() - edm::Ptr<reco::Track>(recoTracks_h, 0).get();
-      if (simCandTrackIdx != candTrackIdx) {
+
+    std::vector<int32_t> simCandTrackIdx;
+    for (const auto& track : simCand.trackPtrs()) {
+      simCandTrackIdx.push_back(track.get() - firstTrack);
+    }
+
+    if (!simCandTrackIdx.empty()) {
+      if (std::find(simCandTrackIdx.begin(), simCandTrackIdx.end(), candTrackIdx) != simCandTrackIdx.end()) {
         // fake += 1
         histograms.h_num_fake_chg_energy_candidate_track[index]->Fill(cand.rawEnergy());
         histograms.h_num_fake_chg_pt_candidate_track[index]->Fill(cand.pt());
