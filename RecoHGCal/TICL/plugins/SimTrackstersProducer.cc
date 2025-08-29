@@ -413,7 +413,7 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
         }
       }
       const auto& tp = (*ipos->second);
-      if (trackIdx.empty() and !tp.decayVertices().empty()) {  // trackIdx.empty() ci vuole??
+      if (!tp.decayVertices().empty()) {
         const auto& iTV = tp.decayVertices()[0];
         for (auto iTP = iTV->daughterTracks_begin(); iTP != iTV->daughterTracks_end(); ++iTP) {
           auto kpos = TPtoRecoTrackMap.find((*iTP));
@@ -482,9 +482,10 @@ void SimTrackstersProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
 
       auto& cand = (*result_ticlCandidates)[cp_index];
       cand.addTrackster(edm::Ptr<Trackster>(simTracksters_h, i));
-      if (not trackIndices.empty() && caloparticles[cp_index].charge() != 0) {
-        for (const auto trackIndex : trackIndices)
+      if (cand.trackPtrs().empty() and not trackIndices.empty() and caloparticles[cp_index].charge() != 0) {
+        for (const auto trackIndex : trackIndices) {
           cand.addTrackPtr(edm::Ptr<reco::Track>(recoTracks_h, trackIndex));
+        }
       }
       toKeep.push_back(cp_index);
     }

@@ -353,8 +353,8 @@ void TICLCandidateValidator::fillCandidateHistos(const edm::Event& event,
 
     std::vector<int32_t> simCandTrackIdx;
     for (const auto& track : simCand.trackPtrs()) {
-      if (track.get()->pt() < 1 or track.get()->missingOuterHits() > 5 or
-        not track.get()->quality(reco::TrackBase::highPurity))
+      if (track.get()->pt() > 1 and track.get()->missingOuterHits() < 5 and
+        track.get()->quality(reco::TrackBase::highPurity))
         simCandTrackIdx.push_back(track.get() - firstTrack);
     }
     if (simCandTrackIdx.empty())
@@ -551,6 +551,7 @@ void TICLCandidateValidator::fillCandidateHistos(const edm::Event& event,
     histograms.h_den_fake_chg_eta_candidate[index]->Fill(cand.eta());
     histograms.h_den_fake_chg_phi_candidate[index]->Fill(cand.phi());
 
+    // general plots
     histograms.h_chg_tracksters_in_candidate[index]->Fill(cand.tracksters().size());
     histograms.h_chg_candidate_regressed_energy[index]->Fill(cand.energy());
     histograms.h_chg_candidate_charge[index]->Fill(cand.charge());
@@ -582,7 +583,7 @@ void TICLCandidateValidator::fillCandidateHistos(const edm::Event& event,
     }
 
     if (!simCandTrackIdx.empty()) {
-      if (std::find(simCandTrackIdx.begin(), simCandTrackIdx.end(), candTrackIdx) != simCandTrackIdx.end()) {
+      if (std::find(simCandTrackIdx.begin(), simCandTrackIdx.end(), candTrackIdx) == simCandTrackIdx.end()) {
         // fake += 1
         histograms.h_num_fake_chg_energy_candidate_track[index]->Fill(cand.rawEnergy());
         histograms.h_num_fake_chg_pt_candidate_track[index]->Fill(cand.pt());
@@ -642,6 +643,7 @@ void TICLCandidateValidator::fillCandidateHistos(const edm::Event& event,
     histograms.h_den_fake_neut_eta_candidate[index]->Fill(cand.eta());
     histograms.h_den_fake_neut_phi_candidate[index]->Fill(cand.phi());
 
+    // general plots
     histograms.h_neut_tracksters_in_candidate[index]->Fill(cand.tracksters().size());
     histograms.h_neut_candidate_regressed_energy[index]->Fill(cand.energy());
     histograms.h_neut_candidate_charge[index]->Fill(cand.charge());
