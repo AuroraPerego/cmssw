@@ -173,7 +173,11 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
 
         if (filled < minNhits) {
           outputs[cluster_index].time() = -99.;
-          outputs[cluster_index].timeError() = -1.;
+          outputs[cluster_index].timeError() = -1.f;
+          continue;
+        } else if (filled == 1) {
+          outputs[cluster_index].time() = t[0];
+          outputs[cluster_index].timeError() = alpaka::math::sqrt(acc, 1 / w[0]);
           continue;
         }
 
@@ -257,6 +261,118 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
     }
   };
 
+  class HGCalLayerClustersSoATimeWithoutErrorAlgoKernel {
+  public:
+    template <typename TAcc>
+    ALPAKA_FN_ACC void operator()(TAcc const& acc,
+                                  HGCalSoARecHitsDeviceCollection::ConstView input_rechits_soa,
+                                  HGCalSoARecHitsExtraDeviceCollection::ConstView input_clusters_soa,
+                                  HGCalSoAClustersDeviceCollection::View outputs,
+                                  HGCalSoAClustersExtraDeviceCollection::View outputs_service,
+                                  uint32_t minNhits = 3,
+                                  float deltaT = 0.210,
+                                  float timeWidthBy = 0.5) const {
+      for (int32_t cluster_index : cms::alpakatools::uniform_elements(acc, outputs.metadata().size())) {
+        float t[32] = {0.0f};
+        uint32_t filled = 0;
+        for (int32_t rec_hit_index = 0; rec_hit_index < input_clusters_soa.metadata().size(); rec_hit_index++) {
+          if (input_clusters_soa[rec_hit_index].clusterIndex() == -1)
+            continue;
+          if (input_clusters_soa[rec_hit_index].clusterIndex() >= outputs.metadata().size())
+            continue;
+
+          if (filled < 32 and input_rechits_soa[rec_hit_index].time() > 0.f and
+              input_clusters_soa[rec_hit_index].clusterIndex() == cluster_index) {
+            t[filled] = input_rechits_soa[rec_hit_index].time();
+            ++filled;
+          }
+        }
+
+        if (filled < minNhits) {
+          outputs[cluster_index].time() = -99.;
+          outputs[cluster_index].timeError() = -1.f;
+          continue;
+        } else if (filled == 1) {
+          outputs[cluster_index].time() = t[0];
+          outputs[cluster_index].timeError() = 0.f;
+          continue;
+        }
+
+        for (uint32_t i = 0; i < filled; i++) {
+          for (uint32_t j = i + 1; j < filled; j++) {
+            if (t[j] < t[i]) {
+              float temp = t[j];
+              t[j] = t[i];
+              t[i] = temp;
+            }
+          }
+        }
+
+        int max_elements = 0;
+        int start_el = 0;
+        int end_el = 0;
+        float tolerance = 0.05f;
+
+        for (uint32_t startIdx = 0; startIdx < filled; startIdx++) {
+          float startRef = t[startIdx];
+
+          int count = 0;
+          for (uint32_t i = startIdx; i < filled; ++i) {
+            if (t[i] - startRef <= deltaT + tolerance) {
+              ++count;
+            }
+          }
+
+          if (count > max_elements) {
+            max_elements = count;
+
+            int lastIdx = startIdx;
+            for (uint32_t i = startIdx; i < filled; i++) {
+              if (t[i] - startRef <= deltaT + tolerance) {
+                lastIdx = i;
+              } else {
+                break;
+              }
+            }
+            float valTostartDiff = t[lastIdx] - startRef;
+            if (std::abs(deltaT - valTostartDiff) < tolerance) {
+              tolerance = std::abs(deltaT - valTostartDiff);
+            }
+
+            start_el = startIdx;
+            end_el = lastIdx;
+          }
+        }
+
+        float HalfTimeDiff = timeWidthBy;
+        float sum = 0.;
+        float num = 0;
+
+        for (int ij = 0; ij <= start_el; ++ij) {
+          if (t[ij] > (t[start_el] - HalfTimeDiff)) {
+            for (uint32_t kl = ij; kl < filled; ++kl) {
+              if (t[kl] < (t[end_el] + HalfTimeDiff)) {
+                sum += t[kl];
+                num += 1.f;
+              } else
+                break;
+            }
+            break;
+          }
+        }
+
+        printf("num %f\n", num);
+        if (num == 0) {
+          outputs[cluster_index].time() = -99.f;
+          outputs[cluster_index].timeError() = -1.f;
+          continue;
+        }
+        outputs[cluster_index].time() = sum / num;
+        outputs[cluster_index].timeError() = 0.f;
+      }
+    }
+  };
+
   void HGCalLayerClustersSoAAlgoWrapper::run(Queue& queue,
                                              const unsigned int numer_of_clusters,
                                              float thresholdW0,
@@ -332,11 +448,14 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                         outputs_service);
     alpaka::exec<Acc1D>(queue,
                         workDivClusters,
-                        HGCalLayerClustersSoATimeAlgoKernel{},
+                        HGCalLayerClustersSoATimeWithoutErrorAlgoKernel{},
                         input_rechits_soa,
                         input_clusters_soa,
                         outputs,
-                        outputs_service);
+                        outputs_service,
+                        1,
+                        10000.f,
+                        10000.f);
   }
 
 }  // namespace ALPAKA_ACCELERATOR_NAMESPACE

@@ -60,11 +60,6 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
       auto y = const_cast<float*>(lc.view().y().data());
       auto z = const_cast<float*>(lc.view().z().data());
       auto E = const_cast<float*>(lc.view().energy().data());
-      std::unordered_map<float, std::vector<int>> map;
-
-      for (int i = 0; i < lc->metadata().size(); ++i) {
-        map[z[i]].push_back(i);
-      }
 
       const int32_t n = static_cast<int32_t>(lc->metadata().size());
       if (n > 0) {
@@ -72,30 +67,15 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
             cms::alpakatools::make_device_buffer<int[]>(queue, n);  // temporary buffer needed by CLUEstering
         auto dp_clIndex = const_cast<int*>(d_clIndex.data());
         clue::PointsDevice<3> d_points(queue, n, x, y, z, E, dp_clIndex);
-        //  for(int iLC = 0; iLC < n; ++iLC){
-        //  std::cout << "( " << x[iLC] << ", " << y[iLC] << ", " << z[iLC] << ", " << E[iLC] << " )" << std::endl;
-        //  }
-        //          auto isSeed =
-        //            cms::alpakatools::make_device_buffer<int[]>(queue, nLCs);  // temporary buffer needed by CLUEstering
 
         clue::Clusterer<3> algo(queue, dc_, rho_, dm_);
         algo.make_clusters(queue, d_points);
         // create hosts points and do the copy
         clue::PointsHost<3> h_points(queue, n);
         clue::copyToHost(queue, h_points, d_points);
-        alpaka::wait(queue);
+        //alpaka::wait(queue);
 
-        // get LCs indices in tracksters and fill the trackster collection
-        const auto tsMap = clue::get_clusters(h_points);
-        auto tracksters = std::vector<ticl::Trackster>(tsMap.size());
-        for (long unsigned int i = 0; i < tsMap.size(); ++i) {
-          const auto [beginLC, endLC] = tsMap.equal_range(i);
-          std::copy(beginLC, endLC, std::back_inserter(tracksters[i].vertices()));
-          tracksters[i].vertex_multiplicity().resize(tracksters[i].vertices().size(), 1);
-        }
-
-        std::cout << "Event Number of Tracksters " << tsMap.size() << std::endl;
-
+        auto time = cms::alpakatools::make_host_buffer<float[]>(n);
         alpaka::memcpy(queue,
                        cms::alpakatools::make_host_view(h_points.view().coords[0], n),
                        cms::alpakatools::make_device_view(alpaka::getDev(queue), x, n),
@@ -112,26 +92,50 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
                        cms::alpakatools::make_host_view(h_points.weights(), n),
                        cms::alpakatools::make_device_view(alpaka::getDev(queue), E, n),
                        (unsigned int)n);
+        alpaka::memcpy(
+            queue,
+            cms::alpakatools::make_host_view(alpaka::getPtrNative(time), n),
+            cms::alpakatools::make_device_view(alpaka::getDev(queue), const_cast<float*>(lc.view().time().data()), n),
+            (unsigned int)n);
         alpaka::wait(queue);
 
         // compute trackster properties
-        // TODO: merge with previous loop
         bool energyWeight = true;
         auto xHost = h_points.coords(0).data();
         auto yHost = h_points.coords(1).data();
         auto zHost = h_points.coords(2).data();
         auto EHost = h_points.weights();
+
+        // DEBUG PRINT
         std::cout << "Event Number of LCs " << n << std::endl;
+        std::unordered_map<float, std::vector<int>> map;
+
+        for (int i = 0; i < lc->metadata().size(); ++i) {
+          map[zHost[i]].push_back(i);
+        }
         for (const auto& [Z, indices] : map) {
           std::cout << "z = " << Z << " -> Clusters : ";
           for (auto i : indices)
-            std::cout << "\t( " << xHost[i] << ", " << yHost[i] << ", " << zHost[i] << ", " << EHost[i] << ")"
-                      << std::endl;
+            std::cout << "\t( " << xHost[i] << ", " << yHost[i] << ", " << zHost[i] << ", " << EHost[i] << ", "
+                      << time[i] << ")" << std::endl;
           std::cout << std::endl;
         }
-        for (auto& trackster : tracksters) {
+        // END DEBUG PRINT
+
+        // get LCs indices in tracksters and fill the trackster collection
+        const auto tsMap = clue::get_clusters(h_points);
+        auto tracksters = std::vector<ticl::Trackster>(tsMap.size());
+        std::cout << "Event Number of Tracksters " << tsMap.size() << std::endl;
+
+        for (long unsigned int i = 0; i < tsMap.size(); ++i) {
+          auto& trackster = tracksters[i];
+
+          const auto [beginLC, endLC] = tsMap.equal_range(i);
+          std::copy(beginLC, endLC, std::back_inserter(trackster.vertices()));
+          tracksters[i].vertex_multiplicity().resize(trackster.vertices().size(), 1);
+
           size_t N = trackster.vertices().size();
-          if (N == 0)
+          if (N == 0)  // useless?
             continue;
 
           Eigen::Vector3f point;
@@ -179,6 +183,23 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
           trackster.calculateRawPt();
           trackster.calculateRawEmPt();
 
+          // compute trackster time
+          constexpr float c = 29.9792458;  // cm/ns
+          float tracksterTime = 0.f;
+          int num = 0;
+          for (size_t i = 0; i < N; ++i) {
+            if (time[i] > 0.f) {
+              // calcolo delta T (assuming Test Beam setup)
+              float deltaT = (zHost[i] - trackster.barycenter().z()) / c;
+              tracksterTime += (time[i] - deltaT);
+              num++;
+            }
+          }
+          if (tracksterTime > 0.f)
+            trackster.setTimeAndError(tracksterTime/num, 0.f);
+          else
+            trackster.setTimeAndError(-99.f, -1.f);
+
           std::cout << "  LC in TS: ";
           for (const auto& lc : trackster.vertices())
             std::cout << lc << " ";
@@ -186,8 +207,8 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
           std::cout << "  energy raw: " << trackster.raw_energy() << std::endl;
           std::cout << "  barycenter: " << trackster.barycenter().x() << ", " << trackster.barycenter().y() << ", "
                     << trackster.barycenter().z() << std::endl;
+          std::cout << "  time: " << trackster.time() << std::endl;
         }
-        // TODO: do a kernel that computes raw energy and barycenter and returns them
 
         iEvent.emplace(legacyTrackstersToken_, std::move(tracksters));
       } else {
