@@ -12,6 +12,7 @@
 #include "HeterogeneousCore/AlpakaCore/interface/alpaka/stream/EDProducer.h"
 #include "HeterogeneousCore/AlpakaInterface/interface/config.h"
 #include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"
+#include "HGCalCommissioning/SystemTestEventFilters/interface/HGCalTestSystemMetaData.h"
 
 namespace ALPAKA_ACCELERATOR_NAMESPACE {
 
@@ -31,6 +32,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
           thicknessCorrection_(config.getParameter<std::vector<double>>("thicknessCorrection")),
           caloGeomToken_(consumesCollector().esConsumes<CaloGeometry, CaloGeometryRecord>()),
           hits_token_(consumes<HGCRecHitCollection>(config.getParameter<edm::InputTag>("recHits"))),
+          metaDataToken_(consumes<HGCalTestSystemTrigTimeCollection>(config.getParameter<edm::InputTag>("MetaData"))),
           deviceToken_{produces()} {}
 
     ~HGCalSoARecHitsProducer() override = default;
@@ -45,6 +47,17 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
       hits_h = iEvent.getHandle(hits_token_);
       auto const& hits = *(hits_h.product());
       computeThreshold();
+
+      // take trig time
+      int trigTime = 0;
+      const auto& metadataHandle = iEvent.getHandle(metaDataToken_);
+      if (metadataHandle.isValid() && metadataHandle->size() > 0) {
+        const auto& link1 = metadataHandle->at(0);
+        if (link1.valid_) {
+          trigTime = link1.time_;
+          // trigBx = link1.bx_;
+        }
+      }
 
       // Count effective hits above threshold
       uint32_t index = 0;
@@ -114,10 +127,11 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
         entryInSoA.layer() = layer;
         entryInSoA.recHitIndex() = i;
         entryInSoA.detid() = detid.rawId();
-        entryInSoA.time() = hgrh.time();
+        entryInSoA.time() = hgrh.time();  // - trigTime * 25/32;
         entryInSoA.timeError() = hgrh.timeError();
         index++;
       }
+      printf("trigger time %d\n", trigTime);
 #if 0
         std::cout << "Size: " << cells->metadata().size() << " count cells: " << index
           << " i.e. " << cells->metadata().size() << std::endl;
@@ -145,6 +159,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
       desc.add<std::vector<double>>("thicknessCorrection");
       desc.add<std::vector<double>>("noises");
       desc.add<std::vector<double>>("dEdXweights");
+      desc.add<edm::InputTag>("MetaData", edm::InputTag("hgcalTrigTimeProducer", ""));
       desc.add<double>("ecut", 3.);
       descriptions.addWithDefaultLabel(desc);
     }
@@ -169,6 +184,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
     hgcal::RecHitTools rhtools_;
     edm::ESGetToken<CaloGeometry, CaloGeometryRecord> caloGeomToken_;
     edm::EDGetTokenT<HGCRecHitCollection> hits_token_;
+    const edm::EDGetTokenT<HGCalTestSystemTrigTimeCollection> metaDataToken_;
     device::EDPutToken<HGCalSoARecHitsDeviceCollection> const deviceToken_;
 
     void computeThreshold() {
