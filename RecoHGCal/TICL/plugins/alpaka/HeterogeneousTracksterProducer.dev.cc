@@ -1,9 +1,15 @@
+#include <Eigen/Core>
+#include <Eigen/Dense>
+
+#include <iostream>
+
 #include <alpaka/alpaka.hpp>
 #include "HeterogeneousCore/AlpakaInterface/interface/config.h"
 #include "DataFormats/HGCalReco/interface/HGCalSoAClusters.h"
 #include "DataFormats/HGCalReco/interface/HGCalSoARecHitsHostCollection.h"
 #include "DataFormats/HGCalReco/interface/alpaka/HGCalSoAClustersDeviceCollection.h"
 #include "DataFormats/HGCalReco/interface/alpaka/HGCalSoARecHitsExtraDeviceCollection.h"
+#include "DataFormats/HGCalReco/interface/alpaka/TracksterSoADeviceCollection.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -14,14 +20,88 @@
 #include "DataFormats/HGCalReco/interface/Trackster.h"
 #include "HeterogeneousCore/AlpakaCore/interface/alpaka/ESGetToken.h"
 #include "HeterogeneousCore/AlpakaCore/interface/alpaka/stream/EDProducer.h"
+#include "HeterogeneousCore/AlpakaInterface/interface/workdivision.h"
 #include "CLUEstering/CLUEstering.hpp"
 
-#include <Eigen/Core>
-#include <Eigen/Dense>
-
-#include <iostream>
-
 namespace ALPAKA_ACCELERATOR_NAMESPACE {
+
+  // FIXME this file should not contain alpaka stuff, should be a .cc and the alpaka part should go in a .dev.cc
+  struct KernelFillTracksters {
+    template <typename TAcc, typename MapViewT, typename TsSoAViewT, typename LcViewT>
+    ALPAKA_FN_ACC void operator()(
+        const TAcc& acc, MapViewT dev_map, TsSoAViewT tsView, LcViewT lcView, int32_t n_tracksters) const {
+      // Each work-item handles one trackster index
+      for (auto tsIdx : alpaka::uniformElements(acc, n_tracksters)) {
+        auto& trackster = tsView[tsIdx];
+        auto keys_ptr = dev_map[tsIdx].data();
+        int32_t keys_n = dev_map[tsIdx].size();
+
+        // Initialize some SoA fields (example fields: energy, emEnergy, barycenterX/Y/Z)
+        float accumEnergy = 0.f;
+        float bx = 0.f, by = 0.f, bz = 0.f;
+
+        // iterate the layer cluster keys and gather information
+        for (int k = 0; k < keys_n; ++k) {
+          const auto lc_idx = keys_ptr[k];  // layer cluster index
+
+          // read LC energy / position from layerClustersView
+          float lcE = lcView.energy()[lc_idx];
+          float lcX = lcView.x()[lc_idx];
+          float lcY = lcView.y()[lc_idx];
+          float lcZ = lcView.z()[lc_idx];
+
+          trackster.vertices()[k] = lc_idx;
+          trackster.vertex_multiplicity()[k] = 1;
+          const float fraction = 1.f / trackster.vertex_multiplicity()[k];
+
+          accumEnergy += lcE * fraction;
+
+          // compute barycenter weighted by lcE
+          bx += (lcE * fraction) * lcX;
+          by += (lcE * fraction) * lcY;
+          bz += (lcE * fraction) * lcZ;
+        }  // keys loop
+
+        // normalize barycenter if needed (avoid division by zero)
+        if (accumEnergy != 0.f) {
+          bx /= accumEnergy;
+          by /= accumEnergy;
+          bz /= accumEnergy;
+        }
+
+        // --- write results into SoA at position tsIdx ---
+        trackster.raw_energy() = accumEnergy;
+        trackster.barycenter().x() = bx;
+        trackster.barycenter().y() = by;
+        trackster.barycenter().z() = bz;
+
+        // FIXME
+        // trackster.calculateRawPt();
+        // trackster.calculateRawEmPt();
+
+        // compute trackster time
+        constexpr float c = 29.9792458;  // cm/ns
+        float tracksterTime = 0.f;
+        int num = 0;
+        for (int k = 0; k < keys_n; ++k) {
+          const auto time = lcView.time()[keys_ptr[k]];
+          if (time > 0.f) {
+            // calcolo delta T (assuming Test Beam setup)
+            float deltaT = (lcView.z()[keys_ptr[k]] - trackster.barycenter().z()) / c;
+            tracksterTime += (time - deltaT);
+            num++;
+          }
+        }
+        if (tracksterTime > 0.f) {
+          trackster.time() = tracksterTime / num;
+          trackster.timeError() = 0.f;
+        } else {
+          trackster.time() = 0.f;
+          trackster.timeError() = -1.f;
+        }
+      }
+    }
+  };
 
   class HeterogeneousTracksterProducer : public stream::EDProducer<> {
   public:
@@ -122,6 +202,29 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
         }
         // END DEBUG PRINT
 
+        // BEGIN TRACKSTERS SOA ATTEMPT
+        // call get clusters with device points to get the trackster soa size
+        const auto devTsMap = clue::get_clusters(queue, d_points);
+        const auto devTsMap_v = devTsMap.view();
+        std::size_t sizeTs = 0;
+        alpaka::memcpy(queue, &sizeTs, devTsMap.size(), sizeof(std::size_t));
+        alpaka::wait(queue);
+        // do the stuff below only if sizeTs > 0
+        TracksterSoADeviceCollection tracksterSoA(sizeTs, queue);
+        auto tracksterSoA_v = tracksterSoA.view();
+        if (sizeTs != 0) {
+          // define work div
+          auto work_div = cms::alpakatools::make_workdiv<Acc1D>(static_cast<uint32_t>(sizeTs), 256);
+          alpaka::exec<Acc1D>(queue,
+                              work_div,
+                              KernelFillTracksters{},
+                              devTsMap_v,
+                              tracksterSoA_v,
+                              lc.view(),
+                              static_cast<int32_t>(sizeTs));
+        }
+        // END TRACKSTERS SOA ATTEMPT
+
         // get LCs indices in tracksters and fill the trackster collection
         const auto tsMap = clue::get_clusters(h_points);
         auto tracksters = std::vector<ticl::Trackster>(tsMap.size());
@@ -196,7 +299,7 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE {
             }
           }
           if (tracksterTime > 0.f)
-            trackster.setTimeAndError(tracksterTime/num, 0.f);
+            trackster.setTimeAndError(tracksterTime / num, 0.f);
           else
             trackster.setTimeAndError(-99.f, -1.f);
 
