@@ -222,6 +222,7 @@ struct HGVHistoProducerAlgoHistograms {
   std::vector<dqm::reco::MonitorElement*> h_trackster_firstlayer;
   std::vector<dqm::reco::MonitorElement*> h_trackster_lastlayer;
   std::vector<dqm::reco::MonitorElement*> h_trackster_layersnum;
+  std::vector<dqm::reco::MonitorElement*> h_trackster_time;
 };
 
 using Density = hgcal_clustering::Density;

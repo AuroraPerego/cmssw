@@ -35,6 +35,7 @@ struct TICLCandidateValidatorHistograms {
   dqm::reco::MonitorElement* h_candidate_charge;
   dqm::reco::MonitorElement* h_candidate_pdgId;
   dqm::reco::MonitorElement* h_candidate_partType;
+  dqm::reco::MonitorElement* h_candidate_time;
 
   std::vector<dqm::reco::MonitorElement*> h_den_chg_energy_candidate;
   std::vector<dqm::reco::MonitorElement*> h_num_chg_energy_candidate_track;
@@ -109,12 +110,16 @@ struct TICLCandidateValidatorHistograms {
   std::vector<dqm::reco::MonitorElement*> h_chg_candidate_charge;
   std::vector<dqm::reco::MonitorElement*> h_chg_candidate_pdgId;
   std::vector<dqm::reco::MonitorElement*> h_chg_candidate_partType;
+  std::vector<dqm::reco::MonitorElement*> h_chg_candidate_time;
+  std::vector<dqm::reco::MonitorElement*> h_chg_candidate_timeRes;
 
   std::vector<dqm::reco::MonitorElement*> h_neut_tracksters_in_candidate;
   std::vector<dqm::reco::MonitorElement*> h_neut_candidate_regressed_energy;
   std::vector<dqm::reco::MonitorElement*> h_neut_candidate_charge;
   std::vector<dqm::reco::MonitorElement*> h_neut_candidate_pdgId;
   std::vector<dqm::reco::MonitorElement*> h_neut_candidate_partType;
+  std::vector<dqm::reco::MonitorElement*> h_neut_candidate_time;
+  std::vector<dqm::reco::MonitorElement*> h_neut_candidate_timeRes;
 
   std::vector<dqm::reco::MonitorElement*> h_neut_energy_noTrackster;
   std::vector<dqm::reco::MonitorElement*> h_neut_pt_noTrackster;

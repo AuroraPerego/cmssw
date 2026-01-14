@@ -33,6 +33,7 @@ void TICLCandidateValidator::bookCandidatesHistos(DQMStore::IBooker& ibook,
   histograms.h_candidate_regressed_energy =
       ibook.book1D("Candidates regressed energy", "Candidates regressed energy;E (GeV)", 100, 0, 500);
   histograms.h_candidate_pT = ibook.book1D("Candidates pT", "Candidates pT;p_{T}", 100, 0, 200);
+  histograms.h_candidate_time = ibook.book1D("Candidates time", "Candidates time;time [ns]", 100, -1, 1);
   histograms.h_candidate_charge = ibook.book1D("Candidates charge", "Candidates charge;Charge", 3, -1.5, 1.5);
   histograms.h_candidate_pdgId = ibook.book1D("Candidates PDG Id", "Candidates PDG ID", 100, -220, 220);
   histograms.h_candidate_partType = ibook.book1D("Candidates type", "Candidates type", 9, -0.5, 8.5);
@@ -43,7 +44,7 @@ void TICLCandidateValidator::bookCandidatesHistos(DQMStore::IBooker& ibook,
     ibook.setCurrentFolder(baseDir + "/" + neutrals[i]);
 
     histograms.h_neut_tracksters_in_candidate.push_back(ibook.book1D("N of tracksters in candidate for " + neutrals[i],
-                                                                     "N of tracksters in candidate for " + neutrals[i],
+                                                                     "N of tracksters in candidate for " + neutrals[i] + ";N tracksters",
                                                                      100,
                                                                      0,
                                                                      99));
@@ -52,9 +53,13 @@ void TICLCandidateValidator::bookCandidatesHistos(DQMStore::IBooker& ibook,
     histograms.h_neut_candidate_charge.push_back(
         ibook.book1D(neutrals[i] + " candidates charge", neutrals[i] + " candidates charge;Charge", 3, -1.5, 1.5));
     histograms.h_neut_candidate_pdgId.push_back(
-        ibook.book1D(neutrals[i] + " candidates PDG Id", neutrals[i] + " candidates PDG ID", 100, -220, 220));
+        ibook.book1D(neutrals[i] + " candidates PDG Id", neutrals[i] + " candidates PDG ID;PDG", 100, -220, 220));
     histograms.h_neut_candidate_partType.push_back(
-        ibook.book1D(neutrals[i] + " candidates type", neutrals[i] + " candidates type", 9, -0.5, 8.5));
+        ibook.book1D(neutrals[i] + " candidates type", neutrals[i] + " candidates type;type", 9, -0.5, 8.5));
+    histograms.h_neut_candidate_time.push_back(
+        ibook.book1D(neutrals[i] + " candidates time", neutrals[i] + " candidates time;time [ns]", 100, -1, 1));
+    histograms.h_neut_candidate_timeRes.push_back(
+        ibook.book1D(neutrals[i] + " candidates time residuals", neutrals[i] + " candidates time residuals (reco-sim);time [ns]", 100, -1, 1));
 
     histograms.h_den_fake_neut_energy_candidate.push_back(
         ibook.book1D("den_fake_cand_vs_energy_" + neutrals[i], neutrals[i] + " candidates energy;E (GeV)", 50, 0, 500));
@@ -187,21 +192,26 @@ void TICLCandidateValidator::bookCandidatesHistos(DQMStore::IBooker& ibook,
                      -3.14159,
                      3.14159));
   }
+
   // charged: electron, muon, hadron
   const std::vector<std::string> charged{"electrons", "muons", "charged_hadrons"};
   for (long unsigned int i = 0; i < charged.size(); i++) {
     ibook.setCurrentFolder(baseDir + "/" + charged[i]);
 
     histograms.h_chg_tracksters_in_candidate.push_back(ibook.book1D(
-        "N of tracksters in candidate for " + charged[i], "N of tracksters in candidate for " + charged[i], 100, 0, 99));
+        "N of tracksters in candidate for " + charged[i], "N of tracksters in candidate for " + charged[i]+";N tracksters", 100, 0, 99));
     histograms.h_chg_candidate_regressed_energy.push_back(ibook.book1D(
         charged[i] + "candidates regressed energy", charged[i] + " candidates regressed energy;E (GeV)", 500, 0, 500));
     histograms.h_chg_candidate_charge.push_back(
         ibook.book1D(charged[i] + " candidates charge", charged[i] + " candidates charge;Charge", 3, -1.5, 1.5));
     histograms.h_chg_candidate_pdgId.push_back(
-        ibook.book1D(charged[i] + " candidates PDG Id", charged[i] + " candidates PDG ID", 100, -220, 220));
+        ibook.book1D(charged[i] + " candidates PDG Id", charged[i] + " candidates PDG ID;PDG", 100, -220, 220));
     histograms.h_chg_candidate_partType.push_back(
-        ibook.book1D(charged[i] + " candidates type", charged[i] + " candidates type", 9, -0.5, 8.5));
+        ibook.book1D(charged[i] + " candidates type", charged[i] + " candidates type;type", 9, -0.5, 8.5));
+    histograms.h_chg_candidate_time.push_back(
+        ibook.book1D(charged[i] + " candidates time", charged[i] + " candidates time;time [ns]", 100, -1, 1));
+    histograms.h_chg_candidate_timeRes.push_back(
+        ibook.book1D(charged[i] + " candidates time residuals", charged[i] + " candidates time residuals (reco-sim);time [ns]", 100, -0.5, 0.5));
 
     histograms.h_den_fake_chg_energy_candidate.push_back(
         ibook.book1D("den_fake_cand_vs_energy_" + charged[i], charged[i] + " candidates energy;E (GeV)", 50, 0, 500));
@@ -441,6 +451,8 @@ void TICLCandidateValidator::fillCandidateHistos(const edm::Event& event,
     histograms.h_candidate_raw_energy->Fill(cand.rawEnergy());
     histograms.h_candidate_regressed_energy->Fill(cand.energy());
     histograms.h_candidate_pT->Fill(cand.pt());
+    if (cand.timeError()>0)
+      histograms.h_candidate_time->Fill(cand.time());
     histograms.h_candidate_charge->Fill(cand.charge());
     histograms.h_candidate_pdgId->Fill(cand.pdgId());
     const auto& arr = cand.idProbabilities();
@@ -710,6 +722,8 @@ void TICLCandidateValidator::fillCandidateHistos(const edm::Event& event,
     histograms.h_chg_candidate_pdgId[index]->Fill(cand.pdgId());
     const auto& arr = cand.idProbabilities();
     histograms.h_chg_candidate_partType[index]->Fill(std::max_element(arr.begin(), arr.end()) - arr.begin());
+    if (cand.timeError()>0)
+      histograms.h_chg_candidate_time[index]->Fill(cand.time());
 
     int32_t simCand_idx = -1;
     const auto& sts_vec = mergeTsRecoToSimMap[mergeTs_id];
@@ -792,6 +806,7 @@ void TICLCandidateValidator::fillCandidateHistos(const edm::Event& event,
       histograms.h_num_fake_chg_eta_candidate_tot[index]->Fill(cand.eta());
       histograms.h_num_fake_chg_phi_candidate_tot[index]->Fill(cand.phi());
     }
+    histograms.h_chg_candidate_timeRes[index]->Fill(cand.time()-simCand.time());
   }
 
   // loop on neutrals
@@ -825,6 +840,8 @@ void TICLCandidateValidator::fillCandidateHistos(const edm::Event& event,
     histograms.h_neut_candidate_pdgId[index]->Fill(cand.pdgId());
     const auto& arr = cand.idProbabilities();
     histograms.h_neut_candidate_partType[index]->Fill(std::max_element(arr.begin(), arr.end()) - arr.begin());
+    if (cand.timeError()>0)
+      histograms.h_neut_candidate_time[index]->Fill(cand.time());
 
     int32_t simCand_idx = -1;
     const auto& sts_vec = mergeTsRecoToSimMap[mergeTs_id];
@@ -870,5 +887,7 @@ void TICLCandidateValidator::fillCandidateHistos(const edm::Event& event,
       histograms.h_num_fake_neut_eta_candidate_tot[index]->Fill(cand.eta());
       histograms.h_num_fake_neut_phi_candidate_tot[index]->Fill(cand.phi());
     }
+
+    histograms.h_neut_candidate_timeRes[index]->Fill(cand.time()-simCand.time());
   }
 }

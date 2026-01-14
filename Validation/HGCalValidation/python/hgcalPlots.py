@@ -1787,7 +1787,8 @@ _trackster_eppe = PlotGroup("EtaPhiPtEnergy", _trackster_eppe_plots, ncols=2)
 _trackster_xyz_plots = [Plot("trackster_x", **_common)]
 _trackster_xyz_plots.extend([Plot("trackster_y", **_common)])
 _trackster_xyz_plots.extend([Plot("trackster_z", **_common)])
-_trackster_xyz = PlotGroup("XYZ", _trackster_xyz_plots, ncols=3)
+_trackster_xyz_plots.extend([Plot("trackster_time", **_common)])
+_trackster_xyz = PlotGroup("XYZT", _trackster_xyz_plots, ncols=2)
 
 #--------------------------------------------------------------------------------------------
 # CANDIDATES
@@ -1800,11 +1801,11 @@ for name in cand_plots_names:
     _candidate_nts_plots.extend([Plot(name, **_common)])
 _candidatesPlots1 = PlotGroup("General_plots_pid_type", _candidate_nts_plots, ncols=2)
 
-cand_plots_names = ["Candidates pT", "Candidates raw energy", "Candidates regressed energy"]
+cand_plots_names = ["Candidates pT", "Candidates raw energy", "Candidates regressed energy", "Candidates time"]
 _candidate_nts_plots = []
 for name in cand_plots_names:
     _candidate_nts_plots.extend([Plot(name, **_common)])
-_candidatesPlots2 = PlotGroup("General_plots_pt_energy", _candidate_nts_plots, ncols=3)
+_candidatesPlots2 = PlotGroup("General_plots_pt_energy_time", _candidate_nts_plots, ncols=2)
 
 _candidatesPlots = [_candidatesPlots1, _candidatesPlots2]
 
@@ -1826,6 +1827,8 @@ for ct in cand_type:
     cand_type_plots = [Plot(ct+name, title=ct.replace("_", " ")+" "+name, **_common)]
     for name in cand_plots_names_den:
         cand_type_plots.extend([Plot(name+ct, title=ct.replace("_", " ")+" candidates "+name.replace("den_fake_cand_vs_", "").replace("_", ""), **_common)])
+    cand_type_plots.extend([Plot(ct+" candidates time", title=ct.replace("_", " ")+" candidates time", **_common)])
+    cand_type_plots.extend([Plot(ct+" candidates time residuals", title=ct.replace("_", " ")+" candidates time residuals (reco-sim)", **_common)])
     _all_cand_ene_plots.append(cand_type_plots)
 
 #efficiency and fake
