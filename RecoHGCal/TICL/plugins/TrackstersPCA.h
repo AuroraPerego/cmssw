@@ -14,7 +14,7 @@ namespace ticl {
    *   and only layers in range around the most energetic layer cluster
    * \param z_limit_em Limit between EM and HAD section (in absolute value)
    * \param energyWeight Compute energy-weighted barycenter and PCA
-   * \param clean Use the PCA cleaning algorithm. 
+   * \param clean Use the PCA cleaning algorithm.
    * \param minLayer Number of layers to consider for cleaned PCA behind the most energetic LC
    * \param maxLayer Number of layers to consider for cleaned PCA after the most energetic LC
    */
@@ -32,7 +32,10 @@ namespace ticl {
                                                     const std::vector<reco::CaloCluster> &layerClusters,
                                                     const edm::ValueMap<std::pair<float, float>> &layerClustersTime,
                                                     const Eigen::Vector3f &barycenter,
-                                                    size_t N);
+                                                    size_t N,
+                                                    float DIST = 3.0f,
+                                                    float SIGMA = 3.0f,
+                                                    size_t NMIN = 1);
   std::pair<float, float> computeTracksterTime(const Trackster &trackster,
                                                const edm::ValueMap<std::pair<float, float>> &layerClustersTime,
                                                size_t N);

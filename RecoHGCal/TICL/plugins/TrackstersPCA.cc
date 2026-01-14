@@ -243,9 +243,11 @@ std::pair<float, float> ticl::computeLocalTracksterTime(const Trackster &trackst
                                                         const std::vector<reco::CaloCluster> &layerClusters,
                                                         const edm::ValueMap<std::pair<float, float>> &layerClustersTime,
                                                         const Eigen::Vector3f &barycenter,
-                                                        size_t N) {
-  float tracksterTime = 0.;
-  float tracksterTimeErr = 0.;
+                                                        size_t N,
+                                                        float DIST,
+                                                        float SIGMA,
+                                                        size_t NMIN) {
+  constexpr float C = CLHEP::c_light * CLHEP::ns / CLHEP::cm;
 
   auto project_lc_to_pca = [](const std::array<float, 3> &point, const std::array<float, 3> &segment_end) {
     float dot_product = 0.0;
@@ -273,34 +275,84 @@ std::pair<float, float> ticl::computeLocalTracksterTime(const Trackster &trackst
     return distanceSquared;
   };
 
-  constexpr float c = 29.9792458;  // cm/ns
+  const float bx = barycenter[0];
+  const float by = barycenter[1];
+  const float bz = barycenter[2];
+
+  std::vector<float> times;
+  std::vector<float> weights;
+
+  // First pass: propagate + weighted avg
   for (size_t i = 0; i < N; ++i) {
-    // Add timing from layerClusters not already used
-    float timeE = layerClustersTime.get(trackster.vertices(i)).second;
-    if (timeE > 0.f) {
-      float time = layerClustersTime.get(trackster.vertices(i)).first;
-      timeE = 1.f / pow(timeE, 2);
-      float x = layerClusters[trackster.vertices(i)].x();
-      float y = layerClusters[trackster.vertices(i)].y();
-      float z = layerClusters[trackster.vertices(i)].z();
+    float timeErr = layerClustersTime.get(trackster.vertices(i)).second;
+    if (timeErr <= 0.f)
+      continue;
 
-      if (project_lc_to_pca({{x, y, z}}, {{barycenter[0], barycenter[1], barycenter[2]}}) < 9.f) {  // set MR to 3
-        float invz = 1.f / z;
-        float deltaT = 1.f / c *
-                       std::sqrt(((barycenter[2] * invz - 1.f) * x) * ((barycenter[2] * invz - 1.f) * x) +
-                                 ((barycenter[2] * invz - 1.f) * y) * ((barycenter[2] * invz - 1.f) * y) +
-                                 (barycenter[2] - z) * (barycenter[2] - z));
-        time = std::abs(barycenter[2]) < std::abs(z) ? time - deltaT : time + deltaT;
+    float t = layerClustersTime.get(trackster.vertices(i)).first;
+    float w = 1.f / (timeErr * timeErr);
 
-        tracksterTime += time * timeE;
-        tracksterTimeErr += timeE;
-      }
+    float x = layerClusters[trackster.vertices(i)].x();
+    float y = layerClusters[trackster.vertices(i)].y();
+    float z = layerClusters[trackster.vertices(i)].z();
+
+    float mr2 = project_lc_to_pca({{x, y, z}}, {{bx, by, bz}});
+    if (mr2 >= DIST * DIST)
+      continue;
+
+    // propagation
+    float invz = 1.f / z;
+    float k = (bz * invz - 1.f);
+
+    float dx = k * x;
+    float dy = k * y;
+    float dz = (bz - z);
+
+    float deltaT = std::sqrt(dx * dx + dy * dy + dz * dz) / C;
+
+    bool trackster_below = (std::abs(bz) < std::abs(z));
+    float tprop = trackster_below ? (t - deltaT) : (t + deltaT);
+
+    times.push_back(tprop);
+    weights.push_back(w);
+  }
+
+  size_t M = times.size();
+  if (M < NMIN)
+    return {-99.f, -1.f};
+
+  // weighted mean
+  float sum_w = 0.f;
+  float sum_tw = 0.f;
+  for (size_t i = 0; i < M; ++i) {
+    sum_tw += times[i] * weights[i];
+    sum_w += weights[i];
+  }
+  float mean = sum_tw / sum_w;
+
+  // weighted variance
+  float sum_wvar = 0.f;
+  for (size_t i = 0; i < M; ++i) {
+    float d = times[i] - mean;
+    sum_wvar += weights[i] * d * d;
+  }
+  float stddev = std::sqrt(sum_wvar / sum_w);
+
+  // One-pass sigma cut
+  float sum_tw2 = 0.f, sum_w2 = 0.f;
+  size_t kept = 0;
+
+  for (size_t i = 0; i < M; ++i) {
+    if (std::fabs(times[i] - mean) < SIGMA * stddev) {
+      sum_tw2 += times[i] * weights[i];
+      sum_w2 += weights[i];
+      kept++;
     }
   }
-  if (tracksterTimeErr > 0.f)
-    return {tracksterTime / tracksterTimeErr, 1.f / std::sqrt(tracksterTimeErr)};
-  else
+
+  if (kept < NMIN)
     return {-99.f, -1.f};
+
+  return {sum_tw2 / sum_w2, 1.f / std::sqrt(sum_w2)};
 }
 
 std::pair<float, float> ticl::computeTracksterTime(const Trackster &trackster,
