@@ -1109,12 +1109,7 @@ void HGVHistoProducerAlgo::bookTracksterHistos(DQMStore::IBooker& ibook, Histogr
                    2 * layers,
                    0.,
                    (float)2 * layers));
-  histograms.h_trackster_time.push_back(
-      ibook.book1D("trackster_time",
-                   "tracksters time;time [ns]",
-                   100,
-                   9,
-                   16));
+  histograms.h_trackster_time.push_back(ibook.book1D("trackster_time", "tracksters time;time [ns]", 100, 9, 16));
 }
 
 void HGVHistoProducerAlgo::bookTracksterSTSHistos(DQMStore::IBooker& ibook,

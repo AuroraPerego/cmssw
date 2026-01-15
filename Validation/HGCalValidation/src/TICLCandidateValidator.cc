@@ -43,11 +43,12 @@ void TICLCandidateValidator::bookCandidatesHistos(DQMStore::IBooker& ibook,
   for (long unsigned int i = 0; i < neutrals.size(); i++) {
     ibook.setCurrentFolder(baseDir + "/" + neutrals[i]);
 
-    histograms.h_neut_tracksters_in_candidate.push_back(ibook.book1D("N of tracksters in candidate for " + neutrals[i],
-                                                                     "N of tracksters in candidate for " + neutrals[i] + ";N tracksters",
-                                                                     100,
-                                                                     0,
-                                                                     99));
+    histograms.h_neut_tracksters_in_candidate.push_back(
+        ibook.book1D("N of tracksters in candidate for " + neutrals[i],
+                     "N of tracksters in candidate for " + neutrals[i] + ";N tracksters",
+                     100,
+                     0,
+                     99));
     histograms.h_neut_candidate_regressed_energy.push_back(ibook.book1D(
         neutrals[i] + "candidates regressed energy", neutrals[i] + " candidates regressed energy;E (GeV)", 100, 0, 500));
     histograms.h_neut_candidate_charge.push_back(
@@ -59,7 +60,11 @@ void TICLCandidateValidator::bookCandidatesHistos(DQMStore::IBooker& ibook,
     histograms.h_neut_candidate_time.push_back(
         ibook.book1D(neutrals[i] + " candidates time", neutrals[i] + " candidates time;time [ns]", 100, -1, 1));
     histograms.h_neut_candidate_timeRes.push_back(
-        ibook.book1D(neutrals[i] + " candidates time residuals", neutrals[i] + " candidates time residuals (reco-sim);time [ns]", 100, -1, 1));
+        ibook.book1D(neutrals[i] + " candidates time residuals",
+                     neutrals[i] + " candidates time residuals (reco-sim);time [ns]",
+                     100,
+                     -1,
+                     1));
 
     histograms.h_den_fake_neut_energy_candidate.push_back(
         ibook.book1D("den_fake_cand_vs_energy_" + neutrals[i], neutrals[i] + " candidates energy;E (GeV)", 50, 0, 500));
@@ -198,8 +203,12 @@ void TICLCandidateValidator::bookCandidatesHistos(DQMStore::IBooker& ibook,
   for (long unsigned int i = 0; i < charged.size(); i++) {
     ibook.setCurrentFolder(baseDir + "/" + charged[i]);
 
-    histograms.h_chg_tracksters_in_candidate.push_back(ibook.book1D(
-        "N of tracksters in candidate for " + charged[i], "N of tracksters in candidate for " + charged[i]+";N tracksters", 100, 0, 99));
+    histograms.h_chg_tracksters_in_candidate.push_back(
+        ibook.book1D("N of tracksters in candidate for " + charged[i],
+                     "N of tracksters in candidate for " + charged[i] + ";N tracksters",
+                     100,
+                     0,
+                     99));
     histograms.h_chg_candidate_regressed_energy.push_back(ibook.book1D(
         charged[i] + "candidates regressed energy", charged[i] + " candidates regressed energy;E (GeV)", 500, 0, 500));
     histograms.h_chg_candidate_charge.push_back(
@@ -211,7 +220,11 @@ void TICLCandidateValidator::bookCandidatesHistos(DQMStore::IBooker& ibook,
     histograms.h_chg_candidate_time.push_back(
         ibook.book1D(charged[i] + " candidates time", charged[i] + " candidates time;time [ns]", 100, -1, 1));
     histograms.h_chg_candidate_timeRes.push_back(
-        ibook.book1D(charged[i] + " candidates time residuals", charged[i] + " candidates time residuals (reco-sim);time [ns]", 100, -0.5, 0.5));
+        ibook.book1D(charged[i] + " candidates time residuals",
+                     charged[i] + " candidates time residuals (reco-sim);time [ns]",
+                     100,
+                     -0.5,
+                     0.5));
 
     histograms.h_den_fake_chg_energy_candidate.push_back(
         ibook.book1D("den_fake_cand_vs_energy_" + charged[i], charged[i] + " candidates energy;E (GeV)", 50, 0, 500));
@@ -451,7 +464,7 @@ void TICLCandidateValidator::fillCandidateHistos(const edm::Event& event,
     histograms.h_candidate_raw_energy->Fill(cand.rawEnergy());
     histograms.h_candidate_regressed_energy->Fill(cand.energy());
     histograms.h_candidate_pT->Fill(cand.pt());
-    if (cand.timeError()>0)
+    if (cand.timeError() > 0)
       histograms.h_candidate_time->Fill(cand.time());
     histograms.h_candidate_charge->Fill(cand.charge());
     histograms.h_candidate_pdgId->Fill(cand.pdgId());
@@ -722,7 +735,7 @@ void TICLCandidateValidator::fillCandidateHistos(const edm::Event& event,
     histograms.h_chg_candidate_pdgId[index]->Fill(cand.pdgId());
     const auto& arr = cand.idProbabilities();
     histograms.h_chg_candidate_partType[index]->Fill(std::max_element(arr.begin(), arr.end()) - arr.begin());
-    if (cand.timeError()>0)
+    if (cand.timeError() > 0)
       histograms.h_chg_candidate_time[index]->Fill(cand.time());
 
     int32_t simCand_idx = -1;
@@ -806,7 +819,7 @@ void TICLCandidateValidator::fillCandidateHistos(const edm::Event& event,
       histograms.h_num_fake_chg_eta_candidate_tot[index]->Fill(cand.eta());
       histograms.h_num_fake_chg_phi_candidate_tot[index]->Fill(cand.phi());
     }
-    histograms.h_chg_candidate_timeRes[index]->Fill(cand.time()-simCand.time());
+    histograms.h_chg_candidate_timeRes[index]->Fill(cand.time() - simCand.time());
   }
 
   // loop on neutrals
@@ -840,7 +853,7 @@ void TICLCandidateValidator::fillCandidateHistos(const edm::Event& event,
     histograms.h_neut_candidate_pdgId[index]->Fill(cand.pdgId());
     const auto& arr = cand.idProbabilities();
     histograms.h_neut_candidate_partType[index]->Fill(std::max_element(arr.begin(), arr.end()) - arr.begin());
-    if (cand.timeError()>0)
+    if (cand.timeError() > 0)
       histograms.h_neut_candidate_time[index]->Fill(cand.time());
 
     int32_t simCand_idx = -1;
@@ -888,6 +901,6 @@ void TICLCandidateValidator::fillCandidateHistos(const edm::Event& event,
       histograms.h_num_fake_neut_phi_candidate_tot[index]->Fill(cand.phi());
     }
 
-    histograms.h_neut_candidate_timeRes[index]->Fill(cand.time()-simCand.time());
+    histograms.h_neut_candidate_timeRes[index]->Fill(cand.time() - simCand.time());
   }
 }
