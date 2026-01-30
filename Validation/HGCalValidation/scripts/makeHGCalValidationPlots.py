@@ -45,6 +45,12 @@ def main(opts):
     if opts.ticlv == 5:
         ticlVersion = 5
 
+    collections = [c.strip() for c in opts.collection.split(",")]
+    print(collections)
+    for coll in collections:
+        if coll not in collection_choices:
+            raise ValueError(f"Unknown collection '{coll}'. Valid options: {collection_choices}.")
+
     filenames = [(f, f.replace(".root", "")) for f in opts.files]
     sample = SimpleSample(opts.subdirprefix[0], opts.html_sample, filenames)
 
@@ -120,9 +126,10 @@ def main(opts):
 
     plotDict = {hitCalLabel:[plot_hitCal], hitValLabel:[plot_hitVal], layerClustersLabel:[plot_LC], trackstersLabel:[plot_Tst], trackstersWithEdgesLabel:[plot_TstEdges], simLabel:[plot_SC, plot_CP], candidatesLabel:[plotCand]}
 
-    if (opts.collection != allLabel):
-        for task in plotDict[opts.collection]:
-            task()
+    if (allLabel not in collections):
+        for coll in collections:
+            for task in plotDict[coll]:
+                task()
     else:
         for label in plotDict:
             if (label == trackstersLabel): continue # already run in trackstersWithEdges
@@ -157,8 +164,8 @@ if __name__ == "__main__":
                         help="Sample name for HTML page generation (default: CMSSW version)")
     parser.add_argument("--html-validation-name", type=str, default=["TICL Validation",""], nargs="+",
                         help="Validation name for HTML page generation (enters to <title> element) (default 'TICL Validation')")
-    parser.add_argument("--collection", choices=collection_choices, default=layerClustersLabel,
-                        help="Choose output plots collections among possible choices")
+    parser.add_argument("--collection", default=layerClustersLabel,
+                        help=f"Choose output plots collections among possible choices: {collection_choices}")
     parser.add_argument("--extended", action="store_true", default = False,
                         help="Include extended set of plots (e.g. bunch of distributions; default off)")
     parser.add_argument("--jobs", default=0, type=int,
