@@ -1833,22 +1833,31 @@ for ct in cand_type:
 
 #efficiency and fake
 _common_eff_fake = {"stat": False, "legend": False, "xbinlabelsize": 14, "xtitle": "Default", "xbinlabeloption": "d", "ymin": 0.0, "ymax": 1.1}
+
 _all_cand_eff_plots = []
 for ct in cand_type:
+    if ct in ["neutral_hadrons", "neutral_pions", "photons"]:
+        cut_title = {"pid": "pid", "energy": "pid and energy"}
+    else:
+        cut_title = {"track": "track", "pid": "track and pid", "energy": "track, pid and energy"}
     cand_eff_plots = []
     for var in ["pt", "energy", "eta", "phi"]:
         for cut in ["track", "pid", "energy"]:
             if cut=="track" and ct in ["neutral_hadrons", "neutral_pions", "photons"]: continue
-            cand_eff_plots.extend([Plot("eff_"+ct+"_"+cut+"_"+var, title=cut + " - efficiency for "+ct.replace("_", " ")+" vs "+var, ytitle="Efficiency", **_common_eff_fake)])
+            cand_eff_plots.extend([Plot("eff_"+ct+"_"+cut+"_"+var, title=cut_title[cut] + " - efficiency for "+ct.replace("_", " ")+" vs "+var, ytitle="Efficiency", **_common_eff_fake)])
     _all_cand_eff_plots.append(cand_eff_plots)
 
 _all_cand_effNum_plots = []
 for ct in cand_type:
+    if ct in ["neutral_hadrons", "neutral_pions", "photons"]:
+        cut_title = {"pid": "pid", "energy": "pid and energy"}
+    else:
+        cut_title = {"track": "track", "pid": "track and pid", "energy": "track, pid and energy"}
     cand_eff_plots = []
     for var in ["pt", "energy", "eta", "phi"]:
         for cut in ["track", "pid", "energy"]:
             if cut=="track" and ct in ["neutral_hadrons", "neutral_pions", "photons"]: continue
-            cand_eff_plots.extend([Plot("num_"+cut+"_cand_vs_"+var+"_"+ct, title=cut + " - number of efficient "+ct.replace("_", " ")+" vs "+var, ytitle="Efficient candidates", **_common)])
+            cand_eff_plots.extend([Plot("num_"+cut+"_cand_vs_"+var+"_"+ct, title=cut_title[cut] + " - number of efficient "+ct.replace("_", " ")+" vs "+var, ytitle="Efficient candidates", **_common)])
     _all_cand_effNum_plots.append(cand_eff_plots)
 
 _all_cand_fake_plots = []

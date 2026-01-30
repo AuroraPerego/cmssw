@@ -33,7 +33,7 @@ void TICLCandidateValidator::bookCandidatesHistos(DQMStore::IBooker& ibook,
   histograms.h_candidate_regressed_energy =
       ibook.book1D("Candidates regressed energy", "Candidates regressed energy;E (GeV)", 100, 0, 500);
   histograms.h_candidate_pT = ibook.book1D("Candidates pT", "Candidates pT;p_{T}", 100, 0, 200);
-  histograms.h_candidate_time = ibook.book1D("Candidates time", "Candidates time;time [ns]", 100, -1, 1);
+  histograms.h_candidate_time = ibook.book1D("Candidates time", "Candidates time;time_{vtx} [ns]", 100, -1, 1);
   histograms.h_candidate_charge = ibook.book1D("Candidates charge", "Candidates charge;Charge", 3, -1.5, 1.5);
   histograms.h_candidate_pdgId = ibook.book1D("Candidates PDG Id", "Candidates PDG ID", 100, -220, 220);
   histograms.h_candidate_partType = ibook.book1D("Candidates type", "Candidates type", 9, -0.5, 8.5);
@@ -58,10 +58,10 @@ void TICLCandidateValidator::bookCandidatesHistos(DQMStore::IBooker& ibook,
     histograms.h_neut_candidate_partType.push_back(
         ibook.book1D(neutrals[i] + " candidates type", neutrals[i] + " candidates type;type", 9, -0.5, 8.5));
     histograms.h_neut_candidate_time.push_back(
-        ibook.book1D(neutrals[i] + " candidates time", neutrals[i] + " candidates time;time [ns]", 100, -1, 1));
+        ibook.book1D(neutrals[i] + " candidates time", neutrals[i] + " candidates time;time_{vtx} [ns]", 100, -1, 1));
     histograms.h_neut_candidate_timeRes.push_back(
         ibook.book1D(neutrals[i] + " candidates time residuals",
-                     neutrals[i] + " candidates time residuals (reco-sim);time [ns]",
+                     neutrals[i] + " candidates time residuals (reco-sim);t_{reco}-t_{sim} [ns]",
                      100,
                      -1,
                      1));
@@ -218,13 +218,13 @@ void TICLCandidateValidator::bookCandidatesHistos(DQMStore::IBooker& ibook,
     histograms.h_chg_candidate_partType.push_back(
         ibook.book1D(charged[i] + " candidates type", charged[i] + " candidates type;type", 9, -0.5, 8.5));
     histograms.h_chg_candidate_time.push_back(
-        ibook.book1D(charged[i] + " candidates time", charged[i] + " candidates time;time [ns]", 100, -1, 1));
+        ibook.book1D(charged[i] + " candidates time", charged[i] + " candidates time;time_{vtx} [ns]", 100, -1, 1));
     histograms.h_chg_candidate_timeRes.push_back(
         ibook.book1D(charged[i] + " candidates time residuals",
-                     charged[i] + " candidates time residuals (reco-sim);time [ns]",
+                     charged[i] + " candidates time residuals (reco-sim);t_{reco}-t_{sim} [ns]",
                      100,
-                     -0.5,
-                     0.5));
+                     -0.3,
+                     0.3));
 
     histograms.h_den_fake_chg_energy_candidate.push_back(
         ibook.book1D("den_fake_cand_vs_energy_" + charged[i], charged[i] + " candidates energy;E (GeV)", 50, 0, 500));
