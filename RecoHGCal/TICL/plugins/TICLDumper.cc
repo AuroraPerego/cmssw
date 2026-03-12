@@ -161,6 +161,7 @@ public:
     trackster_tree_->Branch("sigmaPCA3", &trackster_sigmaPCA3);
     if (tracksterType_ != TracksterType::Trackster) {
       trackster_tree_->Branch("regressed_pt", &simtrackster_regressed_pt);
+      trackster_tree_->Branch("CPidx", &simtrackster_CPidx);
       trackster_tree_->Branch("pdgID", &simtrackster_pdgID);
       trackster_tree_->Branch("trackIdx", &simtrackster_trackIdxs);
       trackster_tree_->Branch("timeBoundary", &simtrackster_timeBoundary);
@@ -218,6 +219,7 @@ public:
     trackster_sigmaPCA3.clear();
 
     simtrackster_regressed_pt.clear();
+    simtrackster_CPidx.clear();
     simtrackster_pdgID.clear();
     simtrackster_trackIdxs.clear();
     simtrackster_timeBoundary.clear();
@@ -289,6 +291,15 @@ public:
       if (tracksterType_ != TracksterType::Trackster) {  // is simtrackster
         auto const& simclusters = *simClusters_h;
         auto const& caloparticles = *caloparticles_h;
+        std::map<uint, uint> SimClusterToCaloParticleMap;
+        for (const auto& cp : caloparticles) {
+          auto cpIndex = &cp - &caloparticles[0];
+          for (const auto& scRef : cp.simClusters()) {
+            auto const& sc = *(scRef);
+            auto const scIndex = &sc - &simclusters[0];
+            SimClusterToCaloParticleMap[scIndex] = cpIndex;
+          }
+        }
 
         simtrackster_timeBoundary.push_back(trackster_iterator->boundaryTime());
 
@@ -299,14 +310,19 @@ public:
            - a SimCluster (other cases)
         Thus trackster.seedIndex() can point to either CaloParticle or SimCluster collection (check seedID to differentiate)
         */
+
+        auto CPindex = 0;
         using CaloObjectVariant = std::variant<CaloParticle, SimCluster>;
         CaloObjectVariant caloObj;
         if (trackster_iterator->seedID() == caloparticles_h.id()) {
           caloObj = caloparticles[trackster_iterator->seedIndex()];
+          CPindex = trackster_iterator->seedIndex();
         } else {
           caloObj = simclusters[trackster_iterator->seedIndex()];
+          CPindex = SimClusterToCaloParticleMap[trackster_iterator->seedIndex()];
         }
 
+        simtrackster_CPidx.push_back(CPindex);
         simtrackster_pdgID.push_back(std::visit([](auto&& obj) { return obj.pdgId(); }, caloObj));
         auto const& simTrack = std::visit([](auto&& obj) { return obj.g4Tracks()[0]; }, caloObj);
         auto const& caloPt = std::visit([](auto&& obj) { return obj.pt(); }, caloObj);
@@ -466,6 +482,7 @@ private:
 
   // for simtrackster
   std::vector<float> simtrackster_regressed_pt;
+  std::vector<int> simtrackster_CPidx;
   std::vector<int> simtrackster_pdgID;
   std::vector<std::vector<int>> simtrackster_trackIdxs;
   std::vector<float> simtrackster_timeBoundary;
@@ -621,6 +638,7 @@ private:
   edm::ESGetToken<CaloGeometry, CaloGeometryRecord> caloGeometry_token_;
   const edm::EDGetTokenT<std::vector<ticl::Trackster>> simTracksters_SC_token_;  // needed for simticlcandidate
   const edm::EDGetTokenT<std::vector<TICLCandidate>> simTICLCandidate_token_;
+  const edm::EDGetTokenT<std::vector<std::vector<unsigned int>>> clue3DinTracksterLinksToken_;
 
   // associators
   const std::vector<edm::ParameterSet>
@@ -666,6 +684,7 @@ private:
   edm::EventID eventId_;
   unsigned int nclusters_;
 
+  std::vector<std::vector<unsigned int>> clue3DIndicesInTs;
   std::vector<std::vector<unsigned int>>
       superclustering_linkedResultTracksters;  // Map of indices from superclusteredTracksters collection back into ticlTrackstersCLUE3DEM collection
   // reco::SuperCluster dump
@@ -791,6 +810,8 @@ private:
   TTree* simTICLCandidate_tree;
   TTree* rechits_tree_;
   TTree* simhits_tree_;
+
+  unsigned int tsLinksPos;
 };
 
 void TICLDumper::clearVariables() {
@@ -800,6 +821,7 @@ void TICLDumper::clearVariables() {
   for (TracksterDumperHelper& tsDumper : tracksters_dumperHelpers_) {
     tsDumper.clearVariables();
   }
+  clue3DIndicesInTs.clear();
 
   superclustering_linkedResultTracksters.clear();
 
@@ -950,6 +972,8 @@ TICLDumper::TICLDumper(const edm::ParameterSet& ps)
           consumes<std::vector<ticl::Trackster>>(ps.getParameter<edm::InputTag>("simtrackstersSC"))),
       simTICLCandidate_token_(
           consumes<std::vector<TICLCandidate>>(ps.getParameter<edm::InputTag>("simTICLCandidates"))),
+      clue3DinTracksterLinksToken_(
+          consumes<std::vector<std::vector<unsigned int>>>(ps.getParameter<edm::InputTag>("clue3DInTracksterLinks"))),
       associations_parameterSets_(ps.getParameter<std::vector<edm::ParameterSet>>("associators")),
       // The DumperHelpers should not be moved after construction (needed by TTree branch pointers), so construct them all here
       associations_dumperHelpers_(associations_parameterSets_.size()),
@@ -1029,6 +1053,10 @@ void TICLDumper::beginJob() {
                             .c_str());
     tracksters_trees.push_back(tree);
     tracksters_dumperHelpers_[i].initTree(tree, &eventId_);
+    if (tracksterPset.getParameter<edm::InputTag>("inputTag").encode()=="ticlTracksterLinks") {
+      tree->Branch("clue3DIndicesInTs", &clue3DIndicesInTs);
+      tsLinksPos = i;
+    }
   }
   if (saveHits_) {
     rechits_tree_ = fs->make<TTree>("rechits", "HGCAL rechits");
@@ -1179,6 +1207,9 @@ void TICLDumper::analyze(const edm::Event& event, const edm::EventSetup& setup) 
 
   edm::Handle<std::vector<ticl::Trackster>> tracksters_in_candidate_handle;
   event.getByToken(tracksters_in_candidate_token_, tracksters_in_candidate_handle);
+
+  edm::Handle<std::vector<std::vector<unsigned int>>> clue3DInTracksterLinks_h;
+  event.getByToken(clue3DinTracksterLinksToken_, clue3DInTracksterLinks_h);
 
   //get all the layer clusters
   edm::Handle<std::vector<reco::CaloCluster>> layer_clusters_h;
@@ -1363,6 +1394,10 @@ void TICLDumper::analyze(const edm::Event& event, const edm::EventSetup& setup) 
     std::vector<ticl::Trackster> const& tracksters = event.get<std::vector<ticl::Trackster>>(tracksters_token_[i]);
     tracksters_dumperHelpers_[i].fillFromEvent(
         tracksters, clusters, layerClustersTimes, *detectorTools_, simclusters_h, caloparticles_h, tracks);
+    if (tsLinksPos==i) {
+      for (auto j = 0u; j < tracksters.size(); ++j)
+        clue3DIndicesInTs.push_back((*clue3DInTracksterLinks_h)[j]);
+    }
     tracksters_trees[i]->Fill();
   }
 
@@ -1620,6 +1655,7 @@ void TICLDumper::fillDescriptions(edm::ConfigurationDescriptions& descriptions) 
   desc.add<edm::InputTag>("simtrackstersSC", edm::InputTag("ticlSimTracksters"))
       ->setComment("SimTrackster from CaloParticle collection to use for simTICLcandidates");
   desc.add<edm::InputTag>("simTICLCandidates", edm::InputTag("ticlSimTracksters"));
+  desc.add<edm::InputTag>("clue3DInTracksterLinks", edm::InputTag("ticlTracksterLinks:linkedTracksterIdToInputTracksterId"));
   desc.add<std::vector<edm::InputTag>>("label_rechits",
                                        {edm::InputTag("HGCalRecHit", "HGCEERecHits"),
                                         edm::InputTag("HGCalRecHit", "HGCHEFRecHits"),
