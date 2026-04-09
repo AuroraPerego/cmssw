@@ -9,8 +9,8 @@ using Vector = ticl::Trackster::Vector;
 
 GeneralInterpretationAlgo::~GeneralInterpretationAlgo() {}
 
-GeneralInterpretationAlgo::GeneralInterpretationAlgo(const edm::ParameterSet &conf, edm::ConsumesCollector cc)
-    : TICLInterpretationAlgoBase(conf, cc),
+GeneralInterpretationAlgo::GeneralInterpretationAlgo(const edm::ParameterSet &conf, TICLONNXGlobalCache const* cache)
+    : TICLInterpretationAlgoBase(conf, cache),
       del_tk_ts_layer1_(conf.getParameter<double>("delta_tk_ts_layer1")),
       del_tk_ts_int_(conf.getParameter<double>("delta_tk_ts_interface")),
       timing_quality_threshold_(conf.getParameter<double>("timing_quality_threshold")) {}

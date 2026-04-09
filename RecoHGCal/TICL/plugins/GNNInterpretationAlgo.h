@@ -36,7 +36,7 @@ namespace ticl {
 
   class GNNInterpretationAlgo : public TICLInterpretationAlgoBase<reco::Track> {
   public:
-    GNNInterpretationAlgo(const edm::ParameterSet &conf, edm::ConsumesCollector iC);
+    GNNInterpretationAlgo(const edm::ParameterSet &conf, TICLONNXGlobalCache const* cache);
 
     ~GNNInterpretationAlgo() override;
 
@@ -54,12 +54,10 @@ namespace ticl {
 
   private:
     void buildLayers();
-    const std::unique_ptr<cms::Ort::ONNXRuntime> onnxLinkingRuntimeFirstDisk_;
-    const cms::Ort::ONNXRuntime *onnxLinkingSessionFirstDisk_;
-    const std::unique_ptr<cms::Ort::ONNXRuntime> onnxLinkingRuntimeInterfaceDisk_;
-    const cms::Ort::ONNXRuntime *onnxLinkingSessionInterfaceDisk_;
     const std::vector<std::string> inputNames_;
     const std::vector<std::string> output_;
+    const cms::Ort::ONNXRuntime *onnxLinkingSessionFirstDisk_;
+    const cms::Ort::ONNXRuntime *onnxLinkingSessionInterfaceDisk_;
 
     Vector propagateTrackster(const Trackster &t,
                               const unsigned idx,

@@ -209,7 +209,7 @@ TICLCandidateProducer::TICLCandidateProducer(const edm::ParameterSet &ps, const 
   auto interpretationPSet = ps.getParameter<edm::ParameterSet>("interpretationDescPSet");
   auto algoType = interpretationPSet.getParameter<std::string>("type");
   generalInterpretationAlgo_ =
-      TICLGeneralInterpretationPluginFactory::get()->create(algoType, interpretationPSet, consumesCollector());
+      TICLGeneralInterpretationPluginFactory::get()->create(algoType, interpretationPSet, cache);
 }
 
 std::unique_ptr<ticl::TICLONNXGlobalCache> TICLCandidateProducer::initializeGlobalCache(

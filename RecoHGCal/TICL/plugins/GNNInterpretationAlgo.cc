@@ -12,18 +12,19 @@ using Vector = ticl::Trackster::Vector;
 
 GNNInterpretationAlgo::~GNNInterpretationAlgo() {}
 
-GNNInterpretationAlgo::GNNInterpretationAlgo(const edm::ParameterSet& conf, edm::ConsumesCollector cc)
-    : TICLInterpretationAlgoBase(conf, cc),
-      onnxLinkingRuntimeFirstDisk_(std::make_unique<cms::Ort::ONNXRuntime>(
-          conf.getParameter<edm::FileInPath>("onnxTrkLinkingModelFirstDisk").fullPath().c_str())),
-      onnxLinkingRuntimeInterfaceDisk_(std::make_unique<cms::Ort::ONNXRuntime>(
-          conf.getParameter<edm::FileInPath>("onnxTrkLinkingModelInterfaceDisk").fullPath().c_str())),
+GNNInterpretationAlgo::GNNInterpretationAlgo(const edm::ParameterSet& conf, TICLONNXGlobalCache const* cache)
+    : TICLInterpretationAlgoBase(conf, cache),
       inputNames_(conf.getParameter<std::vector<std::string>>("inputNames")),
       output_(conf.getParameter<std::vector<std::string>>("output")),
       del_tk_ts_(conf.getParameter<double>("delta_tk_ts")),
       threshold_(conf.getParameter<double>("thr_gnn")) {
-  onnxLinkingSessionFirstDisk_ = onnxLinkingRuntimeFirstDisk_.get();
-  onnxLinkingSessionInterfaceDisk_ = onnxLinkingRuntimeInterfaceDisk_.get();
+  const std::string firstDiskModel = conf.getParameter<std::string>("onnxTrkLinkingModelFirstDisk");
+  const std::string interfaceDiskModel = conf.getParameter<std::string>("onnxTrkLinkingModelInterfaceDisk");
+
+  if (cache_ != nullptr) {
+    onnxLinkingSessionFirstDisk_ = cache_->getByModelPathString(firstDiskModel);
+    onnxLinkingSessionInterfaceDisk_ = cache_->getByModelPathString(interfaceDiskModel);
+  }
 }
 
 // Initialization
