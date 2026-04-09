@@ -19,9 +19,8 @@ using Vector = ticl::Trackster::Vector;
 // ---------------------------------------------------------------------------
 // Constructor
 // ---------------------------------------------------------------------------
-MCFInterpretationAlgo::MCFInterpretationAlgo(const edm::ParameterSet& conf,
-                                             edm::ConsumesCollector cc)
-    : TICLInterpretationAlgoBase<reco::Track>(conf, cc),
+MCFInterpretationAlgo::MCFInterpretationAlgo(const edm::ParameterSet& conf, TICLONNXGlobalCache const* cache)
+    : TICLInterpretationAlgoBase<reco::Track>(conf, cache),
       drCut_(conf.getParameter<double>("drCut")),
       tsTsScoreShift_(conf.getParameter<double>("tsTsScoreShift")),
       trackTsScoreShift_(conf.getParameter<double>("trackTsScoreShift")),

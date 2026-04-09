@@ -15,7 +15,7 @@ namespace ticl {
 
 class MCFInterpretationAlgo : public TICLInterpretationAlgoBase<reco::Track> {
 public:
-  MCFInterpretationAlgo(const edm::ParameterSet& conf, edm::ConsumesCollector cc);
+  MCFInterpretationAlgo(const edm::ParameterSet& conf, TICLONNXGlobalCache const* cache);
   ~MCFInterpretationAlgo() override = default;
 
   void initialize(const HGCalDDDConstants* hgcons,

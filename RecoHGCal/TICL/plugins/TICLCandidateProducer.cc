@@ -210,12 +210,12 @@ TICLCandidateProducer::TICLCandidateProducer(const edm::ParameterSet &ps, const 
   auto interpretationPSet = ps.getParameter<edm::ParameterSet>("interpretationDescPSet");
   auto algoType = interpretationPSet.getParameter<std::string>("type");
   generalInterpretationAlgo_ =
-      TICLGeneralInterpretationPluginFactory::get()->create(algoType, interpretationPSet, consumesCollector());
+      TICLGeneralInterpretationPluginFactory::get()->create(algoType, interpretationPSet, cache);
 
   auto muonInterpretationPSet = ps.getParameter<edm::ParameterSet>("muonInterpretationDescPSet");
   auto muonAlgoType = muonInterpretationPSet.getParameter<std::string>("type");
   muonInterpretationAlgo_ =
-      TICLGeneralInterpretationPluginFactory::get()->create(muonAlgoType, muonInterpretationPSet, consumesCollector());
+      TICLGeneralInterpretationPluginFactory::get()->create(muonAlgoType, muonInterpretationPSet, cache);
 }
 
 std::unique_ptr<ticl::TICLONNXGlobalCache> TICLCandidateProducer::initializeGlobalCache(
