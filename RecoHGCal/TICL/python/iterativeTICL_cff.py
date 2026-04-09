@@ -105,16 +105,19 @@ ticlCandidate = _ticlCandidateProducer.clone(
         doRegression=cms.int32(1),
         type=cms.string('TracksterInferenceByPFN')
     ),
-#    interpretationDescPSet = cms.PSet(
-#      drCut = cms.double(0.035713),
-#      tsTsScoreShift = cms.double(0.264567),
-#      trackTsScoreShift = cms.double(1.194681),
-#      tsTsScoreWeight = cms.double(14.831249),
-#      trackTsScoreWeight = cms.double(14.151130),
-#      neutralPenalty = cms.double(10.215395),
-#      algo_verbosity = cms.int32(0),
-#      type = cms.string('MCF')
-#    )
+    # cp from pu patatune
+    interpretationDescPSet = cms.PSet(
+      drCut = cms.double(0.027951),
+      tsTsScoreShift = cms.double(988.704927),
+      trackTsScoreShift = cms.double(6.115820),
+      tsTsScoreWeight = cms.double(0.001),
+      trackTsScoreWeight = cms.double(996.945005),
+      neutralPenalty = cms.int32(-10000),
+      tracksterInit = cms.int32(-939),
+      trackInit = cms.int32(10000),
+      algo_verbosity = cms.int32(0),
+      type = cms.string('MCF')
+    )
 )
 
 ticlv5_TrackLinkingGNN.toModify(ticlCandidate,
