@@ -6,10 +6,12 @@
 #include "GeneralInterpretationAlgo.h"
 #include "GNNInterpretationAlgo.h"
 #include "MCFInterpretationAlgo.h"
+#include "MCFwithNNInterpretationAlgo.h"
 
 EDM_REGISTER_VALIDATED_PLUGINFACTORY(TICLGeneralInterpretationPluginFactory, "TICLGeneralInterpretationPluginFactory");
 EDM_REGISTER_VALIDATED_PLUGINFACTORY(TICLEGammaInterpretationPluginFactory, "TICLEGammaInterpretationPluginFactory");
 DEFINE_EDM_VALIDATED_PLUGIN(TICLGeneralInterpretationPluginFactory, ticl::GeneralInterpretationAlgo, "General");
 DEFINE_EDM_VALIDATED_PLUGIN(TICLGeneralInterpretationPluginFactory, ticl::GNNInterpretationAlgo, "GNNLink");
 DEFINE_EDM_VALIDATED_PLUGIN(TICLGeneralInterpretationPluginFactory, ticl::MCFInterpretationAlgo, "MCF");
+DEFINE_EDM_VALIDATED_PLUGIN(TICLGeneralInterpretationPluginFactory, ticl::MCFwithNNInterpretationAlgo, "MCFwithNN");
 // DEFINE_EDM_VALIDATED_PLUGIN(TICLEGammaInterpretationPluginFactory, ticl::EGammaInterpretation, "EGamma");
