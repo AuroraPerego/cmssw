@@ -37,7 +37,9 @@ private:
   float trackTsScoreShift_;
   float tsTsScoreWeight_;
   float trackTsScoreWeight_;
-  float neutralPenalty_;
+  int neutralPenalty_;
+  int tracksterInit_;
+  int trackInit_;
 
   const HGCalDDDConstants* hgcons_ = nullptr;
   hgcal::RecHitTools rhtools_;

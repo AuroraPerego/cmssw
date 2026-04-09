@@ -26,7 +26,9 @@ MCFInterpretationAlgo::MCFInterpretationAlgo(const edm::ParameterSet& conf, TICL
       trackTsScoreShift_(conf.getParameter<double>("trackTsScoreShift")),
       tsTsScoreWeight_(conf.getParameter<double>("tsTsScoreWeight")),
       trackTsScoreWeight_(conf.getParameter<double>("trackTsScoreWeight")),
-      neutralPenalty_(conf.getParameter<double>("neutralPenalty")) {}
+      neutralPenalty_(conf.getParameter<int>("neutralPenalty")),
+      tracksterInit_(conf.getParameter<int>("tracksterInit")),
+      trackInit_(conf.getParameter<int>("trackInit")) {}
 
 // ---------------------------------------------------------------------------
 // initialize + buildLayers
@@ -222,7 +224,7 @@ void MCFInterpretationAlgo::makeCandidates(const Inputs& input,
         if (localJ < 0) continue;
         float score = computeScore(trk.pt, trk.eta, trk.phi, trk.p,
                                    ts[localJ].eta, ts[localJ].phi, ts[localJ].energy);
-        int64_t cost = static_cast<int64_t>((score - trackTsScoreShift_) * trackTsScoreWeight_ * 1000);
+        int64_t cost = static_cast<int64_t>((score - trackTsScoreShift_) * trackTsScoreWeight_);
         trackTsEdges.push_back({ti, localJ, cost});
       }
     }
@@ -239,7 +241,7 @@ void MCFInterpretationAlgo::makeCandidates(const Inputs& input,
         float dr   = std::sqrt(deta*deta + dphi*dphi);
         float en   = std::max(ts[i].energy, ts[localJ].energy);
         float eta  = (ts[i].energy >= ts[localJ].energy) ? ts[i].eta : ts[localJ].eta;
-        int64_t cost = static_cast<int64_t>((dr / normTracksters(en, eta) - tsTsScoreShift_) * tsTsScoreWeight_ * 1000);
+        int64_t cost = static_cast<int64_t>((dr / normTracksters(en, eta) - tsTsScoreShift_) * tsTsScoreWeight_);
         tsTsEdges.push_back({i, localJ, cost});
       }
     }
@@ -262,34 +264,33 @@ void MCFInterpretationAlgo::makeCandidates(const Inputs& input,
 
     MinCostFlow mcf(N_NODES);
 
-    // SRC → Track (large capacity, negative cost to incentivise track usage)
+    // SRC -> Track (large capacity, negative cost to incentivise track usage)
     for (int ti = 0; ti < nSideTracks; ++ti)
-      mcf.addArc(SRC, TRACK_OFFSET + ti, nTS, -100000);  // -100 * 1000 scaling
+      mcf.addArc(SRC, TRACK_OFFSET + ti, nTS, tracksterInit_);  // -100 * 1000 scaling
 
-    // SRC → TS_IN (neutral path, zero cost)
+    // SRC -> TS_IN (neutral path, zero cost)
     for (int j = 0; j < nTS; ++j)
-      mcf.addArc(SRC, TS_IN_OFFSET + j, 1, 0);
+      mcf.addArc(SRC, TS_IN_OFFSET + j, 1, trackInit_);
 
-    // Track → TS_IN
+    // Track -> TS_IN
     for (const auto& e : trackTsEdges)
       mcf.addArc(TRACK_OFFSET + e.u, TS_IN_OFFSET + e.v, 1, e.cost);
 
-    // TS_IN → TS_OUT (capacity=1 enforces exclusivity)
+    // TS_IN -> TS_OUT (capacity=1 enforces exclusivity)
     for (int j = 0; j < nTS; ++j)
       mcf.addArc(TS_IN_OFFSET + j, TS_OUT_OFFSET + j, 1, 0);
 
-    // TS_OUT → TS_IN (TS→TS chaining)
+    // TS_OUT -> TS_IN (TS->TS chaining)
     for (const auto& e : tsTsEdges)
       mcf.addArc(TS_OUT_OFFSET + e.u, TS_IN_OFFSET + e.v, 1, e.cost);
 
-    // TS_OUT → SNK
-    int64_t neutralCost = static_cast<int64_t>(neutralPenalty_ * 1000);
+    // TS_OUT -> SNK
     for (int j = 0; j < nTS; ++j)
-      mcf.addArc(TS_OUT_OFFSET + j, SNK, 1, neutralCost);
+      mcf.addArc(TS_OUT_OFFSET + j, SNK, 1, neutralPenalty_);
 
-    // Track → SNK (track-only candidates)
+    // Track -> SNK (track-only candidates)
     for (int ti = 0; ti < nSideTracks; ++ti)
-      mcf.addArc(TRACK_OFFSET + ti, SNK, 1, neutralCost);
+      mcf.addArc(TRACK_OFFSET + ti, SNK, 1, neutralPenalty_);
 
     // Supplies: push exactly nTS units through the network
     mcf.setNodeSupply(SRC,  nTS);
@@ -509,12 +510,14 @@ for (int startNode : usedOut[SRC]) {
 // fillPSetDescription
 // ---------------------------------------------------------------------------
 void MCFInterpretationAlgo::fillPSetDescription(edm::ParameterSetDescription& desc) {
-  desc.add<double>("drCut", 0.02);                // max dR for graph edges
-  desc.add<double>("tsTsScoreShift", 1.0);        // shift applied to TS-TS edge cost
-  desc.add<double>("trackTsScoreShift", 1.0);     // shift applied to track-TS edge cost
-  desc.add<double>("tsTsScoreWeight", 1.0);       // scale for TS-TS edge cost
-  desc.add<double>("trackTsScoreWeight", 1.0);    // scale for track-TS edge cost
-  desc.add<double>("neutralPenalty", 1.0);        // cost for unlinked (neutral) flow
+  desc.add<double>("drCut", 0.02);              // max dR for graph edges
+  desc.add<double>("tsTsScoreShift", 1.0);      // shift applied to TS-TS edge cost
+  desc.add<double>("trackTsScoreShift", 1.0);   // shift applied to track-TS edge cost
+  desc.add<double>("tsTsScoreWeight", 1.0);     // scale for TS-TS edge cost
+  desc.add<double>("trackTsScoreWeight", 1.0);  // scale for track-TS edge cost
+  desc.add<int>("neutralPenalty", 1);           // cost for unlinked (neutral) flow
+  desc.add<int>("tracksterInit", 0);            // cost to start a neutral
+  desc.add<int>("trackInit", 0);                // cost to start a charged
   TICLInterpretationAlgoBase<reco::Track>::fillPSetDescription(desc);
 }
 
