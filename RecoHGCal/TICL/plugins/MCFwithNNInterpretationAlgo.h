@@ -15,8 +15,7 @@ namespace ticl {
 
   class MCFwithNNInterpretationAlgo : public TICLInterpretationAlgoBase<reco::Track> {
   public:
-    MCFwithNNInterpretationAlgo(const edm::ParameterSet &conf, TICLONNXGlobalCache const *cache);
-    ~MCFwithNNInterpretationAlgo() override = default;
+    explicit MCFwithNNInterpretationAlgo(const edm::ParameterSet &conf, TICLONNXGlobalCache const *cache);
 
     void initialize(const HGCalDDDConstants *hgcons,
                     const hgcal::RecHitTools rhtools,
@@ -41,8 +40,10 @@ namespace ticl {
     int tracksterInit_;
     int trackInit_;
 
-    const cms::Ort::ONNXRuntime *onnxSessionTracks_;
-    const cms::Ort::ONNXRuntime *onnxSessionTracksters_;
+    cms::Ort::ONNXRuntime const* onnxSessionTracks_ = nullptr;
+    cms::Ort::ONNXRuntime const* onnxSessionTracksters_ = nullptr;
+    const std::vector<std::string> inputNames_;
+    const std::vector<std::string> outputNames_;
 
     const HGCalDDDConstants *hgcons_ = nullptr;
     hgcal::RecHitTools rhtools_;

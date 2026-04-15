@@ -103,18 +103,35 @@ ticlCandidate = _ticlCandidateProducer.clone(
         doRegression=cms.int32(1),
         type=cms.string('TracksterInferenceByPFN')
     ),
+#    # cp from pu patatune
+#    interpretationDescPSet = cms.PSet(
+#      drCut = cms.double(0.027951),
+#      tsTsScoreShift = cms.double(988.704927),
+#      trackTsScoreShift = cms.double(6.115820),
+#      tsTsScoreWeight = cms.double(0.001),
+#      trackTsScoreWeight = cms.double(996.945005),
+#      neutralPenalty = cms.int32(-10000),
+#      tracksterInit = cms.int32(-939),
+#      trackInit = cms.int32(10000),
+#      algo_verbosity = cms.int32(0),
+#      #onnxTrackModel = cms.string('RecoHGCal/TICL/data/ticlv5/onnx_models/MCF/trk_ts_model_CPfromPU.onnx'),
+#      #onnxTracksterModel = cms.string('RecoHGCal/TICL/data/ticlv5/onnx_models/MCF/ts_ts_model_CPfromPU.onnx'),
+#      type = cms.string('MCF')
+#    )
     # cp from pu patatune
     interpretationDescPSet = cms.PSet(
-      drCut = cms.double(0.027951),
-      tsTsScoreShift = cms.double(988.704927),
-      trackTsScoreShift = cms.double(6.115820),
-      tsTsScoreWeight = cms.double(0.001),
-      trackTsScoreWeight = cms.double(996.945005),
-      neutralPenalty = cms.int32(-10000),
-      tracksterInit = cms.int32(-939),
-      trackInit = cms.int32(10000),
+      drCut = cms.double(0.034843),
+      tsTsScoreShift = cms.double(-420.659865),
+      trackTsScoreShift = cms.double(708.942107),
+      tsTsScoreWeight = cms.double(185.238720),
+      trackTsScoreWeight = cms.double(634.064931),
+      neutralPenalty = cms.int32(10000),
+      tracksterInit = cms.int32(6704),
+      trackInit = cms.int32(3562),
       algo_verbosity = cms.int32(0),
-      type = cms.string('MCF')
+      onnxTrackModel = cms.string('RecoHGCal/TICL/data/ticlv5/onnx_models/MCF/trk_ts_model_CPfromPU.onnx'),
+      onnxTracksterModel = cms.string('RecoHGCal/TICL/data/ticlv5/onnx_models/MCF/ts_ts_model_CPfromPU.onnx'),
+      type = cms.string('MCFwithNN')
     )
 )
 

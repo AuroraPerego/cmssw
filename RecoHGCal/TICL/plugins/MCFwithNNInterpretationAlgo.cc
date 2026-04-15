@@ -29,7 +29,9 @@ MCFwithNNInterpretationAlgo::MCFwithNNInterpretationAlgo(const edm::ParameterSet
       trackTsScoreWeight_(conf.getParameter<double>("trackTsScoreWeight")),
       neutralPenalty_(conf.getParameter<int>("neutralPenalty")),
       tracksterInit_(conf.getParameter<int>("tracksterInit")),
-      trackInit_(conf.getParameter<int>("trackInit")) {
+      trackInit_(conf.getParameter<int>("trackInit")),
+      inputNames_({"input"}),
+      outputNames_({"score"}) {
   const std::string trackModel = conf.getParameter<std::string>("onnxTrackModel");
   const std::string tracksterModel = conf.getParameter<std::string>("onnxTracksterModel");
 
@@ -37,6 +39,10 @@ MCFwithNNInterpretationAlgo::MCFwithNNInterpretationAlgo(const edm::ParameterSet
     onnxSessionTracks_ = cache_->getByModelPathString(trackModel);
     onnxSessionTracksters_ = cache_->getByModelPathString(tracksterModel);
   }
+  if (onnxSessionTracks_==nullptr)
+	  std::cout << "ERROR onnxSessionTracks_ is nullptr!!!\n" ;
+  if (onnxSessionTracksters_==nullptr)
+	  std::cout << "ERROR onnxSessionTracksters_ is nullptr!!!\n" ;
 }
 
 // ---------------------------------------------------------------------------
@@ -398,13 +404,13 @@ void MCFwithNNInterpretationAlgo::makeCandidates(const Inputs& input,
     if (nTrkTsEdges > 0) {
       // Shape: [nEdges, 18]
       onnxSessionTracks_->runInto(
-          {"input"}, trkTsFeatsInput, {{static_cast<int64_t>(nTrkTsEdges), TRACK_TS_NFEAT}}, {"score"}, trkTsScores);
+          inputNames_, trkTsFeatsInput, {{static_cast<int64_t>(nTrkTsEdges), TRACK_TS_NFEAT}}, outputNames_, trkTsScores);
     }
 
     if (nTsTsEdges > 0) {
       // Shape: [nEdges, 21]
       onnxSessionTracksters_->runInto(
-          {"input"}, tsTsFeatsInput, {{static_cast<int64_t>(nTsTsEdges), TS_TS_NFEAT}}, {"score"}, tsTsScores);
+          inputNames_, tsTsFeatsInput, {{static_cast<int64_t>(nTsTsEdges), TS_TS_NFEAT}}, outputNames_, tsTsScores);
     }
 
     trackTsEdges.reserve(nTrkTsEdges);
