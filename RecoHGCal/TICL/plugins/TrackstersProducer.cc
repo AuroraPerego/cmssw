@@ -17,9 +17,9 @@
 #include "FWCore/ParameterSet/interface/PluginDescription.h"
 
 #include "DataFormats/CaloRecHit/interface/CaloCluster.h"
-#include "DataFormats/HGCalReco/interface/TICLLayerTile.h"
-#include "DataFormats/HGCalReco/interface/TICLSeedingRegion.h"
-#include "DataFormats/HGCalReco/interface/Trackster.h"
+#include "DataFormats/TICLReco/interface/TICLLayerTile.h"
+#include "DataFormats/TICLReco/interface/TICLSeedingRegion.h"
+#include "DataFormats/TICLReco/interface/Trackster.h"
 
 #include "RecoHGCal/TICL/interface/TICLONNXGlobalCache.h"
 #include "RecoHGCal/TICL/interface/TracksterInferenceAlgoBase.h"
