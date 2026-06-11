@@ -14,7 +14,7 @@
 #ifndef __RecoHGCal_TICL_SuperclusteringDNNInputs_H__
 #define __RecoHGCal_TICL_SuperclusteringDNNInputs_H__
 
-#include "DataFormats/HGCalReco/interface/TracksterFwd.h"
+#include "DataFormats/TICLReco/interface/TracksterFwd.h"
 #include <vector>
 #include <string>
 #include <memory>
