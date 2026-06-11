@@ -9,7 +9,7 @@ print("Geom file Name: ", geomFile)
 print("Global Tag Name: ", GLOBAL_TAG)
 print("Era Name:        ", ERA)
 
-process = cms.Process('testHGCalRecoLocal',ERA)
+process = cms.Process('testTICLRecoLocal',ERA)
 
 # import of standard configurations
 process.load('Configuration.StandardSequences.Services_cff')
