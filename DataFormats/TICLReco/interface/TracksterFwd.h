@@ -1,5 +1,5 @@
-#ifndef DataFormats_HGCalReco_TracksterFwd_h
-#define DataFormats_HGCalReco_TracksterFwd_h
+#ifndef DataFormats_TICLReco_TracksterFwd_h
+#define DataFormats_TICLReco_TracksterFwd_h
 
 namespace ticl {
   namespace io_v1 {

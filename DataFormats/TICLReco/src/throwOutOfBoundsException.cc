@@ -1,4 +1,4 @@
-#include "DataFormats/HGCalReco/interface/throwOutOfBoundsException.h"
+#include "DataFormats/TICLReco/interface/throwOutOfBoundsException.h"
 #include "FWCore/Utilities/interface/Exception.h"
 
 namespace ticllayer {
