@@ -1,0 +1,21 @@
+<use name="DataFormats/Candidate"/>
+<use name="DataFormats/CaloRecHit"/>
+<use name="DataFormats/Math"/>
+<use name="DataFormats/TICLReco"/>
+<use name="FWCore/Framework"/>
+<use name="FWCore/MessageLogger"/>
+<use name="FWCore/ParameterSet"/>
+<use name="FWCore/PluginManager"/>
+<use name="FWCore/Utilities"/>
+<use name="Geometry/CaloGeometry"/>
+<use name="Geometry/Records"/>
+<use name="RecoLocalCalo/HGCalRecAlgos"/>
+<use name="RecoTICL/PatternRecognition"/>
+<use name="RecoTICL/Utilities"/>
+<use name="fastjet"/>
+<library file="*.cc" name="RecoTICLPatternRecognitionPlugins">
+  <flags EDM_PLUGIN="1"/>
+</library>
+
+
+

@@ -2,9 +2,9 @@
 // Date: 11/2018
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "DataFormats/TICLReco/interface/Common.h"
-#include "PatternRecognitionbyCA.h"
-#include "HGCDoublet.h"
-#include "HGCGraph.h"
+#include "RecoTICL/PatternRecognition/plugins/PatternRecognitionbyCA.h"
+#include "RecoTICL/PatternRecognition/interface/HGCDoublet.h"
+#include "RecoTICL/PatternRecognition/interface/HGCGraph.h"
 #include "DataFormats/Common/interface/ValueMap.h"
 #include "DataFormats/Math/interface/deltaR.h"
 

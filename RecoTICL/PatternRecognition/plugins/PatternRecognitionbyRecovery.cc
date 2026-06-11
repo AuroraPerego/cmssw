@@ -11,7 +11,7 @@
 #include "Geometry/CaloGeometry/interface/CaloGeometry.h"
 #include "Geometry/Records/interface/CaloGeometryRecord.h"
 #include "FWCore/Framework/interface/EventSetup.h"
-#include "TrackstersPCA.h"
+#include "RecoTICL/PatternRecognition/interface/TrackstersPCA.h"
 
 using namespace ticl;
 

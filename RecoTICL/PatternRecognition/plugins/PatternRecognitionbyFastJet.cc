@@ -15,7 +15,7 @@
 #include "FWCore/Utilities/interface/Exception.h"
 #include "PatternRecognitionbyFastJet.h"
 
-#include "TrackstersPCA.h"
+#include "RecoTICL/PatternRecognition/interface/TrackstersPCA.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 
 #include "fastjet/ClusterSequence.hh"

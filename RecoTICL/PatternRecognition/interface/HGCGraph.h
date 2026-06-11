@@ -1,14 +1,14 @@
 // Author: Felice Pantaleo - felice.pantaleo@cern.ch
 // Date: 11/2018
 
-#ifndef __RecoHGCal_TICL_HGCGraph_H__
-#define __RecoHGCal_TICL_HGCGraph_H__
+#ifndef __RecoTICL_PatternRecognition_HGCGraph_H__
+#define __RecoTICL_PatternRecognition_HGCGraph_H__
 
 #include <vector>
 
 #include "DataFormats/TICLReco/interface/TICLLayerTile.h"
 #include "DataFormats/TICLReco/interface/TICLSeedingRegion.h"
-#include "HGCDoublet.h"
+#include "RecoTICL/PatternRecognition/interface/HGCDoublet.h"
 
 template <typename TILES>
 class HGCGraphT {

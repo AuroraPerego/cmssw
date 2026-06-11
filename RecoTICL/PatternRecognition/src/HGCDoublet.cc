@@ -1,4 +1,4 @@
-#include "HGCDoublet.h"
+#include "RecoTICL/PatternRecognition/interface/HGCDoublet.h"
 
 bool HGCDoublet::checkCompatibilityAndTag(std::vector<HGCDoublet> &allDoublets,
                                           const std::vector<int> &innerDoublets,

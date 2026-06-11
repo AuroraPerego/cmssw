@@ -1,13 +1,13 @@
 // Author: Felice Pantaleo,Marco Rovere - felice.pantaleo@cern.ch, marco.rovere@cern.ch
 // Date: 09/2018
 
-#ifndef __RecoHGCal_TICL_PRbyCA_H__
-#define __RecoHGCal_TICL_PRbyCA_H__
+#ifndef __RecoTICL_PatternRecognition_PRbyCA_H__
+#define __RecoTICL_PatternRecognition_PRbyCA_H__
 #include <memory>  // unique_ptr
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
-#include "RecoHGCal/TICL/interface/PatternRecognitionAlgoBase.h"
+#include "RecoTICL/PatternRecognition/interface/PatternRecognitionAlgoBase.h"
 #include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"
-#include "HGCGraph.h"
+#include "RecoTICL/PatternRecognition/interface/HGCGraph.h"
 
 namespace ticl {
   template <typename TILES>

@@ -21,10 +21,10 @@
 #include "DataFormats/TICLReco/interface/TICLSeedingRegion.h"
 #include "DataFormats/TICLReco/interface/Trackster.h"
 
-#include "RecoHGCal/TICL/interface/TICLONNXGlobalCache.h"
-#include "RecoHGCal/TICL/interface/TracksterInferenceAlgoBase.h"
-#include "RecoHGCal/TICL/interface/TracksterInferenceAlgoFactory.h"
-#include "RecoHGCal/TICL/plugins/PatternRecognitionPluginFactory.h"
+#include "RecoTICL/Utilities/interface/TICLONNXGlobalCache.h"
+#include "RecoTICL/PatternRecognition/interface/TracksterInferenceAlgoBase.h"
+#include "RecoTICL/PatternRecognition/interface/TracksterInferenceAlgoFactory.h"
+#include "RecoTICL/PatternRecognition/plugins/PatternRecognitionPluginFactory.h"
 
 #include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"
 

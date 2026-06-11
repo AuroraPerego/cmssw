@@ -8,7 +8,7 @@
 #include "FWCore/Utilities/interface/Exception.h"
 #include "PatternRecognitionbyCA.h"
 
-#include "TrackstersPCA.h"
+#include "RecoTICL/PatternRecognition/interface/TrackstersPCA.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 
 using namespace ticl;

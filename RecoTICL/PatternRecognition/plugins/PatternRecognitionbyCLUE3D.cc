@@ -10,7 +10,7 @@
 #include "FWCore/Utilities/interface/Exception.h"
 #include "PatternRecognitionbyCLUE3D.h"
 
-#include "TrackstersPCA.h"
+#include "RecoTICL/PatternRecognition/interface/TrackstersPCA.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 
 using namespace ticl;

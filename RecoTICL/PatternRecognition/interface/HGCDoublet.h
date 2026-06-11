@@ -1,8 +1,8 @@
 // Author: Felice Pantaleo,Marco Rovere - felice.pantaleo@cern.ch, marco.rovere@cern.ch
 // Date: 11/2018
 
-#ifndef __RecoHGCal_TICL_HGCDoublet_H__
-#define __RecoHGCal_TICL_HGCDoublet_H__
+#ifndef __RecoTICL_PatternRecognition_HGCDoublet_H__
+#define __RecoTICL_PatternRecognition_HGCDoublet_H__
 
 #include <cmath>
 #include <vector>

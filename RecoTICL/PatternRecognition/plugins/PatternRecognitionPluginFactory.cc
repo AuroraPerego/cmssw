@@ -1,4 +1,4 @@
-#include "RecoHGCal/TICL/plugins/PatternRecognitionPluginFactory.h"
+#include "RecoTICL/PatternRecognition/plugins/PatternRecognitionPluginFactory.h"
 #include "PatternRecognitionbyCA.h"
 #include "PatternRecognitionbyCLUE3D.h"
 #include "PatternRecognitionbyFastJet.h"

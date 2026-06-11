@@ -1,0 +1,10 @@
+<use name="DataFormats/Common"/>
+<use name="DataFormats/Math"/>
+<use name="DataFormats/TICLReco"/>
+<use name="FWCore/MessageLogger"/>
+<use name="RecoLocalCalo/HGCalRecProducers"/>
+<use name="PhysicsTools/UtilAlgos"/>
+<use name="PhysicsTools/ONNXRuntime" />
+<export>
+  <lib name="1"/>
+</export>

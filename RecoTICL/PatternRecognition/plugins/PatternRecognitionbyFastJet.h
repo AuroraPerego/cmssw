@@ -1,19 +1,25 @@
-// Author: Felice Pantaleo - felice.pantaleo@cern.ch
-// Date: 05/2024
+// Author: Marco Rovere - marco.rovere@cern.ch
+// Date: 10/2021
 
-#ifndef __RecoHGCal_TICL_PatternRecognitionbyRecovery_H__
-#define __RecoHGCal_TICL_PatternRecognitionbyRecovery_H__
+#ifndef __RecoTICL_PatternRecognition_PRbyFASTJET_H__
+#define __RecoTICL_PatternRecognition_PRbyFASTJET_H__
 #include <memory>  // unique_ptr
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
-#include "RecoHGCal/TICL/interface/PatternRecognitionAlgoBase.h"
+#include "RecoTICL/PatternRecognition/interface/PatternRecognitionAlgoBase.h"
 #include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"
+
+// fwd declaration
+
+namespace fastjet {
+  class PseudoJet;
+};
 
 namespace ticl {
   template <typename TILES>
-  class PatternRecognitionbyRecovery final : public PatternRecognitionAlgoBaseT<TILES> {
+  class PatternRecognitionbyFastJet final : public PatternRecognitionAlgoBaseT<TILES> {
   public:
-    PatternRecognitionbyRecovery(const edm::ParameterSet& conf, edm::ConsumesCollector);
-    ~PatternRecognitionbyRecovery() override = default;
+    PatternRecognitionbyFastJet(const edm::ParameterSet& conf, edm::ConsumesCollector);
+    ~PatternRecognitionbyFastJet() override = default;
 
     void makeTracksters(const typename PatternRecognitionAlgoBaseT<TILES>::Inputs& input,
                         std::vector<Trackster>& result,
@@ -28,9 +34,12 @@ namespace ticl {
     void setGeometry(hgcal::RecHitTools const& rhtools) override;
 
   private:
-    float z_limit_em_ = 0.f;
+    const double antikt_radius_;
+    const int minNumLayerCluster_;
+    const bool computeLocalTime_;
+
+    void buildJetAndTracksters(std::vector<fastjet::PseudoJet>&, std::vector<ticl::Trackster>&);
   };
 
 }  // namespace ticl
-
-#endif  // __RecoHGCal_TICL_PatternRecognitionbyRecovery_H__
+#endif
