@@ -18,7 +18,7 @@ Author: Théo Cuisset (LLR)
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-#include "DataFormats/HGCalReco/interface/Trackster.h"
+#include "DataFormats/TICLReco/interface/Trackster.h"
 
 using namespace ticl;
 
