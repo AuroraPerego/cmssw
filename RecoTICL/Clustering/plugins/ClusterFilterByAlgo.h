@@ -1,8 +1,8 @@
 // Author: Marco Rovere - marco.rovere@cern.ch
 // Date: 11/2018
 
-#ifndef RecoHGCal_TICL_ClusterFilterBySize_H__
-#define RecoHGCal_TICL_ClusterFilterBySize_H__
+#ifndef RecoTICL_Clustering_ClusterFilterByAlgo_H__
+#define RecoTICL_Clustering_ClusterFilterByAlgo_H__
 
 #include "DataFormats/CaloRecHit/interface/CaloCluster.h"
 #include "ClusterFilterBase.h"
@@ -12,24 +12,24 @@
 
 // Filter clusters that belong to a specific algorithm
 namespace ticl {
-  class ClusterFilterBySize final : public ClusterFilterBase {
+  class ClusterFilterByAlgo final : public ClusterFilterBase {
   public:
-    ClusterFilterBySize(const edm::ParameterSet& ps)
-        : ClusterFilterBase(ps), max_cluster_size_(ps.getParameter<int>("max_cluster_size")) {}
-    ~ClusterFilterBySize() override {}
+    ClusterFilterByAlgo(const edm::ParameterSet& ps)
+        : ClusterFilterBase(ps), algo_number_(ps.getParameter<std::vector<int>>("algo_number")) {}
+    ~ClusterFilterByAlgo() override {}
 
     void filter(const std::vector<reco::CaloCluster>& layerClusters,
                 std::vector<float>& layerClustersMask,
                 hgcal::RecHitTools& rhtools) const override {
       for (size_t i = 0; i < layerClusters.size(); i++) {
-        if (layerClusters[i].hitsAndFractions().size() > max_cluster_size_) {
+        if (find(algo_number_.begin(), algo_number_.end(), layerClusters[i].algo()) == algo_number_.end()) {
           layerClustersMask[i] = 0.;
         }
       }
     }
 
   private:
-    unsigned int max_cluster_size_;
+    std::vector<int> algo_number_;
   };
 }  // namespace ticl
 
