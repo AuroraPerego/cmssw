@@ -1,6 +1,6 @@
 #include "PhysicsTools/NanoAOD/interface/SimpleFlatTableProducer.h"
 
-#include "DataFormats/HGCalReco/interface/TICLCandidate.h"
+#include "DataFormats/TICLReco/interface/TICLCandidate.h"
 typedef SimpleCollectionFlatTableProducer<TICLCandidate> TICLCandidateTableProducer;
 
 #include "FWCore/Framework/interface/MakerMacros.h"

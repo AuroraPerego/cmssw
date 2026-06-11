@@ -1,6 +1,6 @@
 #include "PhysicsTools/NanoAOD/interface/SimpleFlatTableProducer.h"
-#include "DataFormats/HGCalReco/interface/TICLCandidate.h"
-#include "DataFormats/HGCalReco/interface/Trackster.h"
+#include "DataFormats/TICLReco/interface/TICLCandidate.h"
+#include "DataFormats/TICLReco/interface/Trackster.h"
 
 //
 // One-to-many: TICLCandidate -> linked Tracksters
