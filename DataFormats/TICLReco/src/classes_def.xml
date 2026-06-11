@@ -1,0 +1,51 @@
+<lcgdict>
+  <class name="ticl::Trackster" ClassVersion="12">
+    <version ClassVersion="12" checksum="912917580"/>
+    <version ClassVersion="11" checksum="2111726404"/>
+    <version ClassVersion="10" checksum="556627704"/>
+    <version ClassVersion="9" checksum="1001808235"/>
+    <version ClassVersion="8" checksum="749412802"/>
+    <version ClassVersion="7" checksum="1072014319"/>
+    <version ClassVersion="6" checksum="3003722924"/>
+    <version ClassVersion="5" checksum="1679804166"/>
+    <version ClassVersion="4" checksum="2963413313"/>
+    <version ClassVersion="3" checksum="3878166595"/>
+  </class>
+  <class name="std::vector<ticl::Trackster>" />
+  <class name="edm::RefProd<std::vector<ticl::Trackster> >"/>
+  <class name="std::pair<edm::RefProd<std::vector<ticl::Trackster> >, edm::RefProd<std::vector<ticl::Trackster> > >"/>
+  <class name="edm::Wrapper<ticl::Trackster>" />
+  <class name="edm::Wrapper<std::vector<ticl::Trackster> >" />
+
+  <class name="ticl::TICLLayerTile" persistent="false">
+    <field name="tile_" transient="true"/>
+  </class>
+
+  <class name="TICLGenericTile<ticl::Tiles>" persistent="false">
+    <field name="tiles_" transient="true"/>
+  </class>
+  <class name="edm::Wrapper<TICLGenericTile<ticl::Tiles>>" persistent="false"/>
+
+  <class name="TICLGenericTile<ticl::TracksterTiles>" persistent="false">
+    <field name="tiles_" transient="true"/>
+  </class>
+  <class name="edm::Wrapper<TICLGenericTile<ticl::TracksterTiles>>" persistent="false"/>
+
+  <class name="ticl::TICLLayerTileBarrel" persistent="false">
+    <field name="tile_" transient="true"/>
+  </class>
+
+  <class name="TICLGenericTile<ticl::TilesBarrel>" persistent="false">
+    <field name="tiles_" transient="true"/>
+  </class>
+  <class name="edm::Wrapper<TICLGenericTile<ticl::TilesBarrel>>" persistent="false"/>
+
+  <class name="TICLGenericTile<ticl::TracksterTilesBarrel>" persistent="false">
+    <field name="tiles_" transient="true"/>
+  </class>
+  
+  <class name="MtdHostCollection" rntupleStreamerMode="true"/>
+  <class name="MtdHostCollection::Layout"/>
+  <class name="MtdSoA"/>
+  <class name="edm::Wrapper<MtdHostCollection>" splitLevel="0"/>
+</lcgdict>
