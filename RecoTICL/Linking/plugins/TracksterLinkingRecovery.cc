@@ -1,5 +1,5 @@
-#include "RecoHGCal/TICL/interface/TracksterLinkingAlgoBase.h"
-#include "RecoHGCal/TICL/plugins/TracksterLinkingRecovery.h"
+#include "RecoTICL/Linking/interface/TracksterLinkingAlgoBase.h"
+#include "RecoTICL/Linking/plugins/TracksterLinkingRecovery.h"
 
 using namespace ticl;
 

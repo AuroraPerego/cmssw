@@ -4,8 +4,8 @@ Authors : Theo Cuisset <theo.cuisset@cern.ch>, Shamik Ghosh <shamik.ghosh@cern.c
 Date : 06/2024
 */
 
-#ifndef RecoHGCal_TICL_TracksterLinkingSuperClusteringMustache_H
-#define RecoHGCal_TICL_TracksterLinkingSuperClusteringMustache_H
+#ifndef RecoTICL_Linking_TracksterLinkingSuperClusteringMustache_H
+#define RecoTICL_Linking_TracksterLinkingSuperClusteringMustache_H
 
 #include <vector>
 
@@ -15,8 +15,8 @@ namespace cms {
   }
 }  // namespace cms
 
-#include "RecoHGCal/TICL/interface/TracksterLinkingAlgoBase.h"
-#include "RecoHGCal/TICL/interface/SuperclusteringDNNInputs.h"
+#include "RecoTICL/Linking/interface/TracksterLinkingAlgoBase.h"
+#include "RecoTICL/Linking/interface/SuperclusteringDNNInputs.h"
 
 #include "CondFormats/EcalObjects/interface/EcalMustacheSCParameters.h"
 #include "CondFormats/DataRecord/interface/EcalMustacheSCParametersRcd.h"

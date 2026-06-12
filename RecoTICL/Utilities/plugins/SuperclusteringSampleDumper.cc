@@ -3,8 +3,8 @@
 /** Produce samples for electron superclustering DNN training in TICL
 
  Pairs of seed-candidate tracksters (in compatible geometric windows) are iterated over, in similar manner as in TracksterLinkingBySuperclustering.
- For each of these pairs, the DNN features are computed and saved to a TTree. 
- Also saved is the best (=lowest) association score of the seed trackster with CaloParticles. The association score of the candidate trackster 
+ For each of these pairs, the DNN features are computed and saved to a TTree.
+ Also saved is the best (=lowest) association score of the seed trackster with CaloParticles. The association score of the candidate trackster
  with the same CaloParticle is also saved.
 */
 #include <cmath>
@@ -31,8 +31,8 @@
 #include "SimDataFormats/CaloAnalysis/interface/CaloParticle.h"
 #include "SimDataFormats/Associations/interface/TracksterToSimTracksterAssociator.h"
 
-#include "RecoHGCal/TICL/plugins/TracksterLinkingbySuperClusteringDNN.h"
-#include "RecoHGCal/TICL/interface/SuperclusteringDNNInputs.h"
+#include "RecoTICL/Linking/plugins/TracksterLinkingbySuperClusteringDNN.h"
+#include "RecoTICL/Linking/interface/SuperclusteringDNNInputs.h"
 
 using namespace ticl;
 
@@ -117,7 +117,7 @@ void SuperclusteringSampleDumper::beginJob() {
   }
 }
 
-/** 
+/**
  * Check if trackster passes cut on explained variance ratio. The DNN is trained only on pairs where both seed and candidate pass this cut
  * Explained variance ratio is (largest PCA eigenvalue) / (sum of PCA eigenvalues)
 */

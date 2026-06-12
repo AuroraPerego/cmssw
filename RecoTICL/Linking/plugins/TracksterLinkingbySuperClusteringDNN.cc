@@ -42,7 +42,7 @@ Date: 02/2026
 
 #include "DataFormats/TICLReco/interface/TICLLayerTile.h"
 #include "DataFormats/TICLReco/interface/Trackster.h"
-#include "RecoHGCal/TICL/plugins/TracksterLinkingbySuperClusteringDNN.h"
+#include "RecoTICL/Linking/plugins/TracksterLinkingbySuperClusteringDNN.h"
 
 using namespace ticl;
 

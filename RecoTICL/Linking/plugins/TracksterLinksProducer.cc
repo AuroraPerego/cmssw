@@ -14,7 +14,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Utilities/interface/Exception.h"
-#include "RecoHGCal/TICL/interface/TICLONNXGlobalCache.h"
+#include "RecoTICL/Utilities/interface/TICLONNXGlobalCache.h"
 
 #include "DataFormats/Common/interface/OrphanHandle.h"
 
@@ -25,8 +25,8 @@
 
 #include "PhysicsTools/ONNXRuntime/interface/ONNXRuntime.h"
 
-#include "RecoHGCal/TICL/interface/TracksterLinkingAlgoBase.h"
-#include "RecoHGCal/TICL/plugins/TracksterLinkingPluginFactory.h"
+#include "RecoTICL/Linking/interface/TracksterLinkingAlgoBase.h"
+#include "RecoTICL/Linking/plugins/TracksterLinkingPluginFactory.h"
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateTransform.h"
 
 #include "TrackingTools/GeomPropagators/interface/Propagator.h"
@@ -40,7 +40,7 @@
 #include "Geometry/CommonTopologies/interface/GeomDet.h"
 
 #include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"
-#include "RecoHGCal/TICL/interface/TracksterInferenceAlgoFactory.h"
+#include "RecoTICL/PatternRecognition/interface/TracksterInferenceAlgoFactory.h"
 
 #include "TrackstersPCA.h"
 

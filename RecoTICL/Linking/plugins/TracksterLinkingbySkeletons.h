@@ -1,5 +1,5 @@
-#ifndef RecoHGCal_TICL_TracksterLinkingAlgoBySkeletons_H
-#define RecoHGCal_TICL_TracksterLinkingAlgoBySkeletons_H
+#ifndef RecoTICL_Linking_TracksterLinkingAlgoBySkeletons_H
+#define RecoTICL_Linking_TracksterLinkingAlgoBySkeletons_H
 
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/ESHandle.h"
@@ -9,7 +9,7 @@
 #include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
 #include "DataFormats/TICLReco/interface/Trackster.h"
 #include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"
-#include "RecoHGCal/TICL/interface/TracksterLinkingAlgoBase.h"
+#include "RecoTICL/Linking/interface/TracksterLinkingAlgoBase.h"
 #include "Geometry/HGCalCommonData/interface/HGCalDDDConstants.h"
 #include "Geometry/Records/interface/IdealGeometryRecord.h"
 #include "Geometry/CommonTopologies/interface/GeomDet.h"

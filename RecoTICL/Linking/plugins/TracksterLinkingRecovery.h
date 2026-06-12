@@ -1,11 +1,11 @@
-#ifndef RecoHGCal_TICL_TracksterLinkingRecovery_H
-#define RecoHGCal_TICL_TracksterLinkingRecovery_H
+#ifndef RecoTICL_Linking_TracksterLinkingRecovery_H
+#define RecoTICL_Linking_TracksterLinkingRecovery_H
 
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
-#include "RecoHGCal/TICL/interface/TracksterLinkingAlgoBase.h"
+#include "RecoTICL/Linking/interface/TracksterLinkingAlgoBase.h"
 
 namespace ticl {
 

@@ -10,7 +10,7 @@
 // Improved memory usage and inference performance.
 // Date: 02/2026
 
-#include "RecoHGCal/TICL/interface/SuperclusteringDNNInputs.h"
+#include "RecoTICL/Linking/interface/SuperclusteringDNNInputs.h"
 
 #include <algorithm>
 #include <cassert>

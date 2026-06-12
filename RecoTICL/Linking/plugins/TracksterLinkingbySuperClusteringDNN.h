@@ -1,5 +1,5 @@
-#ifndef RecoHGCal_TICL_TracksterLinkingSuperClustering_H
-#define RecoHGCal_TICL_TracksterLinkingSuperClustering_H
+#ifndef RecoTICL_Linking_TracksterLinkingSuperClustering_H
+#define RecoTICL_Linking_TracksterLinkingSuperClustering_H
 /*
 TICL plugin for electron superclustering in HGCAL using a DNN. 
 DNN designed and trained by Alessandro Tarabini.
@@ -26,8 +26,8 @@ namespace cms {
   }
 }  // namespace cms
 
-#include "RecoHGCal/TICL/interface/TracksterLinkingAlgoBase.h"
-#include "RecoHGCal/TICL/interface/SuperclusteringDNNInputs.h"
+#include "RecoTICL/Linking/interface/TracksterLinkingAlgoBase.h"
+#include "RecoTICL/Linking/interface/SuperclusteringDNNInputs.h"
 #include "DataFormats/TICLReco/interface/TracksterFwd.h"
 
 namespace ticl {

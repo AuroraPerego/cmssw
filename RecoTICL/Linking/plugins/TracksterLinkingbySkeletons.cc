@@ -6,8 +6,8 @@
 #include "DataFormats/TICLReco/interface/Trackster.h"
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateTransform.h"
 #include "RecoParticleFlow/PFProducer/interface/PFMuonAlgo.h"
-#include "RecoHGCal/TICL/interface/TracksterLinkingAlgoBase.h"
-#include "RecoHGCal/TICL/plugins/TracksterLinkingbySkeletons.h"
+#include "RecoTICL/Linking/interface/TracksterLinkingAlgoBase.h"
+#include "RecoTICL/Linking/plugins/TracksterLinkingbySkeletons.h"
 #include "TICLGraph.h"
 
 namespace {

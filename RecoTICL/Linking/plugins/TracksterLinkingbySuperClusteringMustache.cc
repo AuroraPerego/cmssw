@@ -11,7 +11,7 @@
 #include "DataFormats/TICLReco/interface/TICLLayerTile.h"
 #include "DataFormats/TICLReco/interface/Trackster.h"
 #include "RecoEcal/EgammaCoreTools/interface/Mustache.h"
-#include "RecoHGCal/TICL/plugins/TracksterLinkingbySuperClusteringMustache.h"
+#include "RecoTICL/Linking/plugins/TracksterLinkingbySuperClusteringMustache.h"
 
 using namespace ticl;
 

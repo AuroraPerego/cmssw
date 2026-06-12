@@ -1,7 +1,7 @@
-#include "RecoHGCal/TICL/interface/TracksterLinkingAlgoBase.h"
+#include "RecoTICL/Linking/interface/TracksterLinkingAlgoBase.h"
 #include "fastjet/ClusterSequence.hh"
 #include "DataFormats/Math/interface/deltaR.h"
-#include "RecoHGCal/TICL/plugins/TracksterLinkingbyFastJet.h"
+#include "RecoTICL/Linking/plugins/TracksterLinkingbyFastJet.h"
 
 using namespace ticl;
 

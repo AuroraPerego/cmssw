@@ -1,0 +1,6 @@
+<use name="math"/>
+<use name="DataFormats/TICLReco"/>
+<use name="FWCore/MessageLogger"/>
+<export>
+  <lib name="1"/>
+</export>

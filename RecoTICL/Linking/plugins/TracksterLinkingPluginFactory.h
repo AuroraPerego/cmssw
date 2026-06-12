@@ -1,10 +1,10 @@
-#ifndef RecoHGCal_TICL_TracksterLinkingPluginFactory_H
-#define RecoHGCal_TICL_TracksterLinkingPluginFactory_H
+#ifndef RecoTICL_Linking_TracksterLinkingPluginFactory_H
+#define RecoTICL_Linking_TracksterLinkingPluginFactory_H
 
 #include "FWCore/PluginManager/interface/PluginFactory.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
-#include "RecoHGCal/TICL/interface/TracksterLinkingAlgoBase.h"
+#include "RecoTICL/Linking/interface/TracksterLinkingAlgoBase.h"
 
 namespace cms {
   namespace Ort {
