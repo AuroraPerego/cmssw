@@ -1,7 +1,7 @@
 // Author: Swagata Mukherjee
 
-#ifndef RecoHGCal_TICL_SeedingRegionByL1_h
-#define RecoHGCal_TICL_SeedingRegionByL1_h
+#ifndef RecoTICL_PatternRecognition_SeedingRegionByL1_h
+#define RecoTICL_PatternRecognition_SeedingRegionByL1_h
 #include <memory>
 #include <string>
 
@@ -17,7 +17,7 @@
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/Utilities/interface/ESGetToken.h"
-#include "RecoHGCal/TICL/plugins/SeedingRegionAlgoBase.h"
+#include "RecoTICL/PatternRecognition/interface/SeedingRegionAlgoBase.h"
 
 namespace ticl {
   class SeedingRegionByL1 final : public SeedingRegionAlgoBase {

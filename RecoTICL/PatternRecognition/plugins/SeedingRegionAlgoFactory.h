@@ -3,7 +3,7 @@
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/PluginManager/interface/PluginFactory.h"
-#include "SeedingRegionAlgoBase.h"
+#include "RecoTICL/PatternRecognition/interface/SeedingRegionAlgoBase.h"
 
 using SeedingRegionAlgoFactory =
     edmplugin::PluginFactory<ticl::SeedingRegionAlgoBase*(const edm::ParameterSet&, edm::ConsumesCollector&)>;

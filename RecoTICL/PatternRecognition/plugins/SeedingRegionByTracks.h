@@ -1,11 +1,11 @@
 // Author: Felice Pantaleo,Marco Rovere - felice.pantaleo@cern.ch, marco.rovere@cern.ch
 // Date: 09/2018
 
-#ifndef RecoHGCal_TICL_SeedingRegionByTracks_h
-#define RecoHGCal_TICL_SeedingRegionByTracks_h
+#ifndef RecoTICL_PatternRecognition_SeedingRegionByTracks_h
+#define RecoTICL_PatternRecognition_SeedingRegionByTracks_h
 #include <memory>  // unique_ptr
 #include <string>
-#include "RecoHGCal/TICL/plugins/SeedingRegionAlgoBase.h"
+#include "RecoTICL/PatternRecognition/interface/SeedingRegionAlgoBase.h"
 
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/Event.h"

@@ -14,7 +14,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/ParameterSet/interface/PluginDescription.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
-#include "RecoHGCal/TICL/plugins/SeedingRegionAlgoBase.h"
+#include "RecoTICL/PatternRecognition/interface/SeedingRegionAlgoBase.h"
 #include "SeedingRegionAlgoFactory.h"
 #include "SeedingRegionByL1.h"
 #include "SeedingRegionByTracks.h"

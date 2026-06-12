@@ -1,11 +1,11 @@
 // Author: dalfonso@cern.ch
 // Date: 02/2021
 
-#ifndef RecoHGCal_TICL_SeedingRegionByHF_h
-#define RecoHGCal_TICL_SeedingRegionByHF_h
+#ifndef RecoTICL_PatternRecognition_SeedingRegionByHF_h
+#define RecoTICL_PatternRecognition_SeedingRegionByHF_h
 #include <memory>  // unique_ptr
 #include <string>
-#include "RecoHGCal/TICL/plugins/SeedingRegionAlgoBase.h"
+#include "RecoTICL/PatternRecognition/interface/SeedingRegionAlgoBase.h"
 
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/Event.h"
