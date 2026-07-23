@@ -24,10 +24,6 @@ namespace ticl {
                         std::vector<int> &resultCandidate,
                         std::vector<bool> &maskedTracksters) override;
 
-    // Arbitration mode: one charged-hadron hypothesis per track-linked (merged)
-    // trackster, reusing the geometric association of makeCandidates. Neutral
-    // leftovers are not emitted; the producer derives neutrals from unclaimed
-    // tracksters after arbitration.
     void makeOpinions(const Inputs &input,
                       edm::Handle<MtdHostCollection> inputTiming_h,
                       std::vector<Trackster> &hypothesisTracksters,
@@ -49,6 +45,10 @@ namespace ticl {
     double trackTsScoreShift_;
     double tsTsScoreWeight_;
     double trackTsScoreWeight_;
+    int neutralPenalty_;
+    int tracksterInit_;
+    int trackInit_;
+    int manyPenalty_;
 
     cms::Ort::ONNXRuntime const* onnxSessionTracks_ = nullptr;
     cms::Ort::ONNXRuntime const* onnxSessionTracksters_ = nullptr;
