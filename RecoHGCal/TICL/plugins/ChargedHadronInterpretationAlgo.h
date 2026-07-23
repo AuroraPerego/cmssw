@@ -8,12 +8,13 @@
 #include "RecoHGCal/TICL/interface/TICLInterpretationAlgoBase.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/GeometrySurface/interface/BoundDisk.h"
+#include "DataFormats/HGCalReco/interface/TICLLayerTile.h"
 
 namespace ticl {
 
   class ChargedHadronInterpretationAlgo : public TICLInterpretationAlgoBase<reco::Track> {
   public:
-    ChargedHadronInterpretationAlgo(const edm::ParameterSet &conf, edm::ConsumesCollector iC);
+    ChargedHadronInterpretationAlgo(const edm::ParameterSet &conf, TICLONNXGlobalCache const* cache);
 
     ~ChargedHadronInterpretationAlgo() override;
 
@@ -42,46 +43,21 @@ namespace ticl {
   private:
     void buildLayers();
 
-    Vector propagateTrackster(const Trackster &t,
-                              const unsigned idx,
-                              float zVal,
-                              std::array<TICLLayerTile, 2> &tracksterTiles);
+    // MCF+NN parameters
+    double drCut_;
+    double tsTsScoreShift_;
+    double trackTsScoreShift_;
+    double tsTsScoreWeight_;
+    double trackTsScoreWeight_;
 
-    void findTrackstersInWindow(const edm::MultiSpan<Trackster> &tracksters,
-                                const std::vector<std::pair<Vector, unsigned>> &seedingCollection,
-                                const std::array<TICLLayerTile, 2> &tracksterTiles,
-                                const std::vector<Vector> &tracksterPropPoints,
-                                float delta,
-                                unsigned trackstersSize,
-                                std::vector<std::vector<unsigned>> &resultCollection,
-                                bool useMask);
-
-    bool timeAndEnergyCompatible(float &total_raw_energy,
-                                 const reco::Track &track,
-                                 const Trackster &trackster,
-                                 const float &tkTime,
-                                 const float &tkTimeErr,
-                                 const float &tkQual,
-                                 const float &tkBeta,
-                                 const GlobalPoint &tkMtdPos,
-                                 bool useMTDTiming);
-
-    const float tkEnergyCut_ = 2.0f;
-    const float maxDeltaT_ = 3.0f;
-    const float del_tk_ts_layer1_;
-    const float del_tk_ts_int_;
-    const float timing_quality_threshold_;
-    // Track<->trackster energy-compatibility veto: a trackster is absorbed by a track
-    // only while the cumulative reco raw energy stays below track.p() plus a slack of
-    // min(fraction * E_trackster, max). Tight defaults were tuned at PU200; expose them
-    // so the veto can be relaxed and re-tuned per pileup scenario.
-    const double energy_overshoot_fraction_;
-    const double energy_overshoot_max_;
+    cms::Ort::ONNXRuntime const* onnxSessionTracks_ = nullptr;
+    cms::Ort::ONNXRuntime const* onnxSessionTracksters_ = nullptr;
+    const std::vector<std::string> inputNames_;
+    const std::vector<std::string> outputNames_;
 
     const HGCalDDDConstants *hgcons_;
 
     std::unique_ptr<GeomDet> firstDisk_[2];
-    std::unique_ptr<GeomDet> interfaceDisk_[2];
 
     hgcal::RecHitTools rhtools_;
 
