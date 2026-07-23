@@ -95,7 +95,8 @@ float MCFInterpretationAlgo::computeScore(float refPt, float refEta, float refPh
 void MCFInterpretationAlgo::makeCandidates(const Inputs& input,
                                            edm::Handle<MtdHostCollection> inputTimingh,
                                            std::vector<Trackster>& resultTracksters,
-                                           std::vector<int>& resultCandidate) {
+                                           std::vector<int>& resultCandidate,
+                                           std::vector<bool> &maskedTracksters) {
   const auto& tracksters = input.tracksters;
   const auto  tkH        = input.tracksHandle;
   const auto& tracks     = *tkH;

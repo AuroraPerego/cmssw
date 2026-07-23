@@ -36,7 +36,7 @@ namespace ticl {
 
   class MuonInterpretationAlgo : public TICLInterpretationAlgoBase<reco::Track> {
   public:
-    MuonInterpretationAlgo(const edm::ParameterSet &conf, edm::ConsumesCollector iC);
+    MuonInterpretationAlgo(const edm::ParameterSet &conf, TICLONNXGlobalCache const* cache);
     ~MuonInterpretationAlgo() override;
 
     void makeCandidates(const Inputs &input,

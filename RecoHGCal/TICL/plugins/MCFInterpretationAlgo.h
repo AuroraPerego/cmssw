@@ -26,7 +26,8 @@ public:
   void makeCandidates(const Inputs& input,
                       edm::Handle<MtdHostCollection> inputTimingh,
                       std::vector<Trackster>& resultTracksters,
-                      std::vector<int>& resultCandidate) override;
+                      std::vector<int>& resultCandidate,
+                      std::vector<bool> &maskedTracksters) override;
 
   static void fillPSetDescription(edm::ParameterSetDescription& desc);
 
