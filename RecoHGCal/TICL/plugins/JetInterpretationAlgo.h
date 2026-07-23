@@ -21,7 +21,7 @@ namespace ticl {
 
   class JetInterpretationAlgo : public TICLInterpretationAlgoBase<reco::Track> {
   public:
-    JetInterpretationAlgo(const edm::ParameterSet &conf, edm::ConsumesCollector iC);
+    JetInterpretationAlgo(const edm::ParameterSet &conf, TICLONNXGlobalCache const* cache);
     ~JetInterpretationAlgo() override;
 
     // Opinion-only algorithm: makeCandidates is intentionally a no-op.

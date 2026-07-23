@@ -71,6 +71,27 @@ namespace ticl {
       cache->tryLoadSessionFromKey(infPSet, "onnxPIDModelPath", sess_opts);
       cache->tryLoadSessionFromKey(infPSet, "onnxEnergyModelPath", sess_opts);
 
+      // 3) Interpretation models (TICLCandidateProducer)
+      // Load only if interpretationDescPSet is present and the algorithm type needs ONNX models.
+      if (modulePSet.existsAs<edm::ParameterSet>("interpretationDescPSet", /*trackPar=*/true)) {
+        const auto interpretationDescPSet =
+            modulePSet.getParameter<edm::ParameterSet>("interpretationDescPSet");
+
+        if (interpretationDescPSet.existsAs<std::string>("type", /*trackPar=*/true)) {
+          const auto algoType = interpretationDescPSet.getParameter<std::string>("type");
+
+          if (algoType == "MCFwithNN") {
+            // Two separate ONNX models: Track->TS and TS->TS
+            cache->tryLoadSessionFromKey(interpretationDescPSet, "onnxTrackModel", sess_opts);
+            cache->tryLoadSessionFromKey(interpretationDescPSet, "onnxTracksterModel", sess_opts);
+          } else if (algoType == "GNN") {
+            // Single ONNX model for the GNN interpretation
+            cache->tryLoadSessionFromKey(interpretationDescPSet, "onnxTrkLinkingModelFirstDisk", sess_opts);
+            cache->tryLoadSessionFromKey(interpretationDescPSet, "onnxTrkLinkingModelInterfaceDisk", sess_opts);
+          }
+        }
+      }
+
       return cache;
     }
 

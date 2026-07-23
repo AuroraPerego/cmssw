@@ -22,6 +22,7 @@
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "DataFormats/Common/interface/MultiSpan.h"
 #include "PhysicsTools/ONNXRuntime/interface/ONNXRuntime.h"
+#include "RecoHGCal/TICL/interface/TICLONNXGlobalCache.h"
 
 namespace edm {
   class Event;
@@ -59,8 +60,8 @@ namespace ticl {
   template <typename T>
   class TICLInterpretationAlgoBase {
   public:
-    TICLInterpretationAlgoBase(const edm::ParameterSet& conf, edm::ConsumesCollector)
-        : algo_verbosity_(conf.getParameter<int>("algo_verbosity")) {}
+    TICLInterpretationAlgoBase(const edm::ParameterSet& conf, TICLONNXGlobalCache const* cache)
+        : algo_verbosity_(conf.getParameter<int>("algo_verbosity")), cache_(cache) {}
     virtual ~TICLInterpretationAlgoBase() {}
     struct Inputs {
       const edm::Event& ev;
@@ -135,6 +136,7 @@ namespace ticl {
 
   protected:
     int algo_verbosity_;
+    TICLONNXGlobalCache const* cache_;
   };
 }  // namespace ticl
 

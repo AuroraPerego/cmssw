@@ -9,8 +9,8 @@
 
 using namespace ticl;
 
-JetInterpretationAlgo::JetInterpretationAlgo(const edm::ParameterSet &conf, edm::ConsumesCollector iC)
-    : TICLInterpretationAlgoBase(conf, iC),
+JetInterpretationAlgo::JetInterpretationAlgo(const edm::ParameterSet &conf, TICLONNXGlobalCache const* cache)
+    : TICLInterpretationAlgoBase(conf, cache),
       delta_tk_ts_(conf.getParameter<double>("delta_tk_ts")),
       min_trackster_energy_(conf.getParameter<double>("min_trackster_energy")),
       recovery_min_eop_(conf.getParameter<double>("recovery_min_eop")),

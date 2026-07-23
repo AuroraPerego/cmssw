@@ -13,7 +13,7 @@ namespace ticl {
 
   class GeneralInterpretationAlgo : public TICLInterpretationAlgoBase<reco::Track> {
   public:
-    GeneralInterpretationAlgo(const edm::ParameterSet &conf, edm::ConsumesCollector iC);
+    GeneralInterpretationAlgo(const edm::ParameterSet &conf, TICLONNXGlobalCache const* cache);
 
     ~GeneralInterpretationAlgo() override;
 

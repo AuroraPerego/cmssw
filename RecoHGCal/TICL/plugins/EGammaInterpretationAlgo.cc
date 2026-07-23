@@ -10,8 +10,8 @@
 
 using namespace ticl;
 
-EGammaInterpretationAlgo::EGammaInterpretationAlgo(const edm::ParameterSet &conf, edm::ConsumesCollector iC)
-    : TICLInterpretationAlgoBase(conf, iC),
+EGammaInterpretationAlgo::EGammaInterpretationAlgo(const edm::ParameterSet &conf, TICLONNXGlobalCache const* cache)
+    : TICLInterpretationAlgoBase(conf, cache),
       delta_tk_sc_(conf.getParameter<double>("delta_tk_sc")),
       eop_min_(conf.getParameter<double>("eop_min")),
       eop_max_(conf.getParameter<double>("eop_max")),

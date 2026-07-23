@@ -13,8 +13,8 @@
 
 using namespace ticl;
 
-MuonInterpretationAlgo::MuonInterpretationAlgo(const edm::ParameterSet &conf, edm::ConsumesCollector iC)
-    : TICLInterpretationAlgoBase(conf, iC),
+MuonInterpretationAlgo::MuonInterpretationAlgo(const edm::ParameterSet &conf, TICLONNXGlobalCache const* cache)
+    : TICLInterpretationAlgoBase(conf, cache),
       delta_tk_ts_(conf.getParameter<double>("delta_tk_ts")),
       mip_energy_max_(conf.getParameter<double>("mip_energy_max")),
       onnx_model_path_(conf.getParameter<std::string>("onnx_model_path")),

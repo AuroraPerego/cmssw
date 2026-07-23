@@ -9,9 +9,9 @@
 #include "DataFormats/GsfTrackReco/interface/GsfTrack.h"
 
 using TICLGeneralInterpretationPluginFactory = edmplugin::PluginFactory<ticl::TICLInterpretationAlgoBase<reco::Track>*(
-    const edm::ParameterSet&, edm::ConsumesCollector)>;
+    const edm::ParameterSet&, ticl::TICLONNXGlobalCache const*)>;
 using TICLEGammaInterpretationPluginFactory =
     edmplugin::PluginFactory<ticl::TICLInterpretationAlgoBase<reco::GsfTrack>*(const edm::ParameterSet&,
-                                                                               edm::ConsumesCollector)>;
+                                                                               ticl::TICLONNXGlobalCache const*)>;
 
 #endif
