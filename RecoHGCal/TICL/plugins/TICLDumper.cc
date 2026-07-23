@@ -1192,6 +1192,9 @@ void TICLDumper::analyze(const edm::Event& event, const edm::EventSetup& setup) 
   eventId_ = event.id();
   clearVariables();
 
+  edm::Handle<std::vector<std::vector<unsigned int>>> clue3DInTracksterLinks_h;
+  event.getByToken(clue3DinTracksterLinksToken_, clue3DInTracksterLinks_h);
+
   //get all the layer clusters
   edm::Handle<std::vector<reco::CaloCluster>> layer_clusters_h;
   event.getByToken(layer_clusters_token_, layer_clusters_h);
