@@ -8,20 +8,376 @@
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateTransform.h"
 #include "DataFormats/GeometrySurface/interface/BoundDisk.h"
 
-#include <cmath>
 #include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstdint>
+#include <memory>
 #include <numeric>
+#include <set>
 #include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 using namespace ticl;
 using Vector = ticl::Trackster::Vector;
+
+namespace {
+  struct RecoCandidateTmp {
+    std::vector<int> tracks;
+    std::vector<int> tracksters;
+
+    bool operator==(const RecoCandidateTmp& other) const {
+      return tracks == other.tracks && tracksters == other.tracksters;
+    }
+  };
+
+  template <typename T>
+  void sortUnique(std::vector<T>& v) {
+    std::sort(v.begin(), v.end());
+    v.erase(std::unique(v.begin(), v.end()), v.end());
+  }
+
+  bool isSubset(const std::vector<int>& a, const std::vector<int>& b) {
+    std::set<int> sa(a.begin(), a.end()), sb(b.begin(), b.end());
+    return std::includes(sb.begin(), sb.end(), sa.begin(), sa.end());
+  }
+
+  float energyOf(const std::set<int>& ids, const std::vector<float>& tsEnergy) {
+    float out = 0.f;
+    for (int ts : ids) {
+      if (ts >= 0 && ts < static_cast<int>(tsEnergy.size()))
+        out += tsEnergy[ts];
+    }
+    return out;
+  }
+
+  float candidateEnergy(const RecoCandidateTmp& c, const std::vector<float>& tsEnergy) {
+    float out = 0.f;
+    for (int ts : c.tracksters) {
+      if (ts >= 0 && ts < static_cast<int>(tsEnergy.size()))
+        out += tsEnergy[ts];
+    }
+    return out;
+  }
+
+  float chargedP(const RecoCandidateTmp& c, const reco::TrackCollection& tracks) {
+    float out = 0.f;
+    for (int trk : c.tracks) {
+      if (trk >= 0 && trk < static_cast<int>(tracks.size()))
+        out += tracks[trk].p();
+    }
+    return out;
+  }
+
+  std::unordered_map<int, int> computeUsageCount(const std::vector<RecoCandidateTmp>& candidates) {
+    std::unordered_map<int, int> usage;
+    for (const auto& c : candidates) {
+      std::unordered_set<int> uniq(c.tracksters.begin(), c.tracksters.end());
+      for (int ts : uniq)
+        ++usage[ts];
+    }
+    return usage;
+  }
+
+  bool allUsedOnce(const std::unordered_map<int, int>& usage) {
+    for (const auto& [ts, count] : usage) {
+      if (count > 1)
+        return false;
+    }
+    return true;
+  }
+
+  std::vector<int> duplicatedTracksters(const std::unordered_map<int, int>& usage) {
+    std::vector<int> out;
+    for (const auto& [ts, count] : usage) {
+      if (count > 1)
+        out.push_back(ts);
+    }
+    return out;
+  }
+
+  std::vector<RecoCandidateTmp> mergeOverlappingChargedCandidates(const std::vector<RecoCandidateTmp>& chargedCandidates,
+                                                                  const std::vector<float>& tsEnergy,
+                                                                  const reco::TrackCollection& tracks,
+                                                                  const std::unordered_map<int, int>& usageCount,
+                                                                  float overlapThreshold = 0.5f) {
+    std::vector<RecoCandidateTmp> merged;
+    std::unordered_set<int> used;
+    const auto dups = duplicatedTracksters(usageCount);
+    const std::unordered_set<int> dupSet(dups.begin(), dups.end());
+
+    for (size_t i = 0; i < chargedCandidates.size(); ++i) {
+      if (used.count(i))
+        continue;
+      const auto& ca = chargedCandidates[i];
+      if (ca.tracksters.empty()) {
+        merged.push_back(ca);
+        used.insert(i);
+        continue;
+      }
+
+      std::set<int> setA(ca.tracksters.begin(), ca.tracksters.end());
+      bool touchesDupA = false;
+      for (int ts : setA) {
+        if (dupSet.count(ts)) {
+          touchesDupA = true;
+          break;
+        }
+      }
+      if (!touchesDupA) {
+        merged.push_back(ca);
+        used.insert(i);
+        continue;
+      }
+
+      const float energyA = candidateEnergy(ca, tsEnergy);
+      bool matched = false;
+
+      for (size_t j = i + 1; j < chargedCandidates.size(); ++j) {
+        if (used.count(j))
+          continue;
+        const auto& cb = chargedCandidates[j];
+        if (cb.tracksters.empty())
+          continue;
+
+        std::set<int> setB(cb.tracksters.begin(), cb.tracksters.end());
+        bool touchesDupB = false;
+        for (int ts : setB) {
+          if (dupSet.count(ts)) {
+            touchesDupB = true;
+            break;
+          }
+        }
+        if (!touchesDupB)
+          continue;
+
+        std::set<int> shared;
+        std::set_intersection(setA.begin(), setA.end(), setB.begin(), setB.end(), std::inserter(shared, shared.begin()));
+        const float sharedE = energyOf(shared, tsEnergy);
+        if (sharedE <= 0.f)
+          continue;
+
+        const float energyB = candidateEnergy(cb, tsEnergy);
+        const float totalE = energyA + energyB - sharedE;
+        const float overlap = sharedE / std::max(totalE, 1e-12f);
+
+        if (overlap > overlapThreshold) {
+          RecoCandidateTmp out;
+          out.tracks = ca.tracks;
+          out.tracks.insert(out.tracks.end(), cb.tracks.begin(), cb.tracks.end());
+          out.tracksters = ca.tracksters;
+          out.tracksters.insert(out.tracksters.end(), cb.tracksters.begin(), cb.tracksters.end());
+          sortUnique(out.tracks);
+          sortUnique(out.tracksters);
+          merged.push_back(out);
+        } else {
+          const float pA = chargedP(ca, tracks);
+          const float pB = chargedP(cb, tracks);
+
+          std::set<int> onlyA, onlyB;
+          std::set_difference(setA.begin(), setA.end(), shared.begin(), shared.end(), std::inserter(onlyA, onlyA.begin()));
+          std::set_difference(setB.begin(), setB.end(), shared.begin(), shared.end(), std::inserter(onlyB, onlyB.begin()));
+
+          const float eOnlyA = energyOf(onlyA, tsEnergy);
+          const float eOnlyB = energyOf(onlyB, tsEnergy);
+
+          const float diffA = std::abs(energyA - pA) + std::abs(eOnlyB - pB);
+          const float diffB = std::abs(eOnlyA - pA) + std::abs(energyB - pB);
+
+          RecoCandidateTmp caNew = ca;
+          RecoCandidateTmp cbNew = cb;
+          if (diffA <= diffB) {
+            caNew.tracksters.assign(setA.begin(), setA.end());
+            cbNew.tracksters.assign(onlyB.begin(), onlyB.end());
+          } else {
+            caNew.tracksters.assign(onlyA.begin(), onlyA.end());
+            cbNew.tracksters.assign(setB.begin(), setB.end());
+          }
+          if (!caNew.tracksters.empty())
+            merged.push_back(caNew);
+          if (!cbNew.tracksters.empty())
+            merged.push_back(cbNew);
+        }
+        used.insert(i);
+        used.insert(j);
+        matched = true;
+        break;
+      }
+
+      if (!matched && !used.count(i)) {
+        merged.push_back(ca);
+        used.insert(i);
+      }
+    }
+
+    return merged;
+  }
+
+  std::vector<RecoCandidateTmp> mergeMixedCandidates(const std::vector<RecoCandidateTmp>& candidates,
+                                                     const std::vector<float>& tsEnergy,
+                                                     const reco::TrackCollection& tracks,
+                                                     const std::unordered_map<int, int>& usageCount,
+                                                     float overlapThreshold = 0.5f) {
+    auto isNeutral = [](const RecoCandidateTmp& c) { return c.tracks.empty(); };
+
+    std::vector<RecoCandidateTmp> merged;
+    std::unordered_set<int> used;
+    const auto dups = duplicatedTracksters(usageCount);
+    const std::unordered_set<int> dupSet(dups.begin(), dups.end());
+
+    for (size_t i = 0; i < candidates.size(); ++i) {
+      if (used.count(i))
+        continue;
+      const auto& ca = candidates[i];
+      if (ca.tracksters.empty()) {
+        used.insert(i);
+        continue;
+      }
+
+      std::set<int> setA(ca.tracksters.begin(), ca.tracksters.end());
+      bool touchesDupA = false;
+      for (int ts : setA) {
+        if (dupSet.count(ts)) {
+          touchesDupA = true;
+          break;
+        }
+      }
+      if (!touchesDupA) {
+        merged.push_back(ca);
+        used.insert(i);
+        continue;
+      }
+
+      const float energyA = candidateEnergy(ca, tsEnergy);
+      bool matched = false;
+
+      for (size_t j = i + 1; j < candidates.size(); ++j) {
+        if (used.count(j))
+          continue;
+        const auto& cb = candidates[j];
+        if (cb.tracksters.empty())
+          continue;
+
+        std::set<int> setB(cb.tracksters.begin(), cb.tracksters.end());
+        bool touchesDupB = false;
+        for (int ts : setB) {
+          if (dupSet.count(ts)) {
+            touchesDupB = true;
+            break;
+          }
+        }
+        if (!touchesDupB)
+          continue;
+
+        std::set<int> shared;
+        std::set_intersection(setA.begin(), setA.end(), setB.begin(), setB.end(), std::inserter(shared, shared.begin()));
+        if (shared.empty())
+          continue;
+
+        const float sharedE = energyOf(shared, tsEnergy);
+        if (sharedE <= 0.f)
+          continue;
+
+        const bool aNeu = isNeutral(ca);
+        const bool bNeu = isNeutral(cb);
+        const float energyB = candidateEnergy(cb, tsEnergy);
+        const float totalE = energyA + energyB - sharedE;
+        const float overlap = sharedE / std::max(totalE, 1e-12f);
+
+        std::set<int> onlyA, onlyB;
+        std::set_difference(setA.begin(), setA.end(), shared.begin(), shared.end(), std::inserter(onlyA, onlyA.begin()));
+        std::set_difference(setB.begin(), setB.end(), shared.begin(), shared.end(), std::inserter(onlyB, onlyB.begin()));
+
+        if (aNeu && bNeu) {
+          if (overlap > overlapThreshold) {
+            RecoCandidateTmp out;
+            out.tracksters.assign(setA.begin(), setA.end());
+            out.tracksters.insert(out.tracksters.end(), setB.begin(), setB.end());
+            sortUnique(out.tracksters);
+            merged.push_back(out);
+          } else {
+            RecoCandidateTmp caNew = ca, cbNew = cb;
+            const float eOnlyA = energyOf(onlyA, tsEnergy);
+            const float eOnlyB = energyOf(onlyB, tsEnergy);
+            if (eOnlyA >= eOnlyB) {
+              caNew.tracksters.assign(setA.begin(), setA.end());
+              cbNew.tracksters.assign(onlyB.begin(), onlyB.end());
+            } else {
+              caNew.tracksters.assign(onlyA.begin(), onlyA.end());
+              cbNew.tracksters.assign(setB.begin(), setB.end());
+            }
+            if (!caNew.tracksters.empty())
+              merged.push_back(caNew);
+            if (!cbNew.tracksters.empty())
+              merged.push_back(cbNew);
+          }
+          used.insert(i);
+          used.insert(j);
+          matched = true;
+          break;
+        }
+
+        if (aNeu != bNeu) {
+          const RecoCandidateTmp& charged = aNeu ? cb : ca;
+          const RecoCandidateTmp& neutral = aNeu ? ca : cb;
+          const std::set<int>& setC = aNeu ? setB : setA;
+          const std::set<int>& setN = aNeu ? setA : setB;
+
+          std::set<int> onlyC, onlyN;
+          std::set_difference(setC.begin(), setC.end(), shared.begin(), shared.end(), std::inserter(onlyC, onlyC.begin()));
+          std::set_difference(setN.begin(), setN.end(), shared.begin(), shared.end(), std::inserter(onlyN, onlyN.begin()));
+
+          const float eOnlyC = energyOf(onlyC, tsEnergy);
+          const float pC = chargedP(charged, tracks);
+          const float diffWithout = std::abs(eOnlyC - pC);
+          const float diffWith = std::abs(eOnlyC + sharedE - pC);
+
+          RecoCandidateTmp chargedNew = charged;
+          RecoCandidateTmp neutralNew = neutral;
+          if (overlap > overlapThreshold || diffWith <= diffWithout) {
+            chargedNew.tracksters.assign(setC.begin(), setC.end());
+            neutralNew.tracksters.assign(onlyN.begin(), onlyN.end());
+          } else {
+            chargedNew.tracksters.assign(onlyC.begin(), onlyC.end());
+            neutralNew.tracksters.assign(setN.begin(), setN.end());
+          }
+
+          if (aNeu) {
+            if (!neutralNew.tracksters.empty())
+              merged.push_back(neutralNew);
+            if (!chargedNew.tracksters.empty())
+              merged.push_back(chargedNew);
+          } else {
+            if (!chargedNew.tracksters.empty())
+              merged.push_back(chargedNew);
+            if (!neutralNew.tracksters.empty())
+              merged.push_back(neutralNew);
+          }
+
+          used.insert(i);
+          used.insert(j);
+          matched = true;
+          break;
+        }
+      }
+
+      if (!matched && !used.count(i)) {
+        merged.push_back(ca);
+        used.insert(i);
+      }
+    }
+
+    return merged;
+  }
+}  // namespace
 
 // ---------------------------------------------------------------------------
 // Constructor
 // ---------------------------------------------------------------------------
 MCFwithNNInterpretationAlgo::MCFwithNNInterpretationAlgo(const edm::ParameterSet& conf,
                                                          TICLONNXGlobalCache const* cache)
-    : TICLInterpretationAlgoBase<reco::Track>(conf, cache),
+    : TICLInterpretationAlgoBase(conf, cache),
       drCut_(conf.getParameter<double>("drCut")),
       tsTsScoreShift_(conf.getParameter<double>("tsTsScoreShift")),
       trackTsScoreShift_(conf.getParameter<double>("trackTsScoreShift")),
@@ -30,6 +386,7 @@ MCFwithNNInterpretationAlgo::MCFwithNNInterpretationAlgo(const edm::ParameterSet
       neutralPenalty_(conf.getParameter<int>("neutralPenalty")),
       tracksterInit_(conf.getParameter<int>("tracksterInit")),
       trackInit_(conf.getParameter<int>("trackInit")),
+      manyPenalty_(conf.getParameter<int>("manyPenalty")),
       inputNames_({"input"}),
       outputNames_({"score"}) {
   const std::string trackModel = conf.getParameter<std::string>("onnxTrackModel");
@@ -40,14 +397,11 @@ MCFwithNNInterpretationAlgo::MCFwithNNInterpretationAlgo(const edm::ParameterSet
     onnxSessionTracksters_ = cache_->getByModelPathString(tracksterModel);
   }
   if (onnxSessionTracks_==nullptr)
-	  std::cout << "ERROR onnxSessionTracks_ is nullptr!!!\n" ;
+	  edm::LogError("MCFwithNNInterpretationAlgo") << "onnxSessionTracks_ is nullptr !!" ;
   if (onnxSessionTracksters_==nullptr)
-	  std::cout << "ERROR onnxSessionTracksters_ is nullptr!!!\n" ;
+	  edm::LogError("MCFwithNNInterpretationAlgo") << "onnxSessionTracksters_ is nullptr !!" ;
 }
 
-// ---------------------------------------------------------------------------
-// initialize + buildLayers
-// ---------------------------------------------------------------------------
 void MCFwithNNInterpretationAlgo::initialize(const HGCalDDDConstants* hgcons,
                                              const hgcal::RecHitTools rhtools,
                                              const edm::ESHandle<MagneticField> bfieldH,
@@ -72,128 +426,62 @@ void MCFwithNNInterpretationAlgo::buildLayers() {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Scoring helpers
-// ---------------------------------------------------------------------------
-float MCFwithNNInterpretationAlgo::normTracks(float x, float y) const {
-  y = std::abs(y);
-  constexpr float a = 2.29516386e-01f, b = -8.05371532e+02f, c = -6.45573586e-01f;
-  constexpr float d = 8.05370082e+02f, e = 1.00000033e+00f, f = -1.07458042e-04f;
-  constexpr float g = 4.79631755e-01f, h = 1.21330763e+00f;
-  if (x > 200.f)
-    x = 200.f;
-  if (y < 1.7f)
-    y = 1.7f;
-  return std::max(a + b * x + c * y + d * std::pow(x, e) + f * x * y + g * std::pow(y, h), 0.008f);
-}
-
-float MCFwithNNInterpretationAlgo::normTracksters(float x, float y) const {
-  y = std::abs(y);
-  constexpr float a = 1.49662496e+00f, b = 4.04830636e+01f, c = -1.19840947e+01f;
-  constexpr float d = -4.04834456e+01f, e = 9.99984896e-01f, f = -1.67329993e-03f;
-  constexpr float g = 1.06828890e+01f, h = 1.09862164e+00f;
-  if (x > 200.f)
-    x = 200.f;
-  return a + b * x + c * y + d * std::pow(x, e) + g * std::pow(y, h) + f * x * y;
-}
-
-float MCFwithNNInterpretationAlgo::computeScore(
-    float refPt, float refEta, float refPhi, float refP, float tsEta, float tsPhi, float tsEnergy) const {
-  constexpr float wEp = 0.5f;
-  float rEpNorm = (tsEnergy - refP) / refP;
-  float dphi = reco::deltaPhi(refPhi, tsPhi);
-  float deta = refEta - tsEta;
-  float pullR2 = (deta * deta + dphi * dphi) / std::pow(normTracks(refPt, refEta), 2);
-  return std::sqrt(wEp * rEpNorm * rEpNorm + (1.f - wEp) * pullR2);
-}
-
-// ---------------------------------------------------------------------------
-// makeCandidates
-// ---------------------------------------------------------------------------
 void MCFwithNNInterpretationAlgo::makeCandidates(const Inputs& input,
                                                  edm::Handle<MtdHostCollection> inputTimingh,
                                                  std::vector<Trackster>& resultTracksters,
-                                                 std::vector<int>& resultCandidate) {
+                                                 std::vector<int>& resultCandidate,
+                                                 std::vector<bool>& maskedTracksters) {
   const auto& tracksters = input.tracksters;
-  const auto tkH = input.tracksHandle;
-  const auto& tracks = *tkH;
+  const auto& tracks = *(input.tracksHandle);
   const auto& maskTracks = input.maskedTracks;
   const float drCut2 = drCut_ * drCut_;
-
   auto bFieldProd = bfield_.product();
   const Propagator& prop = *propagator_;
 
-  // -----------------------------------------------------------------------
-  // 1. Propagate all tracksters to HGCal front face, fill tiles
-  // -----------------------------------------------------------------------
   struct TsInfo {
     unsigned origIdx;
     float eta, phi, energy;
     float x, y, z;
     float time, timeErr;
     int pid;
-    // Vector tPoint;
   };
-  std::array<TICLLayerTile, 2> tracksterPropTiles = {};
-  std::vector<std::vector<TsInfo>> tsAllProp(2);
-  tsAllProp[0].reserve(tracksters.size());
-  tsAllProp[1].reserve(tracksters.size());
-
-  const float zVal_layer1 = hgcons_->waferZ(1, true);
-
-  for (unsigned i = 0; i < tracksters.size(); ++i) {
-    const auto& t = tracksters[i];
-    const Vector& baryc = t.barycenter();
-    /*Vector directnv = baryc.unit();
-    float zVal = zVal_layer1 * (baryc.Z() > 0 ? 1.f : -1.f);
-    float par = (zVal - baryc.Z()) / directnv.Z();
-    Vector tPoint(par * directnv.X() + baryc.X(), par * directnv.Y() + baryc.Y(), zVal);
-    if (tPoint.Eta() > 0)
-      tracksterPropTiles[1].fill(tPoint.Eta(), tPoint.Phi(), i);
-    else if (tPoint.Eta() < 0)
-      tracksterPropTiles[0].fill(tPoint.Eta(), tPoint.Phi(), i);
-    tsAllProp.emplace_back(tPoint);*/
-    const auto& probs = t.id_probabilities();
-    const int pid = static_cast<int>(std::max_element(probs.begin(), probs.end()) - probs.begin());  // FIXME
-    if (baryc.eta() >= 0) {
-      tracksterPropTiles[1].fill(baryc.eta(), baryc.phi(), tsAllProp[1].size());
-      tsAllProp[1].push_back({i,
-                              t.barycenter().eta(),
-                              t.barycenter().phi(),
-                              t.raw_energy(),
-                              t.barycenter().x(),
-                              t.barycenter().y(),
-                              t.barycenter().z(),
-                              t.time(),
-                              t.timeError(),
-                              pid});
-    } else {
-      tracksterPropTiles[0].fill(baryc.eta(), baryc.phi(), tsAllProp[0].size());
-      tsAllProp[0].push_back({i,
-                              t.barycenter().eta(),
-                              t.barycenter().phi(),
-                              t.raw_energy(),
-                              t.barycenter().x(),
-                              t.barycenter().y(),
-                              t.barycenter().z(),
-                              t.time(),
-                              t.timeError(),
-                              pid});
-    }
-  }
-
-  // -----------------------------------------------------------------------
-  // 2. Propagate valid tracks to HGCal front face
-  // -----------------------------------------------------------------------
   struct TrackInfo {
     int origIdx;
     float eta, phi;
     double pt, p;
   };
+  struct Edge {
+    unsigned int u, v;
+    int64_t cost;
+  };
+
+  std::array<TICLLayerTile, 2> tracksterPropTiles = {};
+  std::vector<std::vector<TsInfo>> tsAllProp(2);
+  tsAllProp[0].reserve(tracksters.size());
+  tsAllProp[1].reserve(tracksters.size());
+
+  for (unsigned i = 0; i < tracksters.size(); ++i) {
+    const auto& t = tracksters[i];
+    const auto& baryc = t.barycenter();
+    const auto& probs = t.id_probabilities();
+    const int pid = static_cast<int>(std::max_element(probs.begin(), probs.end()) - probs.begin());
+    const int side = baryc.eta() >= 0.f ? 1 : 0;
+    tracksterPropTiles[side].fill(baryc.eta(), baryc.phi(), tsAllProp[side].size());
+    tsAllProp[side].push_back({i,
+                               baryc.eta(),
+                               baryc.phi(),
+                               t.raw_energy(),
+                               baryc.x(),
+                               baryc.y(),
+                               baryc.z(),
+                               t.time(),
+                               t.timeError(),
+                               pid});
+  }
+
   std::vector<std::vector<TrackInfo>> validTracks(2);
   validTracks[0].reserve(tracks.size());
   validTracks[1].reserve(tracks.size());
-
   for (unsigned i = 0; i < tracks.size(); ++i) {
     if (!maskTracks[i])
       continue;
@@ -203,57 +491,19 @@ void MCFwithNNInterpretationAlgo::makeCandidates(const Inputs& input,
     if (std::abs(tk.eta()) < 1.5f || std::abs(tk.eta()) > 3.0f)
       continue;
 
-    int iSide = int(tk.eta() > 0);
+    const int iSide = int(tk.eta() > 0);
     FreeTrajectoryState fts = tk.outerOk() ? trajectoryStateTransform::outerFreeState(tk, bFieldProd)
                                            : trajectoryStateTransform::initialFreeState(tk, bFieldProd);
-
     const auto& tsos = prop.propagate(fts, firstDisk_[iSide]->surface());
     if (!tsos.isValid())
       continue;
 
     GlobalPoint pp = tsos.globalPosition();
-    if (pp.eta() < 0)
-      validTracks[0].push_back({static_cast<int>(i), pp.eta(), pp.phi(), tk.pt(), tk.p()});
-    else
-      validTracks[1].push_back({static_cast<int>(i), pp.eta(), pp.phi(), tk.pt(), tk.p()});
+    const int outSide = pp.eta() >= 0.f ? 1 : 0;
+    validTracks[outSide].push_back({static_cast<int>(i), pp.eta(), pp.phi(), tk.pt(), tk.p()});
   }
 
-  // -----------------------------------------------------------------------
-  // 3. findNeighbours lambda (tile-based, mirrors findTrackstersInWindow)
-  // -----------------------------------------------------------------------
-  auto findNeighbours = [&](float seed_eta, float seed_phi, int side) -> std::vector<unsigned> {
-    bool sideZ = seed_eta > 0;
-    const TICLLayerTile& tile = tracksterPropTiles[sideZ];
-    float eta_min = std::max(std::fabs(seed_eta) - drCut_, (float)TileConstants::minEta);
-    float eta_max = std::min(std::fabs(seed_eta) + drCut_, (float)TileConstants::maxEta);
-    auto search_box = tile.searchBoxEtaPhi(eta_min, eta_max, seed_phi - drCut_, seed_phi + drCut_);
-
-    std::vector<unsigned> result;
-    for (int eta_i = search_box[0]; eta_i <= search_box[1]; ++eta_i) {
-      for (int phi_i = search_box[2]; phi_i <= search_box[3]; ++phi_i) {
-        const auto& in_tile = tile[tile.globalBin(eta_i, phi_i % TileConstants::nPhiBins)];
-        for (unsigned t_i : in_tile) {
-          float deta = tsAllProp[side][t_i].eta - seed_eta;
-          float dphi = reco::deltaPhi(tsAllProp[side][t_i].phi, seed_phi);
-          if (deta * deta + dphi * dphi < drCut2)
-            result.push_back(t_i);
-        }
-      }
-    }
-    return result;
-  };
-  // -----------------------------------------------------------------------
-  // 4. Process each endcap side
-  // -----------------------------------------------------------------------
   for (int side : {0, 1}) {
-    struct TsInfo {
-      unsigned origIdx;
-      float eta, phi, energy;
-      float x, y, z;
-      float time, timeErr;
-      int pid;
-    };
-
     const auto& ts = tsAllProp[side];
     const int nTS = static_cast<int>(ts.size());
     if (nTS == 0)
@@ -261,322 +511,365 @@ void MCFwithNNInterpretationAlgo::makeCandidates(const Inputs& input,
 
     const auto& sideTracks = validTracks[side];
     const int nSideTracks = static_cast<int>(sideTracks.size());
-
+    const bool useMTDTiming = inputTimingh.isValid();
     constexpr float C_CM_PER_NS = 29.9792458f;
-    bool useMTDTiming = inputTimingh.isValid();
 
-    // -----------------------------------------------------------------------
-    // 6. Build edges in two-pass: collect features, batch infer, fill costs
-    // -----------------------------------------------------------------------
-    struct Edge {
-      unsigned int u, v;
-      int64_t cost;
+    auto findNeighbours = [&](float seedEta, float seedPhi, int sideIdx) {
+      bool sideZ = seedEta > 0;
+      const TICLLayerTile& tile = tracksterPropTiles[sideZ];
+      float etaMin = std::max(std::fabs(seedEta) - drCut_, static_cast<float>(TileConstants::minEta));
+      float etaMax = std::min(std::fabs(seedEta) + drCut_, static_cast<float>(TileConstants::maxEta));
+      auto searchBox = tile.searchBoxEtaPhi(etaMin, etaMax, seedPhi - drCut_, seedPhi + drCut_);
+      std::vector<unsigned> result;
+      for (int etaI = searchBox[0]; etaI <= searchBox[1]; ++etaI) {
+        for (int phiI = searchBox[2]; phiI <= searchBox[3]; ++phiI) {
+          const auto& inTile = tile[tile.globalBin(etaI, phiI % TileConstants::nPhiBins)];
+          for (unsigned ti : inTile) {
+            float deta = tsAllProp[sideIdx][ti].eta - seedEta;
+            float dphi = reco::deltaPhi(tsAllProp[sideIdx][ti].phi, seedPhi);
+            if (deta * deta + dphi * dphi < drCut2)
+              result.push_back(ti);
+          }
+        }
+      }
+      return result;
     };
-    std::vector<Edge> trackTsEdges, tsTsEdges;
 
+    std::vector<Edge> trackTsEdges, tsTsEdges;
     constexpr int TRACK_TS_NFEAT = 18;
     constexpr int TS_TS_NFEAT = 21;
-
-    std::vector<std::pair<unsigned int, unsigned int>> trkTsRaw;
-
-    cms::Ort::FloatArrays trkTsFeatsInput(1);
+    std::vector<std::pair<unsigned, unsigned>> trkTsRaw, tsTsRaw;
+    cms::Ort::FloatArrays trkTsFeatsInput(1), tsTsFeatsInput(1);
     auto& trkTsFeats = trkTsFeatsInput[0];
+    auto& tsTsFeats = tsTsFeatsInput[0];
 
     for (int ti = 0; ti < nSideTracks; ++ti) {
       const auto& trk = sideTracks[ti];
-      //const auto& tkOrig  = tracks[trk.origIdx];
-
       float trkTime = 0.f, trkTimeErr = -1.f;
       float trkMtdX = 0.f, trkMtdY = 0.f, trkMtdZ = 0.f;
       if (useMTDTiming) {
-        auto const& tv = (*inputTimingh).const_view();
+        auto const& tv = inputTimingh->const_view();
         trkTime = tv.time()[trk.origIdx];
         trkTimeErr = tv.timeErr()[trk.origIdx];
         trkMtdX = tv.posInMTD_x()[trk.origIdx];
         trkMtdY = tv.posInMTD_y()[trk.origIdx];
         trkMtdZ = tv.posInMTD_z()[trk.origIdx];
       }
-
       for (unsigned localJ : findNeighbours(trk.eta, trk.phi, side)) {
         const auto& tsInf = ts[localJ];
-
         float deltaPhi = reco::deltaPhi(trk.phi, tsInf.phi);
         float deltaEta = trk.eta - tsInf.eta;
         float deltaE = (trk.p - tsInf.energy) / trk.p;
         float deltaR = std::sqrt(deltaEta * deltaEta + deltaPhi * deltaPhi);
-
         float deltaTime = 0.f;
-        if (trkTimeErr > 0 && tsInf.timeErr > 0) {
+        if (trkTimeErr > 0.f && tsInf.timeErr > 0.f) {
           float dx = trkMtdX - tsInf.x, dy = trkMtdY - tsInf.y, dz = trkMtdZ - tsInf.z;
           float tof = std::sqrt(dx * dx + dy * dy + dz * dz) / C_CM_PER_NS;
           deltaTime = tsInf.time - trkTime - tof;
         }
-
-        // Feature order must match training columns exactly
         trkTsFeats.insert(trkTsFeats.end(),
-                          {
-                              static_cast<float>(trk.pt),  // refPt
-                              static_cast<float>(trk.p),   // refP
-                              trk.eta,                     // refEta
-                              std::sin(trk.phi),           // sin_refPhi
-                              std::cos(trk.phi),           // cos_refPhi
-                              trkTime,                     // trk_time
-                              trkTimeErr,                  // trk_timeErr
-                              tsInf.energy,                // tsEnergy
-                              tsInf.eta,                   // tsEta
-                              std::sin(tsInf.phi),         // sin_tsPhi
-                              std::cos(tsInf.phi),         // cos_tsPhi
-                              tsInf.time,                  // tsTime
-                              tsInf.timeErr,               // tsTimeErr
-                              deltaTime,                   // deltaTime
-                              deltaE,                      // deltaE
-                              deltaEta,                    // deltaEta
-                              deltaPhi,                    // deltaPhi
-                              deltaR                       // deltaR
-                          });
-        trkTsRaw.push_back({ti, localJ});
+                          {static_cast<float>(trk.pt),
+                           static_cast<float>(trk.p),
+                           trk.eta,
+                           std::sin(trk.phi),
+                           std::cos(trk.phi),
+                           trkTime,
+                           trkTimeErr,
+                           tsInf.energy,
+                           tsInf.eta,
+                           std::sin(tsInf.phi),
+                           std::cos(tsInf.phi),
+                           tsInf.time,
+                           tsInf.timeErr,
+                           deltaTime,
+                           deltaE,
+                           deltaEta,
+                           deltaPhi,
+                           deltaR});
+        trkTsRaw.push_back({static_cast<unsigned>(ti), localJ});
       }
     }
 
-    std::vector<std::pair<unsigned int, unsigned int>> tsTsRaw;
-    cms::Ort::FloatArrays tsTsFeatsInput(1);
-    auto& tsTsFeats = tsTsFeatsInput[0];
-
-    for (unsigned i = 0; (int)i < nTS; ++i) {
+    for (unsigned i = 0; i < static_cast<unsigned>(nTS); ++i) {
       for (unsigned localJ : findNeighbours(ts[i].eta, ts[i].phi, side)) {
         if (localJ == i)
           continue;
         if (std::abs(ts[localJ].z) <= std::abs(ts[i].z))
           continue;
-
         const auto& ts1 = ts[i];
         const auto& ts2 = ts[localJ];
-
         float deltaPhi = reco::deltaPhi(ts1.phi, ts2.phi);
         float deltaEta = ts1.eta - ts2.eta;
         float deltaR = std::sqrt(deltaEta * deltaEta + deltaPhi * deltaPhi);
         float deltaE = ts1.energy - ts2.energy;
         float deltaZ = ts1.z - ts2.z;
         float samePid = (ts1.pid == ts2.pid) ? 1.f : 0.f;
-
         float deltaTime = 0.f;
-        if (ts1.timeErr > 0 && ts2.timeErr > 0) {
+        if (ts1.timeErr > 0.f && ts2.timeErr > 0.f) {
           float dx = ts1.x - ts2.x, dy = ts1.y - ts2.y, dz = ts1.z - ts2.z;
           float tof = std::sqrt(dx * dx + dy * dy + dz * dz) / C_CM_PER_NS;
           deltaTime = std::abs(ts1.time - ts2.time) - tof;
         }
-
-        // Feature order must match training columns exactly
         tsTsFeats.insert(tsTsFeats.end(),
-                         {
-                             ts1.energy,         // E1
-                             ts1.eta,            // eta1
-                             std::sin(ts1.phi),  // sin_phi1
-                             std::cos(ts1.phi),  // cos_phi1
-                             ts1.z,              // Z1
-                             ts1.time,           // time1
-                             ts1.timeErr,        // timeErr1
-                             ts2.energy,         // E2
-                             ts2.eta,            // eta2
-                             std::sin(ts2.phi),  // sin_phi2
-                             std::cos(ts2.phi),  // cos_phi2
-                             ts2.z,              // Z2
-                             ts2.time,           // time2
-                             ts2.timeErr,        // timeErr2
-                             deltaTime,          // deltaTime
-                             samePid,            // samePid
-                             deltaE,             // deltaE
-                             deltaEta,           // deltaEta
-                             deltaPhi,           // deltaPhi
-                             deltaR,             // deltaR
-                             deltaZ              // deltaZ
-                         });
+                         {ts1.energy,
+                          ts1.eta,
+                          std::sin(ts1.phi),
+                          std::cos(ts1.phi),
+                          ts1.z,
+                          ts1.time,
+                          ts1.timeErr,
+                          ts2.energy,
+                          ts2.eta,
+                          std::sin(ts2.phi),
+                          std::cos(ts2.phi),
+                          ts2.z,
+                          ts2.time,
+                          ts2.timeErr,
+                          deltaTime,
+                          samePid,
+                          deltaE,
+                          deltaEta,
+                          deltaPhi,
+                          deltaR,
+                          deltaZ});
         tsTsRaw.push_back({i, localJ});
       }
     }
 
-    const int nTrkTsEdges = static_cast<int>(trkTsRaw.size());
-    const int nTsTsEdges = static_cast<int>(tsTsRaw.size());
+    cms::Ort::FloatArrays trkTsScores, tsTsScores;
+    if (!trkTsRaw.empty())
+      onnxSessionTracks_->runInto(inputNames_,
+                                  trkTsFeatsInput,
+                                  {{static_cast<int64_t>(trkTsRaw.size()), TRACK_TS_NFEAT}},
+                                  outputNames_,
+                                  trkTsScores);
+    if (!tsTsRaw.empty())
+      onnxSessionTracksters_->runInto(inputNames_,
+                                      tsTsFeatsInput,
+                                      {{static_cast<int64_t>(tsTsRaw.size()), TS_TS_NFEAT}},
+                                      outputNames_,
+                                      tsTsScores);
 
-    cms::Ort::FloatArrays trkTsScores;
-    cms::Ort::FloatArrays tsTsScores;
-
-    if (nTrkTsEdges > 0) {
-      // Shape: [nEdges, 18]
-      onnxSessionTracks_->runInto(
-          inputNames_, trkTsFeatsInput, {{static_cast<int64_t>(nTrkTsEdges), TRACK_TS_NFEAT}}, outputNames_, trkTsScores);
-    }
-
-    if (nTsTsEdges > 0) {
-      // Shape: [nEdges, 21]
-      onnxSessionTracksters_->runInto(
-          inputNames_, tsTsFeatsInput, {{static_cast<int64_t>(nTsTsEdges), TS_TS_NFEAT}}, outputNames_, tsTsScores);
-    }
-
-    trackTsEdges.reserve(nTrkTsEdges);
-    for (int k = 0; k < nTrkTsEdges; ++k) {
+    trackTsEdges.reserve(trkTsRaw.size());
+    for (size_t k = 0; k < trkTsRaw.size(); ++k) {
       int64_t cost = static_cast<int64_t>(-trkTsScores[k][0] * trackTsScoreWeight_ + trackTsScoreShift_);
       trackTsEdges.push_back({trkTsRaw[k].first, trkTsRaw[k].second, cost});
     }
-
-    tsTsEdges.reserve(nTsTsEdges);
-    for (int k = 0; k < nTsTsEdges; ++k) {
+    tsTsEdges.reserve(tsTsRaw.size());
+    for (size_t k = 0; k < tsTsRaw.size(); ++k) {
       int64_t cost = static_cast<int64_t>(-tsTsScores[k][0] * tsTsScoreWeight_ + tsTsScoreShift_);
-      tsTsEdges.push_back({tsTsRaw[k].second, tsTsRaw[k].second, cost});
+      tsTsEdges.push_back({tsTsRaw[k].first, tsTsRaw[k].second, cost});
     }
 
-    // -----------------------------------------------------------------------
-    // 6. Build min-cost flow graph
-    // Node layout:
-    //   SRC=0
-    //   TRACK nodes: [1, nSideTracks]
-    //   TS_IN  nodes: [nSideTracks+1, nSideTracks+nTS]
-    //   TS_OUT nodes: [nSideTracks+nTS+1, nSideTracks+2*nTS]
-    //   SNK = nSideTracks+2*nTS+1
-    // -----------------------------------------------------------------------
     const int SRC = 0;
     const int TRACK_OFFSET = 1;
     const int TS_IN_OFFSET = TRACK_OFFSET + nSideTracks;
     const int TS_OUT_OFFSET = TS_IN_OFFSET + nTS;
     const int SNK = TS_OUT_OFFSET + nTS;
-    const int N_NODES = SNK + 1;
+    MinCostFlow mcf(SNK + 1);
 
-    MinCostFlow mcf(N_NODES);
-
-    // SRC -> Track (large capacity, negative cost to incentivise track usage)
     for (int ti = 0; ti < nSideTracks; ++ti)
-      mcf.addArc(SRC, TRACK_OFFSET + ti, nTS, tracksterInit_);  // -100 * 1000 scaling
-
-    // SRC -> TS_IN (neutral path, zero cost)
+      mcf.addArc(SRC, TRACK_OFFSET + ti, nTS, tracksterInit_);
     for (int j = 0; j < nTS; ++j)
       mcf.addArc(SRC, TS_IN_OFFSET + j, 1, trackInit_);
-
-    // Track -> TS_IN
     for (const auto& e : trackTsEdges)
       mcf.addArc(TRACK_OFFSET + e.u, TS_IN_OFFSET + e.v, 1, e.cost);
-
-    // TS_IN -> TS_OUT (capacity=1 enforces exclusivity)
-    for (int j = 0; j < nTS; ++j)
+    for (int j = 0; j < nTS; ++j) {
       mcf.addArc(TS_IN_OFFSET + j, TS_OUT_OFFSET + j, 1, 0);
-
-    // TS_OUT -> TS_IN (TS->TS chaining)
+      mcf.addArc(TS_IN_OFFSET + j, TS_OUT_OFFSET + j, 1, manyPenalty_);
+    }
     for (const auto& e : tsTsEdges)
       mcf.addArc(TS_OUT_OFFSET + e.u, TS_IN_OFFSET + e.v, 1, e.cost);
-
-    // TS_OUT -> SNK
     for (int j = 0; j < nTS; ++j)
       mcf.addArc(TS_OUT_OFFSET + j, SNK, 1, neutralPenalty_);
-
-    // Track -> SNK (track-only candidates)
     for (int ti = 0; ti < nSideTracks; ++ti)
       mcf.addArc(TRACK_OFFSET + ti, SNK, 1, neutralPenalty_);
 
-    // Supplies: push exactly nTS units through the network
     mcf.setNodeSupply(SRC, nTS);
     mcf.setNodeSupply(SNK, -nTS);
-
-    // -----------------------------------------------------------------------
-    // 7. Solve
-    // -----------------------------------------------------------------------
     if (mcf.solve() != MinCostFlow::OPTIMAL) {
       edm::LogWarning("MCFwithNNInterpretationAlgo") << "Min-cost flow did not find an optimal solution";
       continue;
     }
 
-    // -----------------------------------------------------------------------
-    // 8. Decode flow → adjacency map
-    // -----------------------------------------------------------------------
     std::unordered_map<int, std::vector<int>> usedOut;
     for (int arc = 0; arc < mcf.numArcs(); ++arc) {
       if (mcf.flow(arc) > 0)
         usedOut[mcf.tail(arc)].push_back(mcf.head(arc));
     }
 
-    // Follow a flow chain from startNode, collecting local TS indices
-    auto followChain = [&](int startNode) -> std::vector<int> {
+    std::function<std::vector<int>(int, std::unordered_set<int>&)> followChain =
+        [&](int startNode, std::unordered_set<int>& visited) -> std::vector<int> {
       std::vector<int> tsChain;
       int cur = startNode;
       while (cur != SNK) {
+        if (visited.count(cur))
+          break;
+        visited.insert(cur);
         if (cur >= TS_IN_OFFSET && cur < TS_OUT_OFFSET)
           tsChain.push_back(cur - TS_IN_OFFSET);
         auto it = usedOut.find(cur);
         if (it == usedOut.end() || it->second.empty())
           break;
-        cur = it->second[0];
+        auto nexts = it->second;
+        sortUnique(nexts);
+        if (nexts.size() == 1) {
+          cur = nexts[0];
+        } else {
+          for (int nextNode : nexts) {
+            auto branch = followChain(nextNode, visited);
+            tsChain.insert(tsChain.end(), branch.begin(), branch.end());
+            break;
+          }
+          return tsChain;
+        }
       }
       return tsChain;
     };
 
-    // Helper: push merged or single trackster and set resultCandidate
-    auto pushCandidate = [&](int origTrackIdx, const std::vector<int>& localTsIndices) {
-      if (localTsIndices.size() == 1) {
-        if (origTrackIdx >= 0)
-          resultCandidate[origTrackIdx] = static_cast<int>(resultTracksters.size());
-        resultTracksters.push_back(tracksters[ts[localTsIndices[0]].origIdx]);
-      } else {
-        Trackster merged;
-        bool isHadron = false;
-        for (int idx : localTsIndices) {
-          merged.mergeTracksters(tracksters[ts[idx].origIdx]);
-          if (tracksters[ts[idx].origIdx].isHadronic())
-            isHadron = true;
+    std::vector<float> sideTsEnergy(nTS, 0.f);
+    for (int i = 0; i < nTS; ++i)
+      sideTsEnergy[i] = ts[i].energy;
+
+    std::vector<RecoCandidateTmp> chargedCandidates;
+    auto usageCount = std::unordered_map<int, int>{};
+
+    auto srcIt = usedOut.find(SRC);
+    if (srcIt != usedOut.end()) {
+      for (int trkNode : srcIt->second) {
+        if (trkNode < TRACK_OFFSET || trkNode >= TS_IN_OFFSET)
+          continue;
+        int ti = trkNode - TRACK_OFFSET;
+        int origTrackIdx = sideTracks[ti].origIdx;
+        std::vector<int> tsList;
+        std::unordered_set<int> visited;
+        auto trkIt = usedOut.find(trkNode);
+        if (trkIt != usedOut.end()) {
+          for (int v : trkIt->second) {
+            auto chain = followChain(v, visited);
+            tsList.insert(tsList.end(), chain.begin(), chain.end());
+          }
         }
-        if (origTrackIdx >= 0) {
-          resultCandidate[origTrackIdx] = static_cast<int>(resultTracksters.size());
-          merged.setIdProbability(
-              isHadron ? ticl::Trackster::ParticleType::charged_hadron : ticl::Trackster::ParticleType::electron, 1.f);
+        sortUnique(tsList);
+
+        if (tsList.empty()) {
+          chargedCandidates.push_back({{origTrackIdx}, {}});
+          continue;
         }
-        resultTracksters.push_back(merged);
+
+        bool absorbed = false;
+        for (auto& cand : chargedCandidates) {
+          if (!cand.tracksters.empty() && isSubset(tsList, cand.tracksters)) {
+            cand.tracks.push_back(origTrackIdx);
+            sortUnique(cand.tracks);
+            absorbed = true;
+            break;
+          }
+        }
+        if (!absorbed) {
+          chargedCandidates.push_back({{origTrackIdx}, tsList});
+          std::unordered_set<int> uniq(tsList.begin(), tsList.end());
+          for (int tsid : uniq)
+            ++usageCount[tsid];
+        }
       }
+    }
+
+    while (!allUsedOnce(usageCount)) {
+      auto newCandidates = mergeOverlappingChargedCandidates(chargedCandidates, sideTsEnergy, tracks, usageCount);
+      if (newCandidates == chargedCandidates)
+        break;
+      chargedCandidates = std::move(newCandidates);
+      usageCount = computeUsageCount(chargedCandidates);
+    }
+
+    std::vector<std::vector<int>> usedTsSets;
+    for (const auto& c : chargedCandidates)
+      usedTsSets.push_back(c.tracksters);
+
+    std::vector<RecoCandidateTmp> neutralCandidates;
+    if (srcIt != usedOut.end()) {
+      for (int startNode : srcIt->second) {
+        if (startNode < TS_IN_OFFSET || startNode >= TS_OUT_OFFSET)
+          continue;
+        std::unordered_set<int> visited;
+        std::vector<int> tsChain = followChain(startNode, visited);
+        sortUnique(tsChain);
+        bool skip = false;
+        for (const auto& chargedTs : usedTsSets) {
+          if (isSubset(tsChain, chargedTs)) {
+            skip = true;
+            break;
+          }
+        }
+        if (skip || tsChain.empty())
+          continue;
+        neutralCandidates.push_back({{}, tsChain});
+        usedTsSets.push_back(tsChain);
+      }
+    }
+
+    std::vector<RecoCandidateTmp> candidates = chargedCandidates;
+    candidates.insert(candidates.end(), neutralCandidates.begin(), neutralCandidates.end());
+    usageCount = computeUsageCount(candidates);
+    while (!allUsedOnce(usageCount)) {
+      auto newCandidates = mergeMixedCandidates(candidates, sideTsEnergy, tracks, usageCount, 0.5f);
+      if (newCandidates == candidates)
+        break;
+      candidates = std::move(newCandidates);
+      usageCount = computeUsageCount(candidates);
+    }
+
+    auto pushFinalCandidate = [&](const RecoCandidateTmp& cand) {
+      if (cand.tracksters.empty()) {
+        for (int trk : cand.tracks)
+          resultCandidate[trk] = static_cast<int>(resultTracksters.size());
+        return;
+      }
+
+      std::vector<int> localTs = cand.tracksters;
+      sortUnique(localTs);
+      if (localTs.size() == 1) {
+        const auto& outTs = tracksters[ts[localTs[0]].origIdx];
+        for (int trk : cand.tracks)
+          resultCandidate[trk] = static_cast<int>(resultTracksters.size());
+        resultTracksters.push_back(outTs);
+        return;
+      }
+
+      Trackster merged;
+      bool isHadron = false;
+      for (int idx : localTs) {
+        merged.mergeTracksters(tracksters[ts[idx].origIdx]);
+        if (tracksters[ts[idx].origIdx].isHadronic())
+          isHadron = true;
+      }
+      merged.setIdProbability(isHadron ? ticl::Trackster::ParticleType::charged_hadron
+                                       : ticl::Trackster::ParticleType::electron,
+                              1.f);
+      for (int trk : cand.tracks)
+        resultCandidate[trk] = static_cast<int>(resultTracksters.size());
+      resultTracksters.push_back(merged);
     };
 
-    // Charged candidates: SRC → Track → ...
-    for (int trkNode : usedOut[SRC]) {
-      if (trkNode < TRACK_OFFSET || trkNode >= TS_IN_OFFSET)
-        continue;
-      int ti = trkNode - TRACK_OFFSET;
-      int origTrackIdx = sideTracks[ti].origIdx;
-
-      std::vector<int> tsSet;
-      for (int v : usedOut[trkNode]) {
-        auto chain = followChain(v);
-        tsSet.insert(tsSet.end(), chain.begin(), chain.end());
-      }
-
-      if (tsSet.empty()) {
-        // Track-only: no trackster linked, record index but push nothing
-        resultCandidate[origTrackIdx] = static_cast<int>(resultTracksters.size());
-      } else {
-        pushCandidate(origTrackIdx, tsSet);
-      }
-    }
-
-    // Neutral candidates: SRC → TS_IN directly
-    for (int startNode : usedOut[SRC]) {
-      if (startNode < TS_IN_OFFSET || startNode >= TS_OUT_OFFSET)
-        continue;
-      auto chain = followChain(startNode);
-      if (!chain.empty())
-        pushCandidate(-1, chain);  // -1 = no track
-    }
-  }  // end side loop
+    for (const auto& cand : candidates)
+      pushFinalCandidate(cand);
+  }
 }
 
-// ---------------------------------------------------------------------------
-// fillPSetDescription
-// ---------------------------------------------------------------------------
 void MCFwithNNInterpretationAlgo::fillPSetDescription(edm::ParameterSetDescription& desc) {
-  desc.add<double>("drCut", 0.02);              // max dR for graph edges
-  desc.add<double>("tsTsScoreShift", 1.0);      // shift applied to TS-TS edge cost
-  desc.add<double>("trackTsScoreShift", 1.0);   // shift applied to track-TS edge cost
-  desc.add<double>("tsTsScoreWeight", 1.0);     // scale for TS-TS edge cost
-  desc.add<double>("trackTsScoreWeight", 1.0);  // scale for track-TS edge cost
-  desc.add<int>("neutralPenalty", 1);           // cost for unlinked (neutral) flow
-  desc.add<int>("tracksterInit", 0);            // cost to start a neutral
-  desc.add<int>("trackInit", 0);                // cost to start a charged
+  desc.add<double>("drCut", 0.02);
+  desc.add<double>("tsTsScoreShift", 1.0);
+  desc.add<double>("trackTsScoreShift", 1.0);
+  desc.add<double>("tsTsScoreWeight", 1.0);
+  desc.add<double>("trackTsScoreWeight", 1.0);
+  desc.add<int>("neutralPenalty", 1);
+  desc.add<int>("tracksterInit", 0);
+  desc.add<int>("trackInit", 0);
+  desc.add<int>("manyPenalty", 1);
   desc.add<std::string>("onnxTrackModel", "");
   desc.add<std::string>("onnxTracksterModel", "");
-  TICLInterpretationAlgoBase<reco::Track>::fillPSetDescription(desc);
+  TICLInterpretationAlgoBase::fillPSetDescription(desc);
 }
 
 DEFINE_EDM_PLUGIN(TICLGeneralInterpretationPluginFactory,
