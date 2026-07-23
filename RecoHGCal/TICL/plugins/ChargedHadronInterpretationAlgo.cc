@@ -375,11 +375,6 @@ ChargedHadronInterpretationAlgo::~ChargedHadronInterpretationAlgo() {}
 ChargedHadronInterpretationAlgo::ChargedHadronInterpretationAlgo(const edm::ParameterSet &conf,
                                                                  TICLONNXGlobalCache const* cache)
     : TICLInterpretationAlgoBase<reco::Track>(conf, cache),
-      del_tk_ts_layer1_(conf.getParameter<double>("delta_tk_ts_layer1")),
-      del_tk_ts_int_(conf.getParameter<double>("delta_tk_ts_interface")),
-      timing_quality_threshold_(conf.getParameter<double>("timing_quality_threshold")),
-      energy_overshoot_fraction_(conf.getParameter<double>("energy_overshoot_fraction")),
-      energy_overshoot_max_(conf.getParameter<double>("energy_overshoot_max")),
       drCut_(conf.getParameter<double>("drCut")),
       tsTsScoreShift_(conf.getParameter<double>("tsTsScoreShift")),
       trackTsScoreShift_(conf.getParameter<double>("trackTsScoreShift")),
@@ -462,8 +457,6 @@ void ChargedHadronInterpretationAlgo::makeCandidates(const Inputs &input,
   tsAllProp[0].reserve(tracksters.size());
   tsAllProp[1].reserve(tracksters.size());
 
-  const float zVal_layer1 = hgcons_->waferZ(1, true);
-
   for (unsigned i = 0; i < tracksters.size(); ++i) {
     const auto& t = tracksters[i];
     const Vector& baryc = t.barycenter();
@@ -538,8 +531,8 @@ void ChargedHadronInterpretationAlgo::makeCandidates(const Inputs &input,
   auto findNeighbours = [&](float seed_eta, float seed_phi, int side) -> std::vector<unsigned> {
     bool sideZ = seed_eta > 0;
     const TICLLayerTile& tile = tracksterPropTiles[sideZ];
-    float eta_min = std::max(std::fabs(seed_eta) - drCut_, (float)TileConstants::minEta);
-    float eta_max = std::min(std::fabs(seed_eta) + drCut_, (float)TileConstants::maxEta);
+    float eta_min = std::max(std::fabs(seed_eta) - (float)drCut_, TileConstants::minEta);
+    float eta_max = std::min(std::fabs(seed_eta) + (float)drCut_, TileConstants::maxEta);
     auto search_box = tile.searchBoxEtaPhi(eta_min, eta_max, seed_phi - drCut_, seed_phi + drCut_);
 
     std::vector<unsigned> result;
@@ -964,14 +957,13 @@ void ChargedHadronInterpretationAlgo::makeCandidates(const Inputs &input,
       }
     }
 
-  }  // end side loop
-
-  // Update maskedTracksters to reflect which tracksters were consumed
-  for (size_t i = 0; i < tracksters.size(); ++i) {
-    if (!chargedMask[i] && i < maskedTracksters.size()) {
-      maskedTracksters[i] = true;
+    // Update maskedTracksters to reflect which tracksters were consumed
+    for (size_t i = 0; i < tracksters.size(); ++i) {
+      if (!chargedMask[i] && i < maskedTracksters.size()) {
+        maskedTracksters[i] = true;
+      }
     }
-  }
+  }  // end side loop
 }
 
 void ChargedHadronInterpretationAlgo::makeOpinions(const Inputs &input,
@@ -1010,11 +1002,6 @@ void ChargedHadronInterpretationAlgo::makeOpinions(const Inputs &input,
 }
 
 void ChargedHadronInterpretationAlgo::fillPSetDescription(edm::ParameterSetDescription &desc) {
-  desc.add<double>("delta_tk_ts_layer1", 0.02);
-  desc.add<double>("delta_tk_ts_interface", 0.03);
-  desc.add<double>("timing_quality_threshold", 0.5);
-  desc.add<double>("energy_overshoot_fraction", 0.2);
-  desc.add<double>("energy_overshoot_max", 10.0);
   desc.add<double>("drCut", 0.02);
   desc.add<double>("tsTsScoreShift", 1.0);
   desc.add<double>("trackTsScoreShift", 1.0);
