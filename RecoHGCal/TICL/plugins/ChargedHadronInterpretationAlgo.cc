@@ -1002,15 +1002,15 @@ void ChargedHadronInterpretationAlgo::makeOpinions(const Inputs &input,
 }
 
 void ChargedHadronInterpretationAlgo::fillPSetDescription(edm::ParameterSetDescription &desc) {
-  desc.add<double>("drCut", 0.02);
-  desc.add<double>("tsTsScoreShift", 1.0);
-  desc.add<double>("trackTsScoreShift", 1.0);
-  desc.add<double>("tsTsScoreWeight", 1.0);
-  desc.add<double>("trackTsScoreWeight", 1.0);
-  desc.add<int>("neutralPenalty", 1);
-  desc.add<int>("tracksterInit", 0);
-  desc.add<int>("trackInit", 0);
-  desc.add<int>("manyPenalty", 1);
+  desc.add<double>("drCut", 0.05);
+  desc.add<double>("tsTsScoreShift", 1000.0);
+  desc.add<double>("trackTsScoreShift", -1000.0);
+  desc.add<double>("tsTsScoreWeight", 0.001);
+  desc.add<double>("trackTsScoreWeight", 1000.0);
+  desc.add<int>("neutralPenalty", 745);
+  desc.add<int>("tracksterInit", -215);
+  desc.add<int>("trackInit", 1000);
+  desc.add<int>("manyPenalty", -1000);
   desc.add<std::string>("onnxTrackModel", "");
   desc.add<std::string>("onnxTracksterModel", "");
   TICLInterpretationAlgoBase<reco::Track>::fillPSetDescription(desc);
