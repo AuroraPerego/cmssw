@@ -169,16 +169,16 @@ TracksterLinksProducer::TracksterLinksProducer(const edm::ParameterSet &ps, cons
     arbitrationMaxSharedEnergyFraction_ = ps.getParameter<double>("arbitrationMaxSharedEnergyFraction");
     auto interpretationPSet = ps.getParameter<edm::ParameterSet>("interpretationDescPSet");
     generalInterpretationAlgo_ = TICLGeneralInterpretationPluginFactory::get()->create(
-        interpretationPSet.getParameter<std::string>("type"), interpretationPSet, consumesCollector());
+        interpretationPSet.getParameter<std::string>("type"), interpretationPSet, cache);
     auto muonInterpretationPSet = ps.getParameter<edm::ParameterSet>("muonInterpretationDescPSet");
     muonInterpretationAlgo_ = TICLGeneralInterpretationPluginFactory::get()->create(
-        muonInterpretationPSet.getParameter<std::string>("type"), muonInterpretationPSet, consumesCollector());
+        muonInterpretationPSet.getParameter<std::string>("type"), muonInterpretationPSet, cache);
     auto egammaInterpretationPSet = ps.getParameter<edm::ParameterSet>("egammaInterpretationDescPSet");
     egammaInterpretationAlgo_ = TICLGeneralInterpretationPluginFactory::get()->create(
-        egammaInterpretationPSet.getParameter<std::string>("type"), egammaInterpretationPSet, consumesCollector());
+        egammaInterpretationPSet.getParameter<std::string>("type"), egammaInterpretationPSet, cache);
     auto jetInterpretationPSet = ps.getParameter<edm::ParameterSet>("jetInterpretationDescPSet");
     jetInterpretationAlgo_ = TICLGeneralInterpretationPluginFactory::get()->create(
-        jetInterpretationPSet.getParameter<std::string>("type"), jetInterpretationPSet, consumesCollector());
+        jetInterpretationPSet.getParameter<std::string>("type"), jetInterpretationPSet, cache);
     produces<std::vector<int>>("trackToTrackster");
     produces<std::vector<int>>("trackMode");
     produces<std::vector<int>>("neutralIdx");

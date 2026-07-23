@@ -27,7 +27,7 @@ namespace ticl {
 
   class EGammaInterpretationAlgo : public TICLInterpretationAlgoBase<reco::Track> {
   public:
-    EGammaInterpretationAlgo(const edm::ParameterSet &conf, edm::ConsumesCollector iC);
+    EGammaInterpretationAlgo(const edm::ParameterSet &conf, TICLONNXGlobalCache const* cache);
     ~EGammaInterpretationAlgo() override;
 
     // Opinion-only algorithm: makeCandidates is intentionally a no-op.
