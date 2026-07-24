@@ -80,7 +80,7 @@ namespace ticl {
         if (interpretationDescPSet.existsAs<std::string>("type", /*trackPar=*/true)) {
           const auto algoType = interpretationDescPSet.getParameter<std::string>("type");
 
-          if (algoType == "MCFwithNN") {
+          if (algoType == "ChargedHadron") {
             // Two separate ONNX models: Track->TS and TS->TS
             cache->tryLoadSessionFromKey(interpretationDescPSet, "onnxTrackModel", sess_opts);
             cache->tryLoadSessionFromKey(interpretationDescPSet, "onnxTracksterModel", sess_opts);
