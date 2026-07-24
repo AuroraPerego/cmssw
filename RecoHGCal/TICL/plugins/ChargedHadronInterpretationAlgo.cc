@@ -709,13 +709,13 @@ void ChargedHadronInterpretationAlgo::makeCandidates(const Inputs &input,
 
     trackTsEdges.reserve(nTrkTsEdges);
     for (int k = 0; k < nTrkTsEdges; ++k) {
-      int64_t cost = static_cast<int64_t>(-trkTsScores[k][0] * trackTsScoreWeight_ + trackTsScoreShift_);
+      int64_t cost = static_cast<int64_t>(-trkTsScores[0][k] * trackTsScoreWeight_ + trackTsScoreShift_);
       trackTsEdges.push_back({trkTsRaw[k].first, trkTsRaw[k].second, cost});
     }
 
     tsTsEdges.reserve(nTsTsEdges);
     for (int k = 0; k < nTsTsEdges; ++k) {
-      int64_t cost = static_cast<int64_t>(-tsTsScores[k][0] * tsTsScoreWeight_ + tsTsScoreShift_);
+      int64_t cost = static_cast<int64_t>(-tsTsScores[0][k] * tsTsScoreWeight_ + tsTsScoreShift_);
       tsTsEdges.push_back({tsTsRaw[k].first, tsTsRaw[k].second, cost});
     }
 
@@ -1011,7 +1011,7 @@ void ChargedHadronInterpretationAlgo::fillPSetDescription(edm::ParameterSetDescr
   desc.add<int>("tracksterInit", -215);
   desc.add<int>("trackInit", 1000);
   desc.add<int>("manyPenalty", -1000);
-  desc.add<std::string>("onnxTrackModel", "");
-  desc.add<std::string>("onnxTracksterModel", "");
+  desc.add<std::string>("onnxTrackModel", "RecoHGCal/TICL/data/ticlv5/onnx_models/MCF/model0p9_trk_ts_CP.onnx");
+  desc.add<std::string>("onnxTracksterModel", "RecoHGCal/TICL/data/ticlv5/onnx_models/MCF/model0p9_ts_ts_CP.onnx");
   TICLInterpretationAlgoBase<reco::Track>::fillPSetDescription(desc);
 }
