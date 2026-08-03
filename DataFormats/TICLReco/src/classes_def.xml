@@ -1,0 +1,76 @@
+<lcgdict>
+  <class name="ticl::io_v1::Trackster" ClassVersion="4">
+    <version ClassVersion="4" checksum="4107442909"/>
+    <version ClassVersion="3" checksum="2779314320"/>
+  </class>
+  <class name="std::vector<ticl::io_v1::Trackster>" />
+  <class name="edm::RefProd<std::vector<ticl::io_v1::Trackster> >"/>
+  <class name="std::pair<edm::RefProd<std::vector<ticl::io_v1::Trackster> >, edm::RefProd<std::vector<ticl::io_v1::Trackster> > >"/>
+  <class name="edm::Wrapper<ticl::io_v1::Trackster>" />
+  <class name="edm::Wrapper<std::vector<ticl::io_v1::Trackster> >" />
+
+  <class name="ticl::TICLLayerTile" persistent="false">
+    <field name="tile_" transient="true"/>
+  </class>
+
+  <class name="TICLGenericTile<ticl::Tiles>" persistent="false">
+    <field name="tiles_" transient="true"/>
+  </class>
+  <class name="edm::Wrapper<TICLGenericTile<ticl::Tiles>>" persistent="false"/>
+
+  <class name="TICLGenericTile<ticl::TracksterTiles>" persistent="false">
+    <field name="tiles_" transient="true"/>
+  </class>
+  <class name="edm::Wrapper<TICLGenericTile<ticl::TracksterTiles>>" persistent="false"/>
+
+  <class name="ticl::TICLLayerTileBarrel" persistent="false">
+    <field name="tile_" transient="true"/>
+  </class>
+
+  <class name="TICLGenericTile<ticl::TilesBarrel>" persistent="false">
+    <field name="tiles_" transient="true"/>
+  </class>
+  <class name="edm::Wrapper<TICLGenericTile<ticl::TilesBarrel>>" persistent="false"/>
+
+  <class name="TICLGenericTile<ticl::TracksterTilesBarrel>" persistent="false">
+    <field name="tiles_" transient="true"/>
+  </class>
+  <class name="edm::Wrapper<TICLGenericTile<ticl::TracksterTilesBarrel>>" persistent="false"/>
+
+  <class name="ticl::TICLLayerTileHFNose" persistent="false">
+    <field name="tile_" transient="true"/>
+  </class>
+
+  <class name="TICLGenericTile<ticl::TilesHFNose>" persistent="false">
+    <field name="tiles_" transient="true"/>
+  </class>
+  <class name="edm::Wrapper<TICLGenericTile<ticl::TilesHFNose>>" persistent="false"/>
+
+  <class name="TICLGenericTile<ticl::TracksterTilesHFNose>" persistent="false">
+    <field name="tiles_" transient="true"/>
+  </class>
+  <class name="edm::Wrapper<TICLGenericTile<ticl::TracksterTilesHFNose>>" persistent="false"/>
+
+  <class name="TICLSeedingRegion" ClassVersion="3">
+    <version ClassVersion="3" checksum="2409655320"/>
+  </class>
+  <class name="std::vector<TICLSeedingRegion>" />
+  <class name="edm::Wrapper<TICLSeedingRegion>" />
+  <class name="edm::Wrapper<std::vector<TICLSeedingRegion> >" />
+
+  <class name="io_v1::TICLCandidate" ClassVersion="4">
+    <version ClassVersion="4" checksum="2330696932"/>
+    <version ClassVersion="3" checksum="2436690028"/>
+  </class>
+  <class name="std::vector<io_v1::TICLCandidate>" />
+  <class name="edm::Wrapper<io_v1::TICLCandidate>" />
+  <class name="edm::Wrapper<std::vector<io_v1::TICLCandidate> >" />
+
+  <class name="MtdHostCollection" rntupleStreamerMode="true"/>
+  <!-- MtdHostCollection::Layout must be listed before the aliased-to type -->
+  <class name="MtdHostCollection::Layout"/>
+  <class name="MtdSoA"/>
+  <class name="MtdSoA::View"/>
+  <class name="edm::Wrapper<MtdHostCollection>" splitLevel="0"/>
+
+</lcgdict>
