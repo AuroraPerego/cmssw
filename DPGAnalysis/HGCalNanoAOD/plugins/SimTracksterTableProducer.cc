@@ -1,6 +1,6 @@
 #include <algorithm>
 #include "DataFormats/NanoAOD/interface/FlatTable.h"
-#include "DataFormats/HGCalReco/interface/Trackster.h"
+#include "DataFormats/TICLReco/interface/Trackster.h"
 #include "SimDataFormats/CaloAnalysis/interface/CaloParticle.h"
 #include "SimDataFormats/CaloAnalysis/interface/SimCluster.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
