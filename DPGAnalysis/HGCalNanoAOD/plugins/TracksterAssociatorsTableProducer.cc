@@ -1,6 +1,6 @@
 #include "PhysicsTools/NanoAOD/interface/AssociationMapFlatTableProducer.h"
 
-#include "DataFormats/TICLReco/interface/Trackster.h"
+#include "DataFormats/TICL/interface/Trackster.h"
 #include "SimDataFormats/CaloAnalysis/interface/SimCluster.h"
 #include "SimDataFormats/CaloAnalysis/interface/CaloParticle.h"
 

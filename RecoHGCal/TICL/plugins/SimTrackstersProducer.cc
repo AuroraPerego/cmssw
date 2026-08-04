@@ -16,8 +16,8 @@
 #include "DataFormats/CaloRecHit/interface/CaloCluster.h"
 #include "DataFormats/ParticleFlowReco/interface/PFCluster.h"
 
-#include "DataFormats/TICLReco/interface/Trackster.h"
-#include "DataFormats/TICLReco/interface/TICLCandidate.h"
+#include "DataFormats/TICL/interface/Trackster.h"
+#include "DataFormats/TICL/interface/TICLCandidate.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "CommonTools/Utils/interface/StringCutObjectSelector.h"
@@ -40,7 +40,7 @@
 
 #include "SimDataFormats/Associations/interface/TrackToTrackingParticleAssociator.h"
 
-#include "DataFormats/TICLReco/interface/Common.h"
+#include "DataFormats/TICL/interface/Common.h"
 
 #include <CLHEP/Units/SystemOfUnits.h>
 

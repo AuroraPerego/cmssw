@@ -1,9 +1,0 @@
-#include <vector>
-#include <array>
-#include "DataFormats/Common/interface/Wrapper.h"
-#include "DataFormats/TICLReco/interface/MtdSoA.h"
-#include "DataFormats/TICLReco/interface/MtdHostCollection.h"
-#include "DataFormats/TICLReco/interface/Trackster.h"
-#include "DataFormats/TICLReco/interface/TICLLayerTile.h"
-#include "DataFormats/TICLReco/interface/TICLSeedingRegion.h"
-#include "DataFormats/TICLReco/interface/TICLCandidate.h"

@@ -1,10 +1,10 @@
-#ifndef DataFormats_TICLReco_TICLCandidate_h
-#define DataFormats_TICLReco_TICLCandidate_h
+#ifndef DataFormats_TICL_TICLCandidate_h
+#define DataFormats_TICL_TICLCandidate_h
 
 #include "DataFormats/Candidate/interface/LeafCandidate.h"
 #include "DataFormats/Common/interface/Ptr.h"
 #include "DataFormats/Common/interface/Ref.h"
-#include "DataFormats/TICLReco/interface/Trackster.h"
+#include "DataFormats/TICL/interface/Trackster.h"
 #include "DataFormats/Math/interface/Point3D.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/GsfTrackReco/interface/GsfTrack.h"

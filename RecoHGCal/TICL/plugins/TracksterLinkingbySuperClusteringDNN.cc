@@ -40,8 +40,8 @@ Date: 02/2026
 #include "FWCore/Utilities/interface/FileInPath.h"
 #include "PhysicsTools/ONNXRuntime/interface/ONNXRuntime.h"
 
-#include "DataFormats/TICLReco/interface/TICLLayerTile.h"
-#include "DataFormats/TICLReco/interface/Trackster.h"
+#include "DataFormats/TICL/interface/TICLLayerTile.h"
+#include "DataFormats/TICL/interface/Trackster.h"
 #include "RecoHGCal/TICL/plugins/TracksterLinkingbySuperClusteringDNN.h"
 
 using namespace ticl;

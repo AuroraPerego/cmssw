@@ -1,11 +1,11 @@
-#ifndef DataFormats_TICLReco_Common_h
-#define DataFormats_TICLReco_Common_h
+#ifndef DataFormats_TICL_Common_h
+#define DataFormats_TICL_Common_h
 
 #include <vector>
 #include <array>
 #include <cstdint>
 
-#include "DataFormats/TICLReco/interface/Trackster.h"
+#include "DataFormats/TICL/interface/Trackster.h"
 
 namespace ticl {
   struct TileConstants {
@@ -84,4 +84,4 @@ namespace ticl {
 
 }  // namespace ticl
 
-#endif  // DataFormats_TICLReco_Common_h
+#endif  // DataFormats_TICL_Common_h

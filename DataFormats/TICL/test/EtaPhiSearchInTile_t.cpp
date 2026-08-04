@@ -2,7 +2,7 @@
 #include <cmath>
 #include <iostream>
 
-#include "DataFormats/TICLReco/interface/TICLLayerTile.h"
+#include "DataFormats/TICL/interface/TICLLayerTile.h"
 
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch_all.hpp>

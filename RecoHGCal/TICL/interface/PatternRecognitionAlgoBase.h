@@ -9,12 +9,12 @@
 #include <functional>
 #include <algorithm>
 #include "DataFormats/CaloRecHit/interface/CaloCluster.h"
-#include "DataFormats/TICLReco/interface/Trackster.h"
-#include "DataFormats/TICLReco/interface/TICLLayerTile.h"
-#include "DataFormats/TICLReco/interface/TICLSeedingRegion.h"
+#include "DataFormats/TICL/interface/Trackster.h"
+#include "DataFormats/TICL/interface/TICLLayerTile.h"
+#include "DataFormats/TICL/interface/TICLSeedingRegion.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "DataFormats/Common/interface/ValueMap.h"
-#include "DataFormats/TICLReco/interface/Common.h"
+#include "DataFormats/TICL/interface/Common.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"
 

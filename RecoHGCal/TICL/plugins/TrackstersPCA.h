@@ -1,7 +1,7 @@
 #ifndef RecoHGCal_TICL_TrackstersPCA_h
 #define RecoHGCal_TICL_TrackstersPCA_h
 
-#include "DataFormats/TICLReco/interface/Trackster.h"
+#include "DataFormats/TICL/interface/Trackster.h"
 #include "DataFormats/CaloRecHit/interface/CaloCluster.h"
 #include <vector>
 #include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"

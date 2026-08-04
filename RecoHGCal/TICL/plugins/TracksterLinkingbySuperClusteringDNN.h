@@ -28,7 +28,7 @@ namespace cms {
 
 #include "RecoHGCal/TICL/interface/TracksterLinkingAlgoBase.h"
 #include "RecoHGCal/TICL/interface/SuperclusteringDNNInputs.h"
-#include "DataFormats/TICLReco/interface/TracksterFwd.h"
+#include "DataFormats/TICL/interface/TracksterFwd.h"
 
 namespace ticl {
   class TracksterLinkingbySuperClusteringDNN : public TracksterLinkingAlgoBase {

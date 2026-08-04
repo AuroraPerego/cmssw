@@ -1,7 +1,7 @@
 #ifndef RecoHGCal_TICL_TICLGraph_h
 #define RecoHGCal_TICL_TICLGraph_h
 
-#include "DataFormats/TICLReco/interface/Trackster.h"
+#include "DataFormats/TICL/interface/Trackster.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include <unordered_set>
 

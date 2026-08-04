@@ -22,7 +22,7 @@
 #include <Math/Vector3D.h>
 #include <Math/VectorUtil.h>
 
-#include "DataFormats/TICLReco/interface/Trackster.h"
+#include "DataFormats/TICL/interface/Trackster.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 namespace ticl {

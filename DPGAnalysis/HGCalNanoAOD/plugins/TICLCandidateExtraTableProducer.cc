@@ -1,6 +1,6 @@
 #include "PhysicsTools/NanoAOD/interface/SimpleFlatTableProducer.h"
-#include "DataFormats/TICLReco/interface/TICLCandidate.h"
-#include "DataFormats/TICLReco/interface/Trackster.h"
+#include "DataFormats/TICL/interface/TICLCandidate.h"
+#include "DataFormats/TICL/interface/Trackster.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "DataFormats/GeometrySurface/interface/BoundDisk.h"

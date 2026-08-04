@@ -1,8 +1,8 @@
 // Author: Felice Pantaleo - felice.pantaleo@cern.ch
 // Date: 09/2018
 
-#ifndef DataFormats_TICLReco_Trackster_h
-#define DataFormats_TICLReco_Trackster_h
+#ifndef DataFormats_TICL_Trackster_h
+#define DataFormats_TICL_Trackster_h
 
 #include <array>
 #include <vector>

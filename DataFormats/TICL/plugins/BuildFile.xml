@@ -1,0 +1,5 @@
+<library file="TrivialSerialisation.cc" name="DataFormatsTICLTrivialSerialisation">
+  <use name="DataFormats/TICL"/>
+  <use name="HeterogeneousCore/TrivialSerialisation"/>
+  <flags EDM_PLUGIN="1"/>
+</library>

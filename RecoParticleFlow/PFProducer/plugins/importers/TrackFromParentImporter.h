@@ -5,7 +5,7 @@
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
 #include "DataFormats/ParticleFlowReco/interface/PFBlockElementTrack.h"
 #include "DataFormats/ParticleFlowReco/interface/PFRecTrack.h"
-#include "DataFormats/TICLReco/interface/TICLSeedingRegion.h"
+#include "DataFormats/TICL/interface/TICLSeedingRegion.h"
 
 namespace pflow {
   namespace noop {

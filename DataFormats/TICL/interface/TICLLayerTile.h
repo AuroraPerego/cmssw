@@ -1,12 +1,12 @@
 // Authors: Marco Rovere, Felice Pantaleo - marco.rovere@cern.ch, felice.pantaleo@cern.ch
 // Date: 05/2019
 
-#ifndef DataFormats_TICLReco_TICLLayerTile_h
-#define DataFormats_TICLReco_TICLLayerTile_h
+#ifndef DataFormats_TICL_TICLLayerTile_h
+#define DataFormats_TICL_TICLLayerTile_h
 
-#include "DataFormats/TICLReco/interface/Common.h"
+#include "DataFormats/TICL/interface/Common.h"
 #include "DataFormats/Math/interface/normalizedPhi.h"
-#include "DataFormats/TICLReco/interface/throwOutOfBoundsException.h"
+#include "DataFormats/TICL/interface/throwOutOfBoundsException.h"
 #include <utility>
 
 template <typename T>

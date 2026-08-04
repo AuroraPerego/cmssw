@@ -4,7 +4,7 @@
 #ifndef RecoHGCal_TICL_ClusterFilterBase_h
 #define RecoHGCal_TICL_ClusterFilterBase_h
 
-#include "DataFormats/TICLReco/interface/Common.h"
+#include "DataFormats/TICL/interface/Common.h"
 #include "DataFormats/CaloRecHit/interface/CaloClusterFwd.h"
 #include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"
 

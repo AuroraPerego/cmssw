@@ -2,10 +2,10 @@
 // Emails: felice.pantaleo@cern.ch, marco.rovere@cern.ch
 // Date: 06/2019
 
-#ifndef DataFormats_TICLReco_TICLSeedingRegion_h
-#define DataFormats_TICLReco_TICLSeedingRegion_h
+#ifndef DataFormats_TICL_TICLSeedingRegion_h
+#define DataFormats_TICL_TICLSeedingRegion_h
 
-#include "DataFormats/TICLReco/interface/Common.h"
+#include "DataFormats/TICL/interface/Common.h"
 #include "DataFormats/Math/interface/normalizedPhi.h"
 #include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 #include "DataFormats/GeometryVector/interface/GlobalVector.h"

@@ -9,7 +9,7 @@
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "DataFormats/CaloRecHit/interface/CaloCluster.h"
-#include "DataFormats/TICLReco/interface/TICLSeedingRegion.h"
+#include "DataFormats/TICL/interface/TICLSeedingRegion.h"
 
 class HGCDoublet {
 public:

@@ -19,9 +19,9 @@
 #include "DataFormats/Common/interface/OrphanHandle.h"
 
 #include "DataFormats/CaloRecHit/interface/CaloCluster.h"
-#include "DataFormats/TICLReco/interface/Common.h"
-#include "DataFormats/TICLReco/interface/TICLLayerTile.h"
-#include "DataFormats/TICLReco/interface/Trackster.h"
+#include "DataFormats/TICL/interface/Common.h"
+#include "DataFormats/TICL/interface/TICLLayerTile.h"
+#include "DataFormats/TICL/interface/Trackster.h"
 
 #include "PhysicsTools/ONNXRuntime/interface/ONNXRuntime.h"
 

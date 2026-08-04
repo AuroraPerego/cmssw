@@ -1,9 +1,9 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include <Math/VectorUtil.h>
 #include "DataFormats/Math/interface/deltaR.h"
-#include "DataFormats/TICLReco/interface/Common.h"
+#include "DataFormats/TICL/interface/Common.h"
 #include "DataFormats/GeometrySurface/interface/BoundDisk.h"
-#include "DataFormats/TICLReco/interface/Trackster.h"
+#include "DataFormats/TICL/interface/Trackster.h"
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateTransform.h"
 #include "RecoParticleFlow/PFProducer/interface/PFMuonAlgo.h"
 #include "RecoHGCal/TICL/interface/TICLUtils.h"
