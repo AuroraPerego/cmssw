@@ -317,15 +317,13 @@ void TracksterLinkingbySuperClusteringDNN::linkTracksters(
     }
   }
 
-#ifdef EDM_ML_DEBUG
   for (std::vector<unsigned int> const& sc : outputSuperclusters) {
     std::ostringstream s;
     for (unsigned int trackster_id : sc)
       s << trackster_id << " ";
-    LogDebug("HGCalTICLSuperclustering") << "Created supercluster of size " << sc.size()
-                                         << " holding tracksters (first one is seed) " << s.str();
+    std::cout << "Created supercluster of size " << sc.size()
+                                         << " holding tracksters (first one is seed) " << s.str() << "\n";
   }
-#endif
 }
 
 void TracksterLinkingbySuperClusteringDNN::fillPSetDescription(edm::ParameterSetDescription& desc) {

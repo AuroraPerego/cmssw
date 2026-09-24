@@ -1598,7 +1598,7 @@ void TICLDumper::fillDescriptions(edm::ConfigurationDescriptions& descriptions) 
       edm::allowedValues<std::string>("Trackster", "SimTracksterCP", "SimTracksterSC"));
   desc.addVPSet("tracksterCollections", tracksterDescValidator)->setComment("Trackster collections to dump");
 
-  desc.add<edm::InputTag>("trackstersInCand", edm::InputTag("ticlTrackstersCLUE3DHigh"));
+  desc.add<edm::InputTag>("trackstersInCand", edm::InputTag("ticlCandidate"));
 
   desc.add<edm::InputTag>("layerClusters", edm::InputTag("hgcalMergeLayerClusters"));
   desc.add<edm::InputTag>("layer_clustersTime", edm::InputTag("hgcalMergeLayerClusters", "timeLayerCluster"));
