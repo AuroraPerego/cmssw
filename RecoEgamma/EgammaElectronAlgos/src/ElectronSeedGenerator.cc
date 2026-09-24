@@ -30,6 +30,13 @@
 #include <utility>
 
 namespace {
+  void printHits(const char* tag, const reco::ElectronSeed &s) {
+    std::cout << tag << " hits(mask=" << (unsigned int)s.hitsMask() << "):";
+    for (auto const &hit : s.recHits()) {
+      std::cout << " " << hit.geographicalId().rawId();
+    }
+    std::cout << std::endl;
+  }
 
   bool equivalent(const TrajectorySeed &s1, const TrajectorySeed &s2) {
     if (s1.nHits() != s2.nHits())
@@ -49,8 +56,21 @@ namespace {
     return true;
   }
 
+  float rzQuality(float dRz1, float dRz2) {
+    return dRz1 * dRz1 + dRz2 * dRz2;
+  }
+
+  float phiQuality(float dPhi1, float dPhi2) {
+    return dPhi1 * dPhi1 + dPhi2 * dPhi2;
+  }
+
   void addSeed(reco::ElectronSeed &seed, const SeedWithInfo *info, bool positron, reco::ElectronSeedCollection &out) {
+    std::cout << "[addSeed] ENTER  positron=" << positron
+            << "  cluster.key()=" << seed.caloCluster().key()
+            << "  out.size()=" << out.size() << std::endl;
+    printHits("[addSeed] incoming", seed);
     if (!info) {
+      std::cout << "[addSeed] info==nullptr -> unconditional emplace_back" << std::endl;
       out.emplace_back(seed);
       return;
     }
@@ -60,48 +80,51 @@ namespace {
     } else {
       seed.setNegAttributes(info->dRz2, info->dPhi2, info->dRz1, info->dPhi1);
     }
+    int idx = 0;
     for (auto &res : out) {
-      if ((seed.caloCluster().key() == res.caloCluster().key()) && (seed.hitsMask() == res.hitsMask()) &&
-          equivalent(seed, res)) {
+      bool sameCluster = (seed.caloCluster().key() == res.caloCluster().key());
+      bool sameMask = (seed.hitsMask() == res.hitsMask());
+      bool isEquivalent = equivalent(seed, res);
+
+      std::cout << "[addSeed]   vs out[" << idx << "]  sameCluster=" << sameCluster
+                << "  sameMask=" << sameMask
+                << "  (res.key=" << res.caloCluster().key()
+                << ", res.mask=" << (unsigned int)res.hitsMask() << ")"
+                << "  equivalent=" << isEquivalent << std::endl;
+
+      if ((seed.caloCluster().key() == res.caloCluster().key()) && equivalent(seed, res)) {
+        const auto newRz  = rzQuality(info->dRz1, info->dRz2);
+        const auto newPhi = phiQuality(info->dPhi1, info->dPhi2);
         if (positron) {
-          if (res.dRZPos(1) == std::numeric_limits<float>::max() &&
-              res.dRZNeg(1) != std::numeric_limits<float>::max()) {
+          bool resHasNoPosMatch = res.dRZPos(1) == std::numeric_limits<float>::max();
+          if (resHasNoPosMatch)
             res.setPosAttributes(info->dRz2, info->dPhi2, info->dRz1, info->dPhi1);
-            seed.setNegAttributes(res.dRZNeg(1), res.dPhiNeg(1), res.dRZNeg(0), res.dPhiNeg(0));
-            break;
-          } else {
-            if (res.dRZPos(1) != std::numeric_limits<float>::max()) {
-              if (res.dRZPos(1) != seed.dRZPos(1)) {
-                edm::LogWarning("ElectronSeedGenerator|BadValue")
-                    << "this similar old seed already has another dRz2Pos"
-                    << "\nold seed mask/dRz2/dPhi2/dRz2Pos/dPhi2Pos: " << (unsigned int)res.hitsMask() << "/"
-                    << res.dRZNeg(1) << "/" << res.dPhiNeg(1) << "/" << res.dRZPos(1) << "/" << res.dPhiPos(1)
-                    << "\nnew seed mask/dRz2/dPhi2/dRz2Pos/dPhi2Pos: " << (unsigned int)seed.hitsMask() << "/"
-                    << seed.dRZNeg(1) << "/" << seed.dPhiNeg(1) << "/" << seed.dRZPos(1) << "/" << seed.dPhiPos(1);
-              }
-            }
+          else {
+            const auto resRz  =  rzQuality(res.dRZPos(0), res.dRZPos(1));
+            const auto resPhi = phiQuality(res.dPhiPos(0), res.dPhiPos(1));
+
+            if ((newRz <= resRz) && (newPhi <= resPhi) && (newRz < resRz || newPhi < resPhi))
+              res.setPosAttributes(info->dRz2, info->dPhi2, info->dRz1, info->dPhi1);
           }
         } else {
-          if (res.dRZNeg(1) == std::numeric_limits<float>::max() &&
-              res.dRZPos(1) != std::numeric_limits<float>::max()) {
+          bool resHasNoNegMatch = res.dRZNeg(1) == std::numeric_limits<float>::max();
+          if (resHasNoNegMatch)
             res.setNegAttributes(info->dRz2, info->dPhi2, info->dRz1, info->dPhi1);
-            seed.setPosAttributes(res.dRZPos(1), res.dPhiPos(1), res.dRZPos(0), res.dPhiPos(0));
-            break;
-          } else {
-            if (res.dRZNeg(1) != std::numeric_limits<float>::max()) {
-              if (res.dRZNeg(1) != seed.dRZNeg(1)) {
-                edm::LogWarning("ElectronSeedGenerator|BadValue")
-                    << "this old seed already has another dRz2"
-                    << "\nold seed mask/dRz2/dPhi2/dRz2Pos/dPhi2Pos: " << (unsigned int)res.hitsMask() << "/"
-                    << res.dRZNeg(1) << "/" << res.dPhiNeg(1) << "/" << res.dRZPos(1) << "/" << res.dPhiPos(1)
-                    << "\nnew seed mask/dRz2/dPhi2/dRz2Pos/dPhi2Pos: " << (unsigned int)seed.hitsMask() << "/"
-                    << seed.dRZNeg(1) << "/" << seed.dPhiNeg(1) << "/" << seed.dRZPos(1) << "/" << seed.dPhiPos(1);
-              }
-            }
+          else {
+            const auto resRz  = rzQuality(res.dRZNeg(0), res.dRZNeg(1));
+            const auto resPhi = phiQuality(res.dPhiNeg(0), res.dPhiNeg(1));
+
+            if ((newRz <= resRz) && (newPhi <= resPhi) && (newRz < resRz || newPhi < resPhi))
+              res.setNegAttributes(info->dRz2, info->dPhi2, info->dRz1, info->dPhi1);
           }
         }
+        std::cout << "[addSeed]     -> already consistent, return, no-op" << std::endl;
+        return;
       }
+      ++idx;
     }
+    std::cout << "[addSeed] NO MATCH FOUND -> emplace_back (out.size() will become "
+            << (out.size() + 1) << ")" << std::endl;
 
     out.emplace_back(seed);
   }
