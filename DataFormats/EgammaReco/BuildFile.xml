@@ -9,6 +9,8 @@
 <use name="DataFormats/DetId"/>
 <use name="DataFormats/Math"/>
 <use name="DataFormats/TrajectoryState"/>
+<use name="alpaka"/>
+<use name="xtd"/>
 <export>
   <lib name="1"/>
 </export>

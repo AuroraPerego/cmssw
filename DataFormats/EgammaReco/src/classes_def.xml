@@ -146,8 +146,16 @@
   <class name="edm::Wrapper<edm::RefVector<edm::AssociationMap<edm::OneToOne<vector<reco::io_v1::CaloCluster>,vector<reco::ClusterShape>,unsigned int> >,edm::helpers::KeyVal<edm::Ref<vector<reco::io_v1::CaloCluster>,reco::io_v1::CaloCluster,edm::refhelper::FindUsingAdvance<vector<reco::io_v1::CaloCluster>,reco::io_v1::CaloCluster> >,edm::Ref<vector<reco::ClusterShape>,reco::ClusterShape,edm::refhelper::FindUsingAdvance<vector<reco::ClusterShape>,reco::ClusterShape> > >,edm::AssociationMap<edm::OneToOne<vector<reco::io_v1::CaloCluster>,vector<reco::ClusterShape>,unsigned int> >::Find> >" />
   <class name="edm::Wrapper<edm::RefVector<edm::AssociationMap<edm::OneToOne<vector<reco::io_v1::SuperCluster>,vector<reco::io_v1::HFEMClusterShape>,unsigned int> >,edm::helpers::KeyVal<edm::Ref<vector<reco::io_v1::SuperCluster>,reco::io_v1::SuperCluster,edm::refhelper::FindUsingAdvance<vector<reco::io_v1::SuperCluster>,reco::io_v1::SuperCluster> >,edm::Ref<vector<reco::io_v1::HFEMClusterShape>,reco::io_v1::HFEMClusterShape,edm::refhelper::FindUsingAdvance<vector<reco::io_v1::HFEMClusterShape>,reco::io_v1::HFEMClusterShape> > >,edm::AssociationMap<edm::OneToOne<vector<reco::io_v1::SuperCluster>,vector<reco::io_v1::HFEMClusterShape>,unsigned int> >::Find> >" />
 
-   <class name="std::vector<reco::SuperClusterRef>" />
-   <class name="edm::ValueMap<reco::SuperClusterRef>" />
-   <class name="edm::Wrapper<edm::ValueMap<reco::SuperClusterRef> >" />
+  <class name="std::vector<reco::SuperClusterRef>" />
+  <class name="edm::ValueMap<reco::SuperClusterRef>" />
+  <class name="edm::Wrapper<edm::ValueMap<reco::SuperClusterRef> >" />
+
+  <class name="reco::SuperClusterHostCollection"/>
+  <class name="reco::SuperClusterHostCollection::Layout"/>
+  <class name="reco::SuperClusterSoA"/>
+  <class name="reco::SuperClusterSoA::View"/>
+  <class name="reco::SuperClusterSoAExtra<128, false>"/>
+
+  <class name="edm::Wrapper<reco::SuperClusterHostCollection>" splitLevel="0"/>
 </lcgdict>
 

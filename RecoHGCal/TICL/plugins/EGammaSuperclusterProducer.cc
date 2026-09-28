@@ -1,6 +1,6 @@
 // Authors : Theo Cuisset <theo.cuisset@cern.ch>, Shamik Ghosh <shamik.ghosh@cern.ch>
 // Date : 01/2024
-/* 
+/*
 Translates TICL superclusters to ECAL supercluster dataformats (reco::SuperCluster and reco::CaloCluster).
 Performs similar task as RecoEcal/EgammaCLusterProducers/PFECALSuperClusterProducer
 Note that all tracksters are translated to reco::CaloCluster, even those that are not in any SuperCluster
@@ -23,12 +23,15 @@ Note that all tracksters are translated to reco::CaloCluster, even those that ar
 
 #include "PhysicsTools/ONNXRuntime/interface/ONNXRuntime.h"
 
+#include "DataFormats/EgammaReco/interface/SuperClusterHostCollection.h"
 #include "DataFormats/EgammaReco/interface/SuperClusterFwd.h"
 #include "DataFormats/EgammaReco/interface/SuperCluster.h"
 #include "DataFormats/EgammaReco/interface/ElectronSeed.h"
 #include "DataFormats/EgammaReco/interface/ElectronSeedFwd.h"
 #include "DataFormats/HGCalReco/interface/Trackster.h"
 #include "DataFormats/Math/interface/deltaPhi.h"
+
+#include "HeterogeneousCore/AlpakaInterface/interface/host.h"
 
 using cms::Ort::ONNXRuntime;
 
@@ -80,6 +83,7 @@ EGammaSuperclusterProducer::EGammaSuperclusterProducer(const edm::ParameterSet& 
   }
   produces<reco::SuperClusterCollection>();
   produces<reco::CaloClusterCollection>();  // The CaloCluster corresponding to each EM trackster
+  produces<reco::SuperClusterHostCollection>();
 }
 
 void EGammaSuperclusterProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
@@ -95,6 +99,10 @@ void EGammaSuperclusterProducer::produce(edm::Event& iEvent, const edm::EventSet
   // Output collections :
   auto egammaSuperclusters = std::make_unique<reco::SuperClusterCollection>();
   auto caloClustersEM = std::make_unique<reco::CaloClusterCollection>();
+
+  const auto nSuperclusters = static_cast<int32_t>(ticlSuperclusters.size());
+  std::array<int32_t, 7> sizes{nSuperclusters, nSuperclusters, nSuperclusters, nSuperclusters, nSuperclusters, emTracksters.size()}; // the last two are key and value of the association map, maybe "value" should be the number of emTracksters?
+  auto superClustersSoA = std::make_unique<reco::SuperClusterHostCollection>(cms::alpakatools::host(), sizes);
 
   // Fill reco::CaloCluster collection (1-1 mapping to TICL EM tracksters)
   for (ticl::Trackster const& emTrackster : emTracksters) {
@@ -185,6 +193,9 @@ void EGammaSuperclusterProducer::produce(edm::Event& iEvent, const edm::EventSet
       regressionInputs_[base + 6] = seedFrac;
       regressionInputs_[base + 7] = nTs;
     }
+
+    // soa
+    superClustersSoA->view().extra().rawEnergy()[sc_i] = ticlSupercluster.raw_energy();
   }
 
   if (enableRegression_ && superclustersPassingSelectionsCount > 0u) {
@@ -226,6 +237,7 @@ void EGammaSuperclusterProducer::produce(edm::Event& iEvent, const edm::EventSet
   }
 
   iEvent.put(std::move(egammaSuperclusters));
+  iEvent.put(std::move(superClustersSoA));
 }
 
 std::unique_ptr<ONNXRuntime> EGammaSuperclusterProducer::initializeGlobalCache(const edm::ParameterSet& iConfig) {
