@@ -101,10 +101,10 @@ private:
   const EcalSCDynamicDPhiParameters* scDynamicDPhiParams_;
 
   // the tree
-  void setTreeArraysForSize(const size_t N_ECAL, const size_t N_PS);
+  void setTreeArraysForSize(const size_t N_ECAL);
   treeptr _tree;
   Int_t nVtx;
-  Float_t scRawEnergy, scCalibratedEnergy, scPreshowerEnergy, scEta, scPhi, scR, scPhiWidth, scEtaWidth,
+  Float_t scRawEnergy, scCalibratedEnergy, scEta, scPhi, scR, scPhiWidth, scEtaWidth,
       scSeedRawEnergy, scSeedCalibratedEnergy, scSeedEta, scSeedPhi;
   Float_t genEnergy, genEta, genPhi, genDRToCentroid, genDRToSeed;
   Int_t N_ECALClusters;
@@ -112,8 +112,6 @@ private:
       clusterDEtaToSeed, clusterDPhiToCentroid, clusterDEtaToCentroid, clusterDPhiToGen, clusterDEtaToGen,
       clusterHitFractionSharedWithSeed;
   std::shared_ptr<Int_t> clusterInMustache, clusterInDynDPhi;
-  Int_t N_PSClusters;
-  std::shared_ptr<Float_t> psClusterRawEnergy, psClusterEta, psClusterPhi;
 };
 
 void PFSuperClusterTreeMaker::analyze(const edm::Event& e, const edm::EventSetup& es) {
@@ -188,7 +186,6 @@ void PFSuperClusterTreeMaker::findBestGenMatches(const edm::Event& e,
 
 void PFSuperClusterTreeMaker::processSuperClusterFillTree(const edm::Event& e, const reco::SuperClusterRef& sc) {
   const int N_ECAL = sc->clustersSize();
-  const int N_PS = sc->preshowerClustersSize();
   const double sc_eta = std::abs(sc->position().Eta());
   const double sc_cosheta = std::cosh(sc_eta);
   const double sc_pt = sc->rawEnergy() / sc_cosheta;
@@ -197,7 +194,6 @@ void PFSuperClusterTreeMaker::processSuperClusterFillTree(const edm::Event& e, c
   if ((sc_pt < 3.0 && sc_eta < 2.0) || (sc_pt < 4.0 && sc_eta < 2.5 && sc_eta > 2.0) || (sc_pt < 6.0 && sc_eta > 2.5))
     return;
   N_ECALClusters = std::max(0, N_ECAL - 1);  // minus 1 because of seed
-  N_PSClusters = N_PS;
   // gen information (if needed)
   reco::GenParticleRef genmatch;
   if (_dogen) {
@@ -218,10 +214,9 @@ void PFSuperClusterTreeMaker::processSuperClusterFillTree(const edm::Event& e, c
     }
   }
   // supercluster information
-  setTreeArraysForSize(N_ECALClusters, N_PSClusters);
+  setTreeArraysForSize(N_ECALClusters);
   scRawEnergy = sc->rawEnergy();
   scCalibratedEnergy = sc->energy();
-  scPreshowerEnergy = sc->preshowerEnergy();
   scEta = sc->position().Eta();
   scPhi = sc->position().Phi();
   scR = sc->position().R();
@@ -280,17 +275,6 @@ void PFSuperClusterTreeMaker::processSuperClusterFillTree(const edm::Event& e, c
         scDynamicDPhiParams_, theseed->eta(), theseed->phi(), (*clus)->energy(), (*clus)->eta(), (*clus)->phi());
     ++iclus;
   }
-  // loop over all preshower clusters
-  auto psclusend = sc->preshowerClustersEnd();
-  size_t ipsclus = 0;
-  edm::Ptr<reco::CaloCluster> ppsclus;
-  for (auto psclus = sc->preshowerClustersBegin(); psclus != psclusend; ++psclus) {
-    ppsclus = edm::Ptr<reco::CaloCluster>(*psclus);
-    psClusterRawEnergy.get()[ipsclus] = ppsclus->energy();
-    psClusterEta.get()[ipsclus] = ppsclus->eta();
-    psClusterPhi.get()[ipsclus] = ppsclus->phi();
-    ++ipsclus;
-  }
   _tree->Fill();
 }
 
@@ -301,15 +285,12 @@ PFSuperClusterTreeMaker::PFSuperClusterTreeMaker(const PSet& p) {
 
   _calib.reset(new PFEnergyCalibration());
   N_ECALClusters = 1;
-  N_PSClusters = 1;
   edm::Service<TFileService> fs;
   _tree = fs->make<TTree>("SuperClusterTree", "Dump of all available SC info");
   _tree->Branch("N_ECALClusters", &N_ECALClusters, "N_ECALClusters/I");
-  _tree->Branch("N_PSClusters", &N_PSClusters, "N_PSClusters/I");
   _tree->Branch("nVtx", &nVtx, "nVtx/I");
   _tree->Branch("scRawEnergy", &scRawEnergy, "scRawEnergy/F");
   _tree->Branch("scCalibratedEnergy", &scCalibratedEnergy, "scCalibratedEnergy/F");
-  _tree->Branch("scPreshowerEnergy", &scPreshowerEnergy, "scPreshowerEnergy/F");
   _tree->Branch("scEta", &scEta, "scEta/F");
   _tree->Branch("scPhi", &scPhi, "scPhi/F");
   _tree->Branch("scR", &scR, "scR/F");
@@ -344,13 +325,6 @@ PFSuperClusterTreeMaker::PFSuperClusterTreeMaker(const PSet& p) {
   _tree->Branch("clusterInMustache", clusterInMustache.get(), "clusterInMustache[N_ECALClusters]/I");
   clusterInDynDPhi.reset(new Int_t[1], array_deleter<Int_t>);
   _tree->Branch("clusterInDynDPhi", clusterInDynDPhi.get(), "clusterInDynDPhi[N_ECALClusters]/I");
-  // preshower information
-  psClusterRawEnergy.reset(new Float_t[1], array_deleter<Float_t>);
-  _tree->Branch("psClusterRawEnergy", psClusterRawEnergy.get(), "psClusterRawEnergy[N_PSClusters]/F");
-  psClusterEta.reset(new Float_t[1], array_deleter<Float_t>);
-  _tree->Branch("psClusterEta", psClusterEta.get(), "psClusterEta[N_PSClusters]/F");
-  psClusterPhi.reset(new Float_t[1], array_deleter<Float_t>);
-  _tree->Branch("psClusterPhi", psClusterPhi.get(), "psClusterPhi[N_PSClusters]/F");
 
   if ((_dogen = p.getUntrackedParameter<bool>("doGen", false))) {
     _geninput = p.getParameter<edm::InputTag>("genSrc");
@@ -378,7 +352,7 @@ PFSuperClusterTreeMaker::PFSuperClusterTreeMaker(const PSet& p) {
   }
 }
 
-void PFSuperClusterTreeMaker::setTreeArraysForSize(const size_t N_ECAL, const size_t N_PS) {
+void PFSuperClusterTreeMaker::setTreeArraysForSize(const size_t N_ECAL) {
   Float_t* cRE_new = new Float_t[N_ECAL];
   clusterRawEnergy.reset(cRE_new, array_deleter<Float_t>);
   _tree->GetBranch("clusterRawEnergy")->SetAddress(clusterRawEnergy.get());
@@ -421,15 +395,6 @@ void PFSuperClusterTreeMaker::setTreeArraysForSize(const size_t N_ECAL, const si
   Int_t* cInDynDPhi_new = new Int_t[N_ECAL];
   clusterInDynDPhi.reset(cInDynDPhi_new, array_deleter<Int_t>);
   _tree->GetBranch("clusterInDynDPhi")->SetAddress(clusterInDynDPhi.get());
-  Float_t* psRE_new = new Float_t[N_PS];
-  psClusterRawEnergy.reset(psRE_new, array_deleter<Float_t>);
-  _tree->GetBranch("psClusterRawEnergy")->SetAddress(psClusterRawEnergy.get());
-  Float_t* psEta_new = new Float_t[N_PS];
-  psClusterEta.reset(psEta_new, array_deleter<Float_t>);
-  _tree->GetBranch("psClusterEta")->SetAddress(psClusterEta.get());
-  Float_t* psPhi_new = new Float_t[N_PS];
-  psClusterPhi.reset(psPhi_new, array_deleter<Float_t>);
-  _tree->GetBranch("psClusterPhi")->SetAddress(psClusterPhi.get());
 }
 
 #include "FWCore/Framework/interface/MakerMacros.h"

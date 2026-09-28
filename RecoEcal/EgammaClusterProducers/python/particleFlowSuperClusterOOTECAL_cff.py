@@ -8,8 +8,6 @@ particleFlowSuperClusterOOTECAL = particleFlowSuperClusterECAL.clone(
     PFSuperClusterCollectionBarrel = "particleFlowSuperClusterOOTECALBarrel",
     PFBasicClusterCollectionEndcap = "particleFlowBasicClusterOOTECALEndcap",
     PFSuperClusterCollectionEndcap = "particleFlowSuperClusterOOTECALEndcap",
-    PFBasicClusterCollectionPreshower = "particleFlowBasicClusterOOTECALPreshower",
-    PFSuperClusterCollectionEndcapWithPreshower = "particleFlowSuperClusterOOTECALEndcapWithPreshower",
     ## modification for Algo
     isOOTCollection                = True,
     barrelRecHits                  = "ecalRecHit:EcalRecHitsEB",

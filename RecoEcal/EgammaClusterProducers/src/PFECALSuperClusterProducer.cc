@@ -37,7 +37,7 @@
 #include <vector>
 
 /*
- * class PFECALSuperClusterProducer 
+ * class PFECALSuperClusterProducer
  * author Nicolas Chanon
  * Additional authors for Mustache: Y. Gershtein, R. Patel, L. Gray
  * Additional authors for DeepSC: D.Valsecchi, B.Marzocchi
@@ -79,8 +79,6 @@ private:
   std::string PFSuperClusterCollectionBarrel_;
   std::string PFBasicClusterCollectionEndcap_;
   std::string PFSuperClusterCollectionEndcap_;
-  std::string PFBasicClusterCollectionPreshower_;
-  std::string PFSuperClusterCollectionEndcapWithPreshower_;
   std::string PFClusterAssociationEBEE_;
   std::string PFClusterAssociationES_;
 
@@ -203,18 +201,13 @@ PFECALSuperClusterProducer::PFECALSuperClusterProducer(const edm::ParameterSet& 
   PFBasicClusterCollectionEndcap_ = iConfig.getParameter<string>("PFBasicClusterCollectionEndcap");
   PFSuperClusterCollectionEndcap_ = iConfig.getParameter<string>("PFSuperClusterCollectionEndcap");
 
-  PFBasicClusterCollectionPreshower_ = iConfig.getParameter<string>("PFBasicClusterCollectionPreshower");
-  PFSuperClusterCollectionEndcapWithPreshower_ =
-      iConfig.getParameter<string>("PFSuperClusterCollectionEndcapWithPreshower");
-
   PFClusterAssociationEBEE_ = "PFClusterAssociationEBEE";
   PFClusterAssociationES_ = "PFClusterAssociationES";
 
   produces<reco::SuperClusterCollection>(PFSuperClusterCollectionBarrel_);
-  produces<reco::SuperClusterCollection>(PFSuperClusterCollectionEndcapWithPreshower_);
+  produces<reco::SuperClusterCollection>(PFSuperClusterCollectionEndcap_);
   produces<reco::CaloClusterCollection>(PFBasicClusterCollectionBarrel_);
   produces<reco::CaloClusterCollection>(PFBasicClusterCollectionEndcap_);
-  produces<reco::CaloClusterCollection>(PFBasicClusterCollectionPreshower_);
   produces<edm::ValueMap<reco::CaloClusterPtr>>(PFClusterAssociationEBEE_);
   produces<edm::ValueMap<reco::CaloClusterPtr>>(PFClusterAssociationES_);
 }
@@ -265,17 +258,6 @@ void PFECALSuperClusterProducer::produce(edm::Event& iEvent, const edm::EventSet
             << "Found an EE pfcluster matched to more than one EE supercluster!" << std::dec << std::endl;
       }
     }
-    for (reco::CaloCluster_iterator pfclus = eesc.preshowerClustersBegin(); pfclus != eesc.preshowerClustersEnd();
-         ++pfclus) {
-      if (!pfClusterMapES.count(*pfclus)) {
-        reco::CaloCluster caloclus(**pfclus);
-        caloClustersES->push_back(caloclus);
-        pfClusterMapES[*pfclus] = caloClustersES->size() - 1;
-      } else {
-        throw cms::Exception("PFECALSuperClusterProducer::produce")
-            << "Found an ES pfcluster matched to more than one EE supercluster!" << std::dec << std::endl;
-      }
-    }
   }
 
   //create ValueMaps from output CaloClusters back to original PFClusters
@@ -285,15 +267,12 @@ void PFECALSuperClusterProducer::produce(edm::Event& iEvent, const edm::EventSet
   //vectors to fill ValueMaps
   std::vector<reco::CaloClusterPtr> clusptrsEB(caloClustersEB->size());
   std::vector<reco::CaloClusterPtr> clusptrsEE(caloClustersEE->size());
-  std::vector<reco::CaloClusterPtr> clusptrsES(caloClustersES->size());
 
   //put calocluster output collections in event and get orphan handles to create ptrs
   const edm::OrphanHandle<reco::CaloClusterCollection>& caloClusHandleEB =
       iEvent.put(std::move(caloClustersEB), PFBasicClusterCollectionBarrel_);
   const edm::OrphanHandle<reco::CaloClusterCollection>& caloClusHandleEE =
       iEvent.put(std::move(caloClustersEE), PFBasicClusterCollectionEndcap_);
-  const edm::OrphanHandle<reco::CaloClusterCollection>& caloClusHandleES =
-      iEvent.put(std::move(caloClustersES), PFBasicClusterCollectionPreshower_);
 
   //relink superclusters to output caloclusters and fill vectors for ValueMaps
   for (auto& ebsc : *(superClusterAlgo_.getEBOutputSCCollection())) {
@@ -321,16 +300,6 @@ void PFECALSuperClusterProducer::produce(edm::Event& iEvent, const edm::EventSet
       clusptrsEE[caloclusidx] = *pfclus;
     }
     eesc.setClusters(clusters);
-
-    reco::CaloClusterPtrVector psclusters;
-    for (reco::CaloCluster_iterator pfclus = eesc.preshowerClustersBegin(); pfclus != eesc.preshowerClustersEnd();
-         ++pfclus) {
-      int caloclusidx = pfClusterMapES[*pfclus];
-      reco::CaloClusterPtr clusptr(caloClusHandleES, caloclusidx);
-      psclusters.push_back(clusptr);
-      clusptrsES[caloclusidx] = *pfclus;
-    }
-    eesc.setPreshowerClusters(psclusters);
   }
 
   //fill association maps from output CaloClusters back to original PFClusters
@@ -339,15 +308,11 @@ void PFECALSuperClusterProducer::produce(edm::Event& iEvent, const edm::EventSet
   fillerEBEE.insert(caloClusHandleEE, clusptrsEE.begin(), clusptrsEE.end());
   fillerEBEE.fill();
 
-  edm::ValueMap<reco::CaloClusterPtr>::Filler fillerES(*pfClusterAssociationES);
-  fillerES.insert(caloClusHandleES, clusptrsES.begin(), clusptrsES.end());
-  fillerES.fill();
-
   //store in the event
   iEvent.put(std::move(pfClusterAssociationEBEE), PFClusterAssociationEBEE_);
   iEvent.put(std::move(pfClusterAssociationES), PFClusterAssociationES_);
   iEvent.put(std::move(superClusterAlgo_.getEBOutputSCCollection()), PFSuperClusterCollectionBarrel_);
-  iEvent.put(std::move(superClusterAlgo_.getEEOutputSCCollection()), PFSuperClusterCollectionEndcapWithPreshower_);
+  iEvent.put(std::move(superClusterAlgo_.getEEOutputSCCollection()), PFSuperClusterCollectionEndcap_);
 }
 
 void PFECALSuperClusterProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
@@ -360,7 +325,6 @@ void PFECALSuperClusterProducer::fillDescriptions(edm::ConfigurationDescriptions
   desc.add<double>("satelliteMajorityFraction", 0.5);
   desc.add<double>("thresh_PFClusterEndcap", 0.0);
   desc.add<edm::InputTag>("ESAssociation", edm::InputTag("particleFlowClusterECAL"));
-  desc.add<std::string>("PFBasicClusterCollectionPreshower", "particleFlowBasicClusterECALPreshower");
   desc.addUntracked<bool>("verbose", false);
   desc.add<double>("thresh_SCEt", 4.0);
   desc.add<double>("etawidth_SuperClusterEndcap", 0.04);
@@ -383,8 +347,6 @@ void PFECALSuperClusterProducer::fillDescriptions(edm::ConfigurationDescriptions
   desc.add<bool>("isOOTCollection", false);
   desc.add<edm::InputTag>("barrelRecHits", edm::InputTag("ecalRecHit", "EcalRecHitsEB"));
   desc.add<edm::InputTag>("endcapRecHits", edm::InputTag("ecalRecHit", "EcalRecHitsEE"));
-  desc.add<std::string>("PFSuperClusterCollectionEndcapWithPreshower",
-                        "particleFlowSuperClusterECALEndcapWithPreshower");
   desc.add<bool>("dropUnseedable", false);
 
   edm::ParameterSetDescription deepSCParams;

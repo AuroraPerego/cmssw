@@ -19,7 +19,6 @@ phase2_hgcal.toModify(
     useRegression                  = True,
     PFBasicClusterCollectionEndcap = "",
     PFSuperClusterCollectionEndcap = "",
-    PFSuperClusterCollectionEndcapWithPreshower = "",
     thresh_PFClusterEndcap         = 1.5e-1, # 150 MeV threshold
     dropUnseedable                 = True,
 )
@@ -29,7 +28,7 @@ phase2_hgcal.toModify( particleFlowSuperClusterHGCal.regressionConfig,
     uncertaintyKeyEE = "superclus_hgcal_sigma_offline",
     isPhaseII = True,
     hgcalRecHits = "particleFlowRecHitHGC"
-            
+
 )
 _phase2_hgcal_particleFlowSuperClusteringTask = particleFlowSuperClusteringTask.copy()
 _phase2_hgcal_particleFlowSuperClusteringTask.add(particleFlowSuperClusterHGCal)

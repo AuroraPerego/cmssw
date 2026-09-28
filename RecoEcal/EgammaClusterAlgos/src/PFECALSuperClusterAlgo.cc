@@ -165,7 +165,6 @@ void PFECALSuperClusterAlgo::update(const edm::EventSetup& setup) {
     geometry_ = caloGeometryHandle_.product();
     ebGeom_ = caloGeometryHandle_->getSubdetectorGeometry(DetId::Ecal, EcalBarrel);
     eeGeom_ = caloGeometryHandle_->getSubdetectorGeometry(DetId::Ecal, EcalEndcap);
-    esGeom_ = caloGeometryHandle_->getSubdetectorGeometry(DetId::Ecal, EcalPreshower);
 
     edm::ESHandle<CaloTopology> caloTopologyHandle_ = setup.getHandle(caloTopologyToken_);
     topology_ = caloTopologyHandle_.product();
@@ -472,9 +471,6 @@ void PFECALSuperClusterAlgo::finalizeSuperCluster(CalibratedPFCluster& seed,
   reco::SuperCluster new_sc(corrSCEnergy, math::XYZPoint(posX, posY, posZ));
   new_sc.setCorrectedEnergy(corrSCEnergy);
   new_sc.setSeed(clustered.front().ptr());
-  new_sc.setPreshowerEnergy(corrPS1Energy + corrPS2Energy);
-  new_sc.setPreshowerEnergyPlane1(corrPS1Energy);
-  new_sc.setPreshowerEnergyPlane2(corrPS2Energy);
   for (const auto& clus : clustered) {
     new_sc.addCluster(clus.ptr());
 
@@ -490,21 +486,6 @@ void PFECALSuperClusterAlgo::finalizeSuperCluster(CalibratedPFCluster& seed,
       // now wrapped in EDM debug flags
       for (auto i_ps = clustops.first; i_ps != clustops.second; ++i_ps) {
         edm::Ptr<reco::PFCluster> psclus(i_ps->second);
-#ifdef EDM_ML_DEBUG
-
-        auto found_pscluster =
-            std::find(new_sc.preshowerClustersBegin(), new_sc.preshowerClustersEnd(), reco::CaloClusterPtr(psclus));
-
-        if (found_pscluster == new_sc.preshowerClustersEnd()) {
-#endif
-          new_sc.addPreshowerCluster(psclus);
-#ifdef EDM_ML_DEBUG
-        } else {
-          throw cms::Exception("PFECALSuperClusterAlgo::buildSuperCluster")
-              << "Found a PS cluster matched to more than one EE cluster!" << std::endl
-              << std::hex << psclus.get() << " == " << found_pscluster->get() << std::dec << std::endl;
-        }
-#endif
       }
     }
   }

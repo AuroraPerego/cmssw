@@ -5,8 +5,6 @@ import FWCore.ParameterSet.Config as cms
 from RecoEcal.EgammaClusterProducers.hybridClusteringSequence_cff import *
 # multi5x5 clusters
 from RecoEcal.EgammaClusterProducers.multi5x5ClusteringSequence_cff import *
-# preshower sequence for multi5x5 clusters
-from RecoEcal.EgammaClusterProducers.multi5x5PreshowerClusteringSequence_cff import *
 #reduced recHit collection producer
 from RecoEcal.EgammaClusterProducers.reducedRecHitsSequence_cff import *
 
@@ -19,8 +17,7 @@ from RecoEcal.EgammaCoreTools.EcalNextToDeadChannelESProducer_cff import *
 from RecoEcal.EgammaClusterProducers.particleFlowSuperClusteringSequence_cff import *
 
 ecalClustersNoPFBoxTask = cms.Task(hybridClusteringTask,
-                              multi5x5ClusteringTask,
-                              multi5x5PreshowerClusteringTask)
+                              multi5x5ClusteringTask)
 ecalClustersNoPFBox = cms.Sequence(ecalClustersNoPFBoxTask)
 ecalClustersTask = cms.Task(ecalClustersNoPFBoxTask, particleFlowSuperClusteringTask)
 ecalClusters = cms.Sequence(ecalClustersTask)
@@ -30,8 +27,6 @@ from Configuration.Eras.Modifier_peripheralPbPb_cff import peripheralPbPb
 from Configuration.ProcessModifiers.pp_on_AA_cff import pp_on_AA
 from Configuration.Eras.Modifier_pp_on_XeXe_2017_cff import pp_on_XeXe_2017
 from Configuration.Eras.Modifier_ppRef_2017_cff import ppRef_2017
-from Configuration.Eras.Modifier_phase2_ecal_devel_cff import phase2_ecal_devel
-phase2_ecal_devel.toReplaceWith(ecalClustersNoPFBoxTask, ecalClustersNoPFBoxTask.copyAndExclude([multi5x5ClusteringTask, multi5x5PreshowerClusteringTask]))
 
 from RecoEcal.EgammaClusterProducers.islandClusteringSequence_cff import *
 

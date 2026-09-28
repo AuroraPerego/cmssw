@@ -14,8 +14,6 @@ from RecoEcal.EgammaClusterProducers.preshowerClusteringSequence_cff import *
 from RecoEcal.EgammaClusterProducers.dynamicHybridClusteringSequence_cff import *
 # multi5x5 clusters
 from RecoEcal.EgammaClusterProducers.multi5x5ClusteringSequence_cff import *
-# preshower sequence for multi5x5 clusters
-from RecoEcal.EgammaClusterProducers.multi5x5PreshowerClusteringSequence_cff import *
 #selected digis
 from RecoEcal.EgammaClusterProducers.ecalDigiSelector_cff import *
 # create path with all clustering algos
@@ -25,7 +23,6 @@ ecalClusteringTask = cms.Task(islandClusteringTask,
                               preshowerClusteringTask,
                               dynamicHybridClusteringTask,
                               multi5x5ClusteringTask,
-                              multi5x5PreshowerClusteringTask,
                               seldigisTask)
 ecalClusteringSequence = cms.Sequence(ecalClusteringTask)
 

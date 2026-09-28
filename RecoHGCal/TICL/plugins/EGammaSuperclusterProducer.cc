@@ -1,6 +1,6 @@
 // Authors : Theo Cuisset <theo.cuisset@cern.ch>, Shamik Ghosh <shamik.ghosh@cern.ch>
 // Date : 01/2024
-/* 
+/*
 Translates TICL superclusters to ECAL supercluster dataformats (reco::SuperCluster and reco::CaloCluster).
 Performs similar task as RecoEcal/EgammaCLusterProducers/PFECALSuperClusterProducer
 Note that all tracksters are translated to reco::CaloCluster, even those that are not in any SuperCluster
@@ -156,7 +156,6 @@ void EGammaSuperclusterProducer::produce(edm::Event& iEvent, const edm::EventSet
         reco::CaloClusterPtr(caloClustersEM_h,
                              superclusterLink[0]),  // seed (first trackster in superclusterLink is the seed)
         trackstersEMInSupercluster,                 // clusters
-        0.,                                         // Epreshower (not relevant for HGCAL)
         -1,                                         // phiwidth (not implemented yet)
         -1                                          // etawidth (not implemented yet)
     );

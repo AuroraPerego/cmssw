@@ -311,7 +311,7 @@ float egamma::classBasedElectronEnergy(reco::GsfElectron const& electron,
     energy = electron.superCluster()->rawEnergy() * cetacorr;  //previously in CMSSW
     //energy = superCluster.rawEnergy()*fEta(e5x5, superCluster.seed()->eta(), 0)/e5x5;
   } else if (electron.isEE()) {
-    energy = electron.superCluster()->rawEnergy() + electron.superCluster()->preshowerEnergy();
+    energy = electron.superCluster()->rawEnergy();
   } else {
     edm::LogWarning("ElectronEnergyCorrector::classBasedParameterizationEnergy")
         << "nor barrel neither endcap electron !";

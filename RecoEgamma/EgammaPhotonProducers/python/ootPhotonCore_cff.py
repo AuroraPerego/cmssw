@@ -3,6 +3,6 @@ from RecoEgamma.EgammaPhotonProducers.photonCore_cfi import *
 
 ootPhotonCore = photonCore.clone(
     scHybridBarrelProducer = "particleFlowSuperClusterOOTECAL:particleFlowSuperClusterOOTECALBarrel",
-    scIslandEndcapProducer = "particleFlowSuperClusterOOTECAL:particleFlowSuperClusterOOTECALEndcapWithPreshower",
+    scIslandEndcapProducer = "particleFlowSuperClusterOOTECAL:particleFlowSuperClusterOOTECALEndcap",
     conversionProducer     = "conversions"
 )

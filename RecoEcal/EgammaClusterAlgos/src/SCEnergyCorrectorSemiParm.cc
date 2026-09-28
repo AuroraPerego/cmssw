@@ -142,9 +142,6 @@ std::pair<double, double> SCEnergyCorrectorSemiParm::getCorrections(const reco::
   double sigma = regParam.sigma(regData);
 
   double energyCorr = mean * sc.rawEnergy();
-  if (isHLT_ && sc.seed()->seed().det() == DetId::Ecal && seedId.subdetId() == EcalEndcap && !regTrainedWithPS_) {
-    energyCorr += sc.preshowerEnergy();
-  }
   double resolutionEst = sigma * energyCorr;
 
   corrEnergyAndRes.first = energyCorr;

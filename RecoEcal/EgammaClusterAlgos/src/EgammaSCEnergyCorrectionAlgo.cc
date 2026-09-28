@@ -83,7 +83,7 @@ reco::SuperCluster EgammaSCEnergyCorrectionAlgo::applyCorrection(const reco::Sup
 
   } else if (theAlgo == reco::CaloCluster::multi5x5) {
     if (energyCorrectorName_ == "EcalClusterEnergyCorrection")
-      newEnergy = tmp.rawEnergy() + tmp.preshowerEnergy() + energyCorrectionFunction->getValue(tmp, modeEE_);
+      newEnergy = tmp.rawEnergy() + energyCorrectionFunction->getValue(tmp, modeEE_);
     if (energyCorrectorName_ == "EcalClusterEnergyCorrectionObjectSpecific")
       newEnergy = energyCorrectionFunction->getValue(tmp, modeEE_);
 

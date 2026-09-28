@@ -1,5 +1,5 @@
 /** \class ReducedEGProducer
- **  
+ **
  **  Select subset of electrons and photons from input collections and
  **  produced consistently relinked output collections including
  **  associated SuperClusters, CaloClusters and ecal RecHits
@@ -162,8 +162,6 @@ private:
 
   const edm::EDGetTokenT<EcalRecHitCollection> barrelEcalHits_;
   const edm::EDGetTokenT<EcalRecHitCollection> endcapEcalHits_;
-  const bool doPreshowerEcalHits_;
-  const edm::EDGetTokenT<EcalRecHitCollection> preshowerEcalHits_;
   const edm::EDGetTokenT<HBHERecHitCollection> hbheHits_;
 
   const edm::EDGetTokenT<edm::ValueMap<std::vector<reco::PFCandidateRef>>> photonPfCandMapT_;
@@ -275,10 +273,6 @@ ReducedEGProducer::ReducedEGProducer(const edm::ParameterSet& config)
       singleConversionT_(consumes(config.getParameter<edm::InputTag>("singleConversions"))),
       barrelEcalHits_(consumes(config.getParameter<edm::InputTag>("barrelEcalHits"))),
       endcapEcalHits_(consumes(config.getParameter<edm::InputTag>("endcapEcalHits"))),
-      doPreshowerEcalHits_(!config.getParameter<edm::InputTag>("preshowerEcalHits").label().empty()),
-      preshowerEcalHits_(doPreshowerEcalHits_
-                             ? consumes<EcalRecHitCollection>(config.getParameter<edm::InputTag>("preshowerEcalHits"))
-                             : edm::EDGetTokenT<EcalRecHitCollection>()),
       hbheHits_(consumes<HBHERecHitCollection>(config.getParameter<edm::InputTag>("hbheHits"))),
       photonPfCandMapT_(consumes(config.getParameter<edm::InputTag>("photonsPFValMap"))),
       gsfElectronPfCandMapT_(consumes(config.getParameter<edm::InputTag>("gsfElectronsPFValMap"))),
@@ -371,9 +365,6 @@ ReducedEGProducer::ReducedEGProducer(const edm::ParameterSet& config)
     outOOTEBEEClusters_ = produces<reco::CaloClusterCollection>("reducedOOTEBEEClusters");
     outOOTESClusters_ = produces<reco::CaloClusterCollection>("reducedOOTESClusters");
   }
-  if (doPreshowerEcalHits_) {
-    outESRecHits_ = produces<EcalRecHitCollection>("reducedESRecHits");
-  }
   if (!ootPhotonT_.isUninitialized()) {
     outOOTPhotonFloatValueMaps_ =
         vproduces<edm::ValueMap<float>>(config.getParameter<std::vector<std::string>>("ootPhotonFloatValueMapOutput"));
@@ -400,9 +391,6 @@ void ReducedEGProducer::produce(edm::Event& event, const edm::EventSetup& eventS
   auto singleConversionHandle = event.getHandle(singleConversionT_);
   auto barrelHitHandle = event.getHandle(barrelEcalHits_);
   auto endcapHitHandle = event.getHandle(endcapEcalHits_);
-
-  auto preshowerHitHandle =
-      doPreshowerEcalHits_ ? event.getHandle(preshowerEcalHits_) : edm::Handle<EcalRecHitCollection>{};
 
   auto hbheHitHandle = event.getHandle(hbheHits_);
   auto photonPfCandMapHandle = event.getHandle(photonPfCandMapT_);
@@ -790,15 +778,6 @@ void ReducedEGProducer::produce(edm::Event& event, const edm::EventSetup& eventS
   event.emplace(outEBRecHits_, std::move(ebRecHits));
   event.emplace(outEERecHits_, std::move(eeRecHits));
 
-  if (doPreshowerEcalHits_) {
-    for (const EcalRecHit& rechit : *preshowerHitHandle) {
-      if (rechitMap.count(rechit.detid())) {
-        esRecHits.push_back(rechit);
-      }
-    }
-    event.emplace(outESRecHits_, std::move(esRecHits));
-  }
-
   for (const HBHERecHit& rechit : *hbheHitHandle) {
     if (hcalRechitMap.count(rechit.detid())) {
       hbheRecHits.push_back(rechit);
@@ -1089,13 +1068,6 @@ void ReducedEGProducer::linkCaloClusters(const reco::SuperCluster& superCluster,
       rechitMap.insert(detid);
     }
   }
-  for (const auto& cluster : superCluster.preshowerClusters()) {
-    linkCaloCluster(cluster, esClusters, esClusterMap);
-
-    for (const auto& hitfrac : cluster->hitsAndFractions()) {
-      rechitMap.insert(hitfrac.first);
-    }
-  }
 }
 
 void ReducedEGProducer::linkHcalHits(const reco::SuperCluster& superClus,
@@ -1135,23 +1107,6 @@ void ReducedEGProducer::relinkCaloClusters(reco::SuperCluster& superCluster,
     superCluster.setClusters(clusters);
   }
 
-  //remap preshower clusters
-  reco::CaloClusterPtrVector esclusters;
-  for (const auto& cluster : superCluster.preshowerClusters()) {
-    const auto& clustermapped = esClusterMap.find(cluster);
-    if (clustermapped != esClusterMap.end()) {
-      //make new ptr
-      reco::CaloClusterPtr clusptr(outESClusterHandle, clustermapped->second);
-      esclusters.push_back(clusptr);
-    } else {
-      //can only relink if all clusters are being relinked, so if one is missing, then skip the relinking completely
-      esclusters.clear();
-      break;
-    }
-  }
-  if (!esclusters.empty()) {
-    superCluster.setPreshowerClusters(esclusters);
-  }
 }
 
 template <typename T>
