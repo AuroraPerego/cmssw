@@ -1,7 +1,5 @@
 <use name="root"/>
-<!-- used only if VI_TBB is defined in src/CkfTrackCandidateMakerBase.cc
 <use name="tbb"/>
--->
 <use name="DataFormats/Common"/>
 <use name="DataFormats/TrajectorySeed"/>
 <use name="FWCore/Framework"/>

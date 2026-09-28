@@ -37,7 +37,7 @@
 
 // #define VI_SORTSEED
 // #define VI_REPRODUCIBLE
-// #define VI_TBB
+#define VI_TBB
 
 #include <thread>
 #ifdef VI_TBB
