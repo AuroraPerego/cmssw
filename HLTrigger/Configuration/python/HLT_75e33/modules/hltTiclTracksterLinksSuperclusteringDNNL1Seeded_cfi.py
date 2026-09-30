@@ -9,4 +9,5 @@ hltTiclTracksterLinksSuperclusteringDNNL1Seeded = hltTiclTracksterLinksL1Seeded.
         nnWorkingPoint=cms.float(0.57247),
     ),
     tracksters_collections = [cms.InputTag("hltTiclTrackstersCLUE3DHighL1Seeded")], # to be changed to ticlTrackstersCLUE3DEM once separate CLUE3D iterations are introduced
+    tracksters_mask_collections = [cms.InputTag("")]
 )

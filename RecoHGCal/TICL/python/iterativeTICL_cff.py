@@ -35,6 +35,7 @@ ticlTracksterLinks = _tracksterLinksProducer.clone(
         'ticlTrackstersCLUE3DHigh',
         'ticlTrackstersRecovery'
     ),
+    tracksters_mask_collections = cms.VInputTag('ticlTracksterLinksSuperclusteringDNN', ''),
     linkingPSet = cms.PSet(
       cylinder_radius_sqr_split = cms.float(9),
       proj_distance_split = cms.float(5),

@@ -67,6 +67,7 @@ private:
   std::string algoType_;
 
   std::vector<edm::EDGetTokenT<std::vector<Trackster>>> tracksters_tokens_;
+  std::vector<edm::EDGetTokenT<std::vector<unsigned int>>> tracksters_mask_tokens_;
   const edm::EDGetTokenT<std::vector<reco::CaloCluster>> clusters_token_;
   const edm::EDGetTokenT<edm::ValueMap<std::pair<float, float>>> clustersTime_token_;
 
@@ -104,9 +105,22 @@ TracksterLinksProducer::TracksterLinksProducer(const edm::ParameterSet &ps, cons
       bfield_token_(esConsumes<MagneticField, IdealMagneticFieldRecord, edm::Transition::BeginRun>()),
       propagator_token_(
           esConsumes<Propagator, TrackingComponentsRecord, edm::Transition::BeginRun>(edm::ESInputTag("", propName_))) {
-  for (auto const &tag : ps.getParameter<std::vector<edm::InputTag>>("tracksters_collections")) {
-    tracksters_tokens_.emplace_back(consumes<std::vector<Trackster>>(tag));
+  auto const tracksterTags = ps.getParameter<std::vector<edm::InputTag>>("tracksters_collections");
+  auto const maskTags = ps.getParameter<std::vector<edm::InputTag>>("tracksters_mask_collections");
+  if (!maskTags.empty() and maskTags.size() != tracksterTags.size()) {
+    edm::LogError("TracksterLinksProducer")
+        << "tracksters_mask_collections must be empty or have the same number of entries as tracksters_collections: got "
+        << maskTags.size() << " masks for " << tracksterTags.size() << " trackster collections.";
   }
+  for (auto const& tag : tracksterTags)
+    tracksters_tokens_.emplace_back(consumes<std::vector<Trackster>>(tag));
+
+  tracksters_mask_tokens_.resize(tracksters_tokens_.size());
+  for (auto i = 0u; i < tracksters_tokens_.size(); ++i) {
+    if (!maskTags[i].label().empty())
+      tracksters_mask_tokens_[i] = consumes<std::vector<unsigned int>>(maskTags[i]);
+  }
+
   for (auto const &tag : ps.getParameter<std::vector<edm::InputTag>>("original_masks")) {
     original_masks_tokens_.emplace_back(consumes<std::vector<float>>(tag));
   }
@@ -227,13 +241,36 @@ void TracksterLinksProducer::produce(edm::Event &evt, const edm::EventSetup &es)
   auto resultMask = std::make_unique<std::vector<float>>(original_global_mask);
 
   std::vector<edm::Handle<std::vector<Trackster>>> tracksters_h(tracksters_tokens_.size());
+  std::vector<int> offsets(tracksters_tokens_.size()+1, 0);
   edm::MultiSpan<Trackster> trackstersManager;
   for (unsigned int i = 0; i < tracksters_tokens_.size(); ++i) {
     evt.getByToken(tracksters_tokens_[i], tracksters_h[i]);
     //Fill MultiSpan
     trackstersManager.add(*tracksters_h[i]);
+    offsets[i+1] = trackstersManager.size();
   }
+  std::cout << "offsets:";
+  for (auto offset : offsets) std::cout << ' ' << offset;
+  std::cout << '\n';
+
+  std::cout << "filling mask\n";
   maskTracksters->resize(trackstersManager.size(), 1);
+  for (unsigned int i = 0; i < tracksters_mask_tokens_.size(); ++i) {
+    auto const& token = tracksters_mask_tokens_[i];
+    if (token.isUninitialized()) {
+      // maskTracksters already initialized with ones
+      std::cout << "token " << i << " not there, filling " << offsets[i+1] << " elements with 1\n";
+      continue;
+    }
+    const auto& mask = evt.get(token);
+    if (tracksters_h[i]->size() != mask.size())
+      edm::LogError("TracksterLinksProducer") << "tracksters and mask sizes don't match!";
+    std::copy(mask.begin(), mask.end(), maskTracksters->begin() + offsets[i]);
+    std::cout << "token " << i << " there, filling " << offsets[i+1] << " elements with mask\n";
+  }
+  for (auto m : *maskTracksters)
+    std::cout << m << " ";
+  std::cout << "\n";
 
   // Linking
   const typename TracksterLinkingAlgoBase::Inputs input(evt, es, layerClusters, layerClustersTimes, trackstersManager);
@@ -312,6 +349,7 @@ void TracksterLinksProducer::fillDescriptions(edm::ConfigurationDescriptions &de
   desc.add<edm::ParameterSetDescription>("pluginInferenceAlgoTracksterInferenceByPFN", inferenceDescPFN);
   desc.add<edm::ParameterSetDescription>("linkingPSet", linkingDesc);
   desc.add<std::vector<edm::InputTag>>("tracksters_collections", {edm::InputTag("ticlTrackstersCLUE3DHigh")});
+  desc.add<std::vector<edm::InputTag>>("tracksters_mask_collections", {edm::InputTag("")});
   desc.add<std::vector<edm::InputTag>>("original_masks",
                                        {edm::InputTag("hgcalMergeLayerClusters", "InitialLayerClustersMask")});
   desc.add<edm::InputTag>("layer_clusters", edm::InputTag("hgcalMergeLayerClusters"));

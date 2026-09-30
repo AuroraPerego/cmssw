@@ -413,8 +413,17 @@ void TracksterLinkingbySkeletons::linkTracksters(
   const auto &layerClusters = input.layerClusters;
 
   // sort tracksters by energy
-  std::vector<unsigned int> sortedTracksters(tracksters.size());
-  std::iota(sortedTracksters.begin(), sortedTracksters.end(), 0);
+  std::vector<unsigned int> sortedTracksters;
+  sortedTracksters.reserve(tracksters.size());
+  std::vector<int> allToOkMap(tracksters.size(), -1);
+  std::vector<unsigned int> okToAllMap;
+  okToAllMap.reserve(tracksters.size());
+  for (unsigned int i = 0; i < tracksters.size(); ++i)
+    if (maskTracksters[i]==1) {
+      allToOkMap[i] = static_cast<int>(sortedTracksters.size());
+      sortedTracksters.push_back(i);
+      okToAllMap.push_back(i);
+    }
   std::sort(sortedTracksters.begin(), sortedTracksters.end(), [&tracksters](unsigned int i, unsigned int j) {
     return tracksters[i].raw_energy() > tracksters[j].raw_energy();
   });
@@ -434,10 +443,10 @@ void TracksterLinkingbySkeletons::linkTracksters(
   std::vector<int> maskReceivedLink(tracksters.size(), 1);
   std::vector<int> isRootTracksters(tracksters.size(), 1);
 
-  std::vector<ticl::Node> allNodes;
-  allNodes.reserve(tracksters.size());
-  for (size_t it = 0; it < tracksters.size(); ++it) {
-    allNodes.emplace_back(it);
+  std::vector<ticl::Node> okNodes;
+  okNodes.reserve(sortedTracksters.size());
+  for (size_t it = 0; it < sortedTracksters.size(); ++it) {
+    okNodes.emplace_back(it); //indices in the sortedTrackster collection
   }
 
   // loop over tracksters sorted by energy and link them
@@ -485,16 +494,16 @@ void TracksterLinkingbySkeletons::linkTracksters(
                                                             << " Out is good " << tracksterOut.raw_energy() << " Sk In "
                                                             << skeleton[0] << " Sk out " << skeletonOut[0] << std::endl;
                     LogDebug("TracksterLinkingbySkeletons") << "\t " << t_idx << " --> " << n << std::endl;
-                    allNodes[t_idx].addOuterNeighbour(n);
-                    allNodes[n].addInnerNeighbour(t_idx);
+                    okNodes[allToOkMap[t_idx]].addOuterNeighbour(n);
+                    okNodes[allToOkMap[n]].addInnerNeighbour(t_idx);
                     isRootTracksters[n] = 0;
                   } else if (abs(skeleton[0].z()) > abs(skeletonOut[0].z())) {
                     LogDebug("TracksterLinkingbySkeletons") << "Trackster in energy " << trackster.raw_energy()
                                                             << " Out is good " << tracksterOut.raw_energy() << " Sk In "
                                                             << skeleton[0] << " Sk out " << skeletonOut[0] << std::endl;
                     LogDebug("TracksterLinkingbySkeletons") << "\t " << n << " --> " << t_idx << std::endl;
-                    allNodes[n].addOuterNeighbour(t_idx);
-                    allNodes[t_idx].addInnerNeighbour(n);
+                    okNodes[allToOkMap[n]].addOuterNeighbour(t_idx);
+                    okNodes[allToOkMap[t_idx]].addInnerNeighbour(n);
                     isRootTracksters[t_idx] = 0;
                   } else {
                     if (trackster.raw_energy() >= tracksterOut.raw_energy()) {
@@ -503,8 +512,8 @@ void TracksterLinkingbySkeletons::linkTracksters(
                           << tracksterOut.raw_energy() << " Sk In " << skeleton[0] << " Sk out " << skeletonOut[0]
                           << std::endl;
                       LogDebug("TracksterLinkingbySkeletons") << "\t " << t_idx << " --> " << n << std::endl;
-                      allNodes[t_idx].addOuterNeighbour(n);
-                      allNodes[n].addInnerNeighbour(t_idx);
+                      okNodes[allToOkMap[t_idx]].addOuterNeighbour(n);
+                      okNodes[allToOkMap[n]].addInnerNeighbour(t_idx);
                       isRootTracksters[n] = 0;
                     } else {
                       LogDebug("TracksterLinkingbySkeletons")
@@ -512,8 +521,8 @@ void TracksterLinkingbySkeletons::linkTracksters(
                           << tracksterOut.raw_energy() << " Sk In " << skeleton[0] << " Sk out " << skeletonOut[0]
                           << std::endl;
                       LogDebug("TracksterLinkingbySkeletons") << "\t " << n << " --> " << t_idx << std::endl;
-                      allNodes[n].addOuterNeighbour(t_idx);
-                      allNodes[t_idx].addInnerNeighbour(n);
+                      okNodes[allToOkMap[n]].addOuterNeighbour(t_idx);
+                      okNodes[allToOkMap[t_idx]].addInnerNeighbour(n);
                       isRootTracksters[t_idx] = 0;
                     }
                   }
@@ -523,8 +532,8 @@ void TracksterLinkingbySkeletons::linkTracksters(
                       << tracksterOut.raw_energy() << " Sk In " << skeleton[0] << " Sk out " << skeletonOut[0]
                       << std::endl;
                   LogDebug("TracksterLinkingbySkeletons") << "\t " << t_idx << " --> " << n << std::endl;
-                  allNodes[t_idx].addOuterNeighbour(n);
-                  allNodes[n].addInnerNeighbour(t_idx);
+                  okNodes[allToOkMap[t_idx]].addOuterNeighbour(n);
+                  okNodes[allToOkMap[n]].addInnerNeighbour(t_idx);
                   isRootTracksters[n] = 0;
                 }
               }
@@ -535,12 +544,12 @@ void TracksterLinkingbySkeletons::linkTracksters(
     }
   }
 
-  TICLGraph graph(allNodes);
+  TICLGraph graph(okNodes);
   auto sortedRootNodes = graph.getRootNodes();
-  std::sort(sortedRootNodes.begin(), sortedRootNodes.end(), [&tracksters](const ticl::Node &n1, const ticl::Node &n2) {
+  std::sort(sortedRootNodes.begin(), sortedRootNodes.end(), [&tracksters,&okToAllMap](const ticl::Node &n1, const ticl::Node &n2) {
     unsigned int n1Id = n1.getId();
     unsigned int n2Id = n2.getId();
-    return tracksters[n1Id].raw_energy() > tracksters[n2Id].raw_energy();
+    return tracksters[okToAllMap[n1Id]].raw_energy() > tracksters[okToAllMap[n2Id]].raw_energy();
   });
 
   int ic = 0;
@@ -551,11 +560,13 @@ void TracksterLinkingbySkeletons::linkTracksters(
     std::vector<unsigned int> linkedTracksters;
     Trackster outTrackster;
     if (comp.size() == 1) {
-      if (input.tracksters[comp[0]].vertices().size() <= 3 && input.tracksters[comp[0]].raw_energy() < 5.f) {
+      const auto mappedComp = okToAllMap[comp[0]];
+      if (input.tracksters[mappedComp].vertices().size() <= 3 && input.tracksters[mappedComp].raw_energy() < 5.f) {
         continue;
       }
     }
-    for (auto const &node : comp) {
+    for (auto const &nodeOk : comp) {
+      const auto node = okToAllMap[nodeOk];
       LogDebug("TracksterLinkingbySkeletons") << node << " ";
       linkedTracksterIdToInputTracksterId[ic].push_back(node);
       maskTracksters[node] = 0;
