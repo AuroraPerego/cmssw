@@ -163,6 +163,7 @@ void PFLinker::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
     auto pfCandidates = iEvent.getHandle(inputTagPFCandidates_[icol]);
     unsigned ncand = pfCandidates->size();
 
+    std::cout << "there are " << ncand << " candidates\n";
     for (unsigned i = 0; i < ncand; ++i) {
       edm::Ptr<reco::PFCandidate> candPtr(pfCandidates, i);
       reco::PFCandidate cand(candPtr);
@@ -172,6 +173,7 @@ void PFLinker::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
       // PFCandidates may have a valid MuonRef though they are not muons.
       bool hasNonNullMuonRef = cand.muonRef().isNonnull() && fillMuonRefs_;
 
+      std::cout << "PID "<< cand.particleId() << " photon " << isphoton << " ele " << iselectron << " muon "<< hasNonNullMuonRef << std::endl;
       // if not an electron or a photon or a muon just fill the PFCandidate collection
       if (!(isphoton || iselectron || hasNonNullMuonRef)) {
         pfCandidates_p->push_back(cand);
@@ -190,13 +192,14 @@ void PFLinker::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
         auto itcheck = find_if(gsfElectrons->begin(), gsfElectrons->end(), [&gsfTrackRef](const auto& ele) {
           return (ele.gsfTrack() == gsfTrackRef);
         });
+        std::cout << "ELE found at " << gsfElectrons->end() - itcheck << std::endl;
         if (itcheck == gsfElectrons->end()) {
           if (!forceElectronsInHGCAL_) {
             std::ostringstream err;
             err << " Problem in PFLinker: no GsfElectron " << std::endl;
-            edm::LogError("PFLinker") << err.str();
+            std::cout << err.str();
           } else {
-            LogDebug("PFLinker") << "Forcing an electron pfCandidate at: " << cand.eta() << " in HGCAL" << std::endl;
+            std::cout << "Forcing an electron pfCandidate at: " << cand.eta() << " in HGCAL" << std::endl;
             pfCandidates_p->push_back(cand);
           }
           continue;  // Watch out ! Continue
@@ -216,6 +219,7 @@ void PFLinker::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
         const reco::SuperClusterRef& scRef(cand.superClusterRef());
         auto itcheck = find_if(
             photons->begin(), photons->end(), [&scRef](const auto& photon) { return photon.superCluster() == scRef; });
+        std::cout << "PHOTON found at " << photons->end() - itcheck << std::endl;
         if (itcheck == photons->end()) {
           std::ostringstream err;
           err << " Problem in PFLinker: no Photon " << std::endl;

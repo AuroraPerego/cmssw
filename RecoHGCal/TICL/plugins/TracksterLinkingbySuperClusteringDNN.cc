@@ -307,6 +307,7 @@ void TracksterLinkingbySuperClusteringDNN::linkTracksters(
   flushBatch();
   onCandidateTransition(previousCand);
 
+  std::cout << "DNN\n";
   for (unsigned int ts_id = 0; ts_id < tracksterCount; ++ts_id) {
     if (!tracksterMask[ts_id] && inputTracksters[ts_id].raw_pt() >= seedPtThreshold_) {
       resultTracksters.emplace_back(inputTracksters[ts_id]);
@@ -315,15 +316,13 @@ void TracksterLinkingbySuperClusteringDNN::linkTracksters(
     }
   }
 
-#ifdef EDM_ML_DEBUG
-  for (std::vector<unsigned int> const& sc : outputSuperclusters) {
+  for (std::vector<unsigned int> const& sc : linkedTracksterIdToInputTracksterId) {
     std::ostringstream s;
     for (unsigned int trackster_id : sc)
       s << trackster_id << " ";
-    LogDebug("HGCalTICLSuperclustering") << "Created supercluster of size " << sc.size()
-                                         << " holding tracksters (first one is seed) " << s.str();
+    std::cout << "Created supercluster of size " << sc.size()
+                                         << " holding tracksters (first one is seed) " << s.str() << "\n";
   }
-#endif
 }
 
 void TracksterLinkingbySuperClusteringDNN::fillPSetDescription(edm::ParameterSetDescription& desc) {

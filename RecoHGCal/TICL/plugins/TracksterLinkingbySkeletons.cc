@@ -448,6 +448,7 @@ void TracksterLinkingbySkeletons::linkTracksters(
   for (size_t it = 0; it < sortedTracksters.size(); ++it) {
     okNodes.emplace_back(it); //indices in the sortedTrackster collection
   }
+  std::cout<< "there are " << tracksters.size() << " tracksters\nthere are " << okNodes.size() << " good nodes\n";
 
   // loop over tracksters sorted by energy and link them
   for (auto const &t_idx : sortedTracksters) {
