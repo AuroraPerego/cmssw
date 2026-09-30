@@ -116,7 +116,7 @@ bool TracksterLinkingbySuperClusteringDNN::trackstersPassesPIDCut(const Trackste
 void TracksterLinkingbySuperClusteringDNN::linkTracksters(
     const Inputs& input,
     std::vector<Trackster>& resultTracksters,
-    std::vector<std::vector<unsigned int>>& outputSuperclusters,
+    std::vector<unsigned int>& maskTracksters,
     std::vector<std::vector<unsigned int>>& linkedTracksterIdToInputTracksterId) {
   auto const& inputTracksters = input.tracksters;
   const auto tracksterCount = static_cast<unsigned int>(inputTracksters.size());
@@ -188,15 +188,13 @@ void TracksterLinkingbySuperClusteringDNN::linkTracksters(
 
     int& outIdxRef = seedToOutputIndex[bestSeed];
     if (outIdxRef < 0) {
-      outputSuperclusters.emplace_back(std::initializer_list<unsigned int>{bestSeed});
       resultTracksters.emplace_back(inputTracksters[bestSeed]);
       linkedTracksterIdToInputTracksterId.emplace_back(std::initializer_list<unsigned int>{bestSeed});
-      outIdxRef = static_cast<int>(outputSuperclusters.size()) - 1;
+      outIdxRef = static_cast<int>(linkedTracksterIdToInputTracksterId.size()) - 1;
       tracksterMask[bestSeed] = true;
     }
 
     const auto outIdx = static_cast<unsigned int>(outIdxRef);
-    outputSuperclusters[outIdx].push_back(candIdx);
     resultTracksters[outIdx].mergeTracksters(inputTracksters[candIdx]);
     linkedTracksterIdToInputTracksterId[outIdx].push_back(candIdx);
 
@@ -311,9 +309,9 @@ void TracksterLinkingbySuperClusteringDNN::linkTracksters(
 
   for (unsigned int ts_id = 0; ts_id < tracksterCount; ++ts_id) {
     if (!tracksterMask[ts_id] && inputTracksters[ts_id].raw_pt() >= seedPtThreshold_) {
-      outputSuperclusters.emplace_back(std::initializer_list<unsigned int>{ts_id});
       resultTracksters.emplace_back(inputTracksters[ts_id]);
       linkedTracksterIdToInputTracksterId.emplace_back(std::initializer_list<unsigned int>{ts_id});
+      maskTracksters[ts_id] = 0;
     }
   }
 

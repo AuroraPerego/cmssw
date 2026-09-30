@@ -112,7 +112,7 @@ TracksterLinksProducer::TracksterLinksProducer(const edm::ParameterSet &ps, cons
   }
 
   produces<std::vector<Trackster>>();
-  produces<std::vector<std::vector<unsigned int>>>();
+  produces<std::vector<unsigned int>>();
   produces<std::vector<std::vector<unsigned int>>>("linkedTracksterIdToInputTracksterId");
   produces<std::vector<float>>();
 
@@ -209,7 +209,7 @@ void TracksterLinksProducer::produce(edm::Event &evt, const edm::EventSetup &es)
 
   auto resultTracksters = std::make_unique<std::vector<Trackster>>();
 
-  auto linkedResultTracksters = std::make_unique<std::vector<std::vector<unsigned int>>>();
+  auto maskTracksters = std::make_unique<std::vector<unsigned int>>();
 
   const auto &layerClusters = evt.get(clusters_token_);
   const auto &layerClustersTimes = evt.get(clustersTime_token_);
@@ -233,6 +233,7 @@ void TracksterLinksProducer::produce(edm::Event &evt, const edm::EventSetup &es)
     //Fill MultiSpan
     trackstersManager.add(*tracksters_h[i]);
   }
+  maskTracksters->resize(trackstersManager.size(), 1);
 
   // Linking
   const typename TracksterLinkingAlgoBase::Inputs input(evt, es, layerClusters, layerClustersTimes, trackstersManager);
@@ -243,7 +244,7 @@ void TracksterLinksProducer::produce(edm::Event &evt, const edm::EventSetup &es)
   // 2) are isolated if only one
   // Result tracksters contains the final version of the trackster collection
   // linkedTrackstersToInputTrackstersMap contains the mapping between the linked tracksters and the input tracksters
-  linkingAlgo_->linkTracksters(input, *resultTracksters, *linkedResultTracksters, *linkedTracksterIdToInputTracksterId);
+  linkingAlgo_->linkTracksters(input, *resultTracksters, *maskTracksters, *linkedTracksterIdToInputTracksterId);
 
   // Now we need to remove the tracksters that are not linked
   // We need to emplace_back in the resultTracksters only the tracksters that are linked
@@ -265,7 +266,7 @@ void TracksterLinksProducer::produce(edm::Event &evt, const edm::EventSetup &es)
     inferenceAlgo_->runInference(layerClusters, *resultTracksters, rhtools_);
   }
 
-  evt.put(std::move(linkedResultTracksters));
+  evt.put(std::move(maskTracksters));
   evt.put(std::move(resultMask));
   evt.put(std::move(resultTracksters));
   evt.put(std::move(linkedTracksterIdToInputTracksterId), "linkedTracksterIdToInputTracksterId");

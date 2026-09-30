@@ -407,7 +407,7 @@ bool TracksterLinkingbySkeletons::checkClosestPoints(const ticl::Trackster &myTr
 void TracksterLinkingbySkeletons::linkTracksters(
     const Inputs &input,
     std::vector<Trackster> &resultTracksters,
-    std::vector<std::vector<unsigned int>> &linkedResultTracksters,
+    std::vector<unsigned int>& maskTracksters,
     std::vector<std::vector<unsigned int>> &linkedTracksterIdToInputTracksterId) {
   const auto &tracksters = input.tracksters;
   const auto &layerClusters = input.layerClusters;
@@ -558,12 +558,12 @@ void TracksterLinkingbySkeletons::linkTracksters(
     for (auto const &node : comp) {
       LogDebug("TracksterLinkingbySkeletons") << node << " ";
       linkedTracksterIdToInputTracksterId[ic].push_back(node);
+      maskTracksters[node] = 0;
     }
     outTrackster.mergeTracksters(input.tracksters, linkedTracksterIdToInputTracksterId[ic]);
     linkedTracksters.push_back(resultTracksters.size());
     LogDebug("TracksterLinkingbySkeletons") << "\nOut Trackster " << outTrackster.raw_energy() << std::endl;
     resultTracksters.push_back(outTrackster);
-    linkedResultTracksters.push_back(linkedTracksters);
     LogDebug("TracksterLinkingbySkeletons") << "\n";
     ++ic;
   }

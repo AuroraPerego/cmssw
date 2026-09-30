@@ -320,20 +320,23 @@ void TICLCandidateProducer::produce(edm::Event &evt, const edm::EventSetup &es) 
     generalTrackstersSpan.add(*general_tracksters_h[i]);
   }
   //now get the general_tracksterlinks_tokens_
-  std::vector<edm::Handle<std::vector<std::vector<unsigned>>>> general_tracksterlinks_h(
-      general_tracksterlinks_tokens_.size());
-  std::vector<std::vector<unsigned>> generalTracksterLinksGlobalId;
-  for (unsigned int i = 0; i < general_tracksterlinks_tokens_.size(); ++i) {
-    evt.getByToken(general_tracksterlinks_tokens_[i], general_tracksterlinks_h[i]);
-    for (unsigned int j = 0; j < general_tracksterlinks_h[i]->size(); ++j) {
-      generalTracksterLinksGlobalId.emplace_back();
-      auto &links_vector = generalTracksterLinksGlobalId.back();
-      links_vector.resize((*general_tracksterlinks_h[i])[j].size());
-      for (unsigned int k = 0; k < links_vector.size(); ++k) {
-        links_vector[k] = generalTrackstersSpan.globalIndex(i, (*general_tracksterlinks_h[i])[j][k]);
-      }
-    }
-  }
+  //std::vector<edm::Handle<std::vector<std::vector<unsigned>>>> general_tracksterlinks_h(
+  //    general_tracksterlinks_tokens_.size());
+  //std::vector<std::vector<unsigned>> generalTracksterLinksGlobalId;
+  //for (unsigned int i = 0; i < general_tracksterlinks_tokens_.size(); ++i) {
+  //  evt.getByToken(general_tracksterlinks_tokens_[i], general_tracksterlinks_h[i]);
+  //  std::cout << "i=" << i << " general_tracksterlinks_h[i]->size() " << general_tracksterlinks_h[i]->size() << "\n";
+  //  for (unsigned int j = 0; j < general_tracksterlinks_h[i]->size(); ++j) {
+  //    generalTracksterLinksGlobalId.emplace_back();
+  //    auto &links_vector = generalTracksterLinksGlobalId.back();
+  //    links_vector.resize((*general_tracksterlinks_h[i])[j].size());
+  //    std::cout << "j=" << j << " vec size " << links_vector.size() << "\n";
+  //    for (unsigned int k = 0; k < links_vector.size(); ++k) {
+  //      std::cout << "k=" << k << "\n";
+  //      links_vector[k] = generalTrackstersSpan.globalIndex(i, (*general_tracksterlinks_h[i])[j][k]);
+  //    }
+  //  }
+  //}
 
   std::vector<bool> maskTracks;
   maskTracks.resize(tracks.size());
@@ -360,7 +363,6 @@ void TICLCandidateProducer::produce(edm::Event &evt, const edm::EventSetup &es) 
                                                                            layerClusters,
                                                                            layerClustersTimes,
                                                                            generalTrackstersSpan,
-                                                                           generalTracksterLinksGlobalId,
                                                                            tracks_h,
                                                                            muonTrackMask);
   auto resultCandidates = std::make_unique<std::vector<TICLCandidate>>();
@@ -393,7 +395,6 @@ void TICLCandidateProducer::produce(edm::Event &evt, const edm::EventSetup &es) 
                                                                        layerClusters,
                                                                        layerClustersTimes,
                                                                        generalTrackstersSpan,
-                                                                       generalTracksterLinksGlobalId,
                                                                        tracks_h,
                                                                        generalTrackMask);
   generalInterpretationAlgo_->makeCandidates(
@@ -608,7 +609,7 @@ void TICLCandidateProducer::fillDescriptions(edm::ConfigurationDescriptions &des
   desc.add<std::vector<edm::InputTag>>("egamma_tracksters_collections", {edm::InputTag("ticlTracksterLinks")});
   desc.add<std::vector<edm::InputTag>>("egamma_tracksterlinks_collections", {edm::InputTag("ticlTracksterLinks")});
   desc.add<std::vector<edm::InputTag>>("general_tracksters_collections", {edm::InputTag("ticlTracksterLinks")});
-  desc.add<std::vector<edm::InputTag>>("general_tracksterlinks_collections", {edm::InputTag("ticlTracksterLinks")});
+  desc.add<std::vector<edm::InputTag>>("general_tracksterlinks_collections", {edm::InputTag("ticlTracksterLinks:linkedTracksterIdToInputTracksterId")});
   desc.add<std::vector<edm::InputTag>>("original_masks",
                                        {edm::InputTag("hgcalMergeLayerClusters", "InitialLayerClustersMask")});
   desc.add<edm::InputTag>("layer_clusters", edm::InputTag("hgcalMergeLayerClusters"));

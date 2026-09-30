@@ -8,7 +8,7 @@ using namespace ticl;
 void TracksterLinkingbyFastJet::linkTracksters(
     const Inputs& input,
     std::vector<Trackster>& resultTracksters,
-    std::vector<std::vector<unsigned int>>& linkedResultTracksters,
+    std::vector<unsigned int>& maskTracksters,
     std::vector<std::vector<unsigned int>>& linkedTracksterIdToInputTracksterId) {
   // Create jets of tracksters using FastJet
   std::vector<fastjet::PseudoJet> fjInputs;
@@ -37,12 +37,11 @@ void TracksterLinkingbyFastJet::linkTracksters(
       for (const auto& constituent : jet.constituents()) {
         auto tracksterIndex = constituent.user_index();
         linkedTracksterIdToInputTracksterId[i].push_back(tracksterIndex);
+        maskTracksters[tracksterIndex] = 0;
       }
       outTrackster.mergeTracksters(input.tracksters, linkedTracksterIdToInputTracksterId[i]);
       linkedTracksters.push_back(resultTracksters.size());
       resultTracksters.push_back(outTrackster);
-      // Store the linked tracksters
-      linkedResultTracksters.push_back(linkedTracksters);
     }
   }
 }

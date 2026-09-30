@@ -45,7 +45,6 @@ namespace ticl {
       const std::vector<reco::CaloCluster>& layerClusters;
       const edm::ValueMap<std::pair<float, float>>& layerClustersTime;
       const edm::MultiSpan<Trackster>& tracksters;
-      const std::vector<std::vector<unsigned int>>& linkedResultTracksters;
       const edm::Handle<std::vector<T>> tracksHandle;
       const std::vector<bool>& maskedTracks;
 
@@ -54,7 +53,6 @@ namespace ticl {
              const std::vector<reco::CaloCluster>& lC,
              const edm::ValueMap<std::pair<float, float>>& lcT,
              const edm::MultiSpan<Trackster>& tS,
-             const std::vector<std::vector<unsigned int>>& links,
              const edm::Handle<std::vector<T>> trks,
              const std::vector<bool>& mT)
           : ev(eV),
@@ -62,7 +60,6 @@ namespace ticl {
             layerClusters(lC),
             layerClustersTime(lcT),
             tracksters(tS),
-            linkedResultTracksters(links),
             tracksHandle(trks),
             maskedTracks(mT) {}
     };

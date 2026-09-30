@@ -56,7 +56,7 @@ bool TracksterLinkingbySuperClusteringMustache::trackstersPassesPIDCut(const Tra
 void TracksterLinkingbySuperClusteringMustache::linkTracksters(
     const Inputs& input,
     std::vector<Trackster>& resultTracksters,
-    std::vector<std::vector<unsigned int>>& outputSuperclusters,
+    std::vector<unsigned int>& maskTracksters,
     std::vector<std::vector<unsigned int>>& linkedTracksterIdToInputTracksterId) {
   // For now we use all input tracksters for superclustering. At some point there might be a filter here for EM tracksters (electromagnetic identification with DNN ?)
   auto const& inputTracksters = input.tracksters;
@@ -86,7 +86,6 @@ void TracksterLinkingbySuperClusteringMustache::linkTracksters(
     if (tracksterMask_pt[ts_seed_idx_pt])
       continue;  // Trackster does not pass PID cut
 
-    outputSuperclusters.emplace_back(std::initializer_list<unsigned int>{trackstersIndicesPt[ts_seed_idx_pt]});
     resultTracksters.emplace_back(inputTracksters[trackstersIndicesPt[ts_seed_idx_pt]]);
     linkedTracksterIdToInputTracksterId.emplace_back(
         std::initializer_list<unsigned int>{trackstersIndicesPt[ts_seed_idx_pt]});
@@ -113,9 +112,9 @@ void TracksterLinkingbySuperClusteringMustache::linkTracksters(
                                                           ts_cand.raw_energy(),
                                                           ts_cand.barycenter().eta(),
                                                           ts_cand.barycenter().phi())) {
-        outputSuperclusters.back().push_back(trackstersIndicesPt[ts_cand_idx_pt]);
         resultTracksters.back().mergeTracksters(ts_cand);
         linkedTracksterIdToInputTracksterId.back().push_back(trackstersIndicesPt[ts_cand_idx_pt]);
+        maskTracksters[ts_cand_idx_pt] = 0;
         tracksterMask_pt[ts_cand_idx_pt] = true;
       }
     }
