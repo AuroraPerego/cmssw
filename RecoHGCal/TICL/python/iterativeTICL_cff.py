@@ -123,7 +123,9 @@ mtdSoA = _mtdSoAProducer.clone()
 
 # pfTICL uses ticlCandidate by default in v5
 pfTICL = _pfTICLProducer.clone(
-    ticlCandidateSrc = cms.InputTag('ticlCandidate'), 
+    ticlCandidateSrc = cms.InputTag('ticlCandidate'),
+    egammaElectronCores = cms.InputTag('ecalDrivenGsfElectronCoresHGC'),
+    egammaPhotonCores = cms.InputTag('photonCoreHGC'),
     useTimingAverage=True
 )
 

@@ -12,6 +12,8 @@
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
 
 #include "DataFormats/HGCalReco/interface/TICLCandidate.h"
+#include "DataFormats/EgammaCandidates/interface/GsfElectronCore.h"
+#include "DataFormats/EgammaCandidates/interface/PhotonCore.h"
 
 #include "RecoParticleFlow/PFProducer/interface/PFMuonAlgo.h"
 
@@ -32,6 +34,8 @@ private:
   const bool energy_from_regression_;
   // inputs
   const edm::EDGetTokenT<edm::View<TICLCandidate>> ticl_candidates_;
+  edm::EDGetTokenT<reco::GsfElectronCoreCollection> electronCoresToken_;
+  edm::EDGetTokenT<reco::PhotonCoreCollection> photonCoresToken_;
   edm::EDGetTokenT<edm::ValueMap<float>> srcTrackTime_, srcTrackTimeError_, srcTrackTimeQuality_;
   const edm::EDGetTokenT<reco::MuonCollection> muons_;
   // For PFMuonAlgo
@@ -49,12 +53,20 @@ PFTICLProducer::PFTICLProducer(const edm::ParameterSet& conf)
       muons_(consumes<reco::MuonCollection>(conf.getParameter<edm::InputTag>("muonSrc"))),
       pfmu_(std::make_unique<PFMuonAlgo>(conf.getParameterSet("pfMuonAlgoParameters"),
                                          false)) {  // postMuonCleaning = false
+  auto const eleTag = conf.getParameter<edm::InputTag>("egammaElectronCores");
+  auto const phoTag = conf.getParameter<edm::InputTag>("egammaPhotonCores");
+  if (!eleTag.label().empty())
+    electronCoresToken_ = consumes<reco::GsfElectronCoreCollection>(eleTag);
+  if (!phoTag.label().empty())
+    photonCoresToken_ = consumes<reco::PhotonCoreCollection>(phoTag);
   produces<reco::PFCandidateCollection>();
 }
 
 void PFTICLProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   desc.add<edm::InputTag>("ticlCandidateSrc", edm::InputTag("ticlCandidate"));
+  desc.add<edm::InputTag>("egammaElectronCores", edm::InputTag(""));
+  desc.add<edm::InputTag>("egammaPhotonCores", edm::InputTag(""));
   desc.add<edm::InputTag>("trackTimeValueMap", edm::InputTag("tofPID:t0"));
   desc.add<edm::InputTag>("trackTimeErrorMap", edm::InputTag("tofPID:sigmat0"));
   desc.add<edm::InputTag>("trackTimeQualityMap", edm::InputTag("mtdTrackQualityMVA:mtdQualMVA"));
@@ -147,5 +159,55 @@ void PFTICLProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
     candidate.setTime(ticl_cand.time(), ticl_cand.timeError());
   }
 
+  std::unordered_set<unsigned int> electronScKeys;
+  if (!electronCoresToken_.isUninitialized()) {
+    const auto& eleCore = evt.get(electronCoresToken_);
+    std::cout << " ele " << eleCore.size() ;
+    for (auto const &core : eleCore) {
+      auto const scRef = core.superCluster();
+      auto const gsfRef = core.gsfTrack();
+      if (scRef.isNull() || gsfRef.isNull()) continue;
+
+      double const E = scRef->energy();
+      auto const mom = gsfRef->momentum();
+      //if (E / std::cosh(mom.eta()) < egammaMinEt_) continue;
+
+      constexpr double me = 0.000511;
+      double const p = std::sqrt(std::max(E * E - me * me, 0.));
+      double const s = p / mom.R();
+      reco::PFCandidate::LorentzVector p4(mom.x() * s, mom.y() * s, mom.z() * s, E);
+
+      candidates->emplace_back(gsfRef->charge(), p4, reco::PFCandidate::e);
+      auto& cand = candidates->back();
+      cand.setGsfTrackRef(gsfRef);
+      cand.setSuperClusterRef(scRef);
+      cand.setEcalEnergy(scRef->rawEnergy(), E);
+      if (core.ctfTrack().isNonnull()) cand.setTrackRef(core.ctfTrack());
+
+      electronScKeys.insert(scRef.key());
+    }
+  }
+
+  if (!photonCoresToken_.isUninitialized()) {
+    const auto& photonCore = evt.get(photonCoresToken_);
+    std::cout << " photon " << photonCore.size() << std::endl;
+    for (auto const &core : photonCore) {
+      auto const scRef = core.superCluster();
+      if (scRef.isNull()) continue;
+      if (electronScKeys.count(scRef.key())) continue;   // electron wins
+
+      double const E = scRef->energy();
+      const auto& dir = scRef->position(); // - vtx , ma non ce l'abbiamo
+      //if (E / std::cosh(dir.eta()) < egammaMinEt_) continue;
+
+      double const s = E / dir.R();
+      reco::PFCandidate::LorentzVector p4(dir.x() * s, dir.y() * s, dir.z() * s, E);
+
+      candidates->emplace_back(0, p4, reco::PFCandidate::gamma);
+      auto& cand = candidates->back();
+      cand.setSuperClusterRef(scRef);
+      cand.setEcalEnergy(scRef->rawEnergy(), E);
+    }
+  }
   evt.put(std::move(candidates));
 }
