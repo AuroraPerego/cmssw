@@ -467,6 +467,14 @@ void TracksterLinkingbySkeletons::linkTracksters(
       search_box[3] += TileConstants::nPhiBins;
     }
 
+    auto addLink = [&](unsigned int from, unsigned int to) {
+      const int cf = allToOkMap[from];
+      const int ct = allToOkMap[to];
+      okNodes[cf].addOuterNeighbour(ct);
+      okNodes[ct].addInnerNeighbour(cf);
+      isRootTracksters[to] = 0;
+    };
+
     for (int eta_i = search_box[0]; eta_i <= search_box[1]; ++eta_i) {
       for (int phi_i = search_box[2]; phi_i <= search_box[3]; ++phi_i) {
         auto &neighbours = tiles[tiles.globalBin(eta_i, (phi_i % TileConstants::nPhiBins))];
@@ -495,17 +503,13 @@ void TracksterLinkingbySkeletons::linkTracksters(
                                                             << " Out is good " << tracksterOut.raw_energy() << " Sk In "
                                                             << skeleton[0] << " Sk out " << skeletonOut[0] << std::endl;
                     LogDebug("TracksterLinkingbySkeletons") << "\t " << t_idx << " --> " << n << std::endl;
-                    okNodes[allToOkMap[t_idx]].addOuterNeighbour(n);
-                    okNodes[allToOkMap[n]].addInnerNeighbour(t_idx);
-                    isRootTracksters[n] = 0;
+                    addLink(t_idx, n);
                   } else if (abs(skeleton[0].z()) > abs(skeletonOut[0].z())) {
                     LogDebug("TracksterLinkingbySkeletons") << "Trackster in energy " << trackster.raw_energy()
                                                             << " Out is good " << tracksterOut.raw_energy() << " Sk In "
                                                             << skeleton[0] << " Sk out " << skeletonOut[0] << std::endl;
                     LogDebug("TracksterLinkingbySkeletons") << "\t " << n << " --> " << t_idx << std::endl;
-                    okNodes[allToOkMap[n]].addOuterNeighbour(t_idx);
-                    okNodes[allToOkMap[t_idx]].addInnerNeighbour(n);
-                    isRootTracksters[t_idx] = 0;
+                    addLink(n, t_idx);
                   } else {
                     if (trackster.raw_energy() >= tracksterOut.raw_energy()) {
                       LogDebug("TracksterLinkingbySkeletons")
@@ -513,18 +517,14 @@ void TracksterLinkingbySkeletons::linkTracksters(
                           << tracksterOut.raw_energy() << " Sk In " << skeleton[0] << " Sk out " << skeletonOut[0]
                           << std::endl;
                       LogDebug("TracksterLinkingbySkeletons") << "\t " << t_idx << " --> " << n << std::endl;
-                      okNodes[allToOkMap[t_idx]].addOuterNeighbour(n);
-                      okNodes[allToOkMap[n]].addInnerNeighbour(t_idx);
-                      isRootTracksters[n] = 0;
+                      addLink(t_idx, n);
                     } else {
                       LogDebug("TracksterLinkingbySkeletons")
                           << "Trackster in energy " << trackster.raw_energy() << " Out is good "
                           << tracksterOut.raw_energy() << " Sk In " << skeleton[0] << " Sk out " << skeletonOut[0]
                           << std::endl;
                       LogDebug("TracksterLinkingbySkeletons") << "\t " << n << " --> " << t_idx << std::endl;
-                      okNodes[allToOkMap[n]].addOuterNeighbour(t_idx);
-                      okNodes[allToOkMap[t_idx]].addInnerNeighbour(n);
-                      isRootTracksters[t_idx] = 0;
+                      addLink(n, t_idx);
                     }
                   }
                 } else {
@@ -533,9 +533,7 @@ void TracksterLinkingbySkeletons::linkTracksters(
                       << tracksterOut.raw_energy() << " Sk In " << skeleton[0] << " Sk out " << skeletonOut[0]
                       << std::endl;
                   LogDebug("TracksterLinkingbySkeletons") << "\t " << t_idx << " --> " << n << std::endl;
-                  okNodes[allToOkMap[t_idx]].addOuterNeighbour(n);
-                  okNodes[allToOkMap[n]].addInnerNeighbour(t_idx);
-                  isRootTracksters[n] = 0;
+                  addLink(t_idx, n);
                 }
               }
             }
