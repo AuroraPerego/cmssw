@@ -13,6 +13,7 @@ from Validation.EventGenerator.PostProcessor_cff import *
 from Validation.RecoEgamma.photonPostProcessor_cff import *
 from Validation.RecoEgamma.electronPostValidationSequence_cff import *
 from Validation.RecoEgamma.electronPostValidationSequenceMiniAOD_cff import *
+from Validation.RecoEgamma.egammaPostProcessor_cfi import *
 from Validation.RecoB.BDHadronTrackValidation_cff import *
 from Validation.RecoParticleFlow.PFValidationClient_cff import *
 from Validation.RPCRecHits.postValidation_cfi import *
@@ -93,6 +94,7 @@ from Validation.TruthInfo.truthGraphDQMHarvester_cff import *
 _postValidationCommonNoTruth = postValidation_common.copy()
 _postValidationCommonWithTruth = postValidation_common.copy()
 _postValidationCommonWithTruth += truthGraphDQMHarvesting
+_postValidationCommonWithTruth += postProcessorEGamma
 enableTruth.toReplaceWith(postValidation_common, _postValidationCommonWithTruth)
 premix_stage2.toReplaceWith(postValidation_common, _postValidationCommonNoTruth)
 

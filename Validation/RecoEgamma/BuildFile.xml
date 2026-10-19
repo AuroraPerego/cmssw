@@ -1,0 +1,15 @@
+<use name="DQMServices/Core"/>
+<use name="DataFormats/EgammaCandidates"/>
+<use name="DataFormats/EgammaReco"/>
+<use name="DataFormats/GsfTrackReco"/>
+<use name="FWCore/Utilities"/>
+<use name="FWCore/Framework"/>
+<use name="FWCore/MessageLogger"/>
+<use name="FWCore/ParameterSet"/>
+<use name="clhep"/>
+<use name="PhysicsTools/TruthInfo"/>
+<use name="SimDataFormats/Associations"/>
+<use name="SimDataFormats/TruthInfo"/>
+<export>
+  <lib name="ValidationRecoEgamma"/>
+</export>

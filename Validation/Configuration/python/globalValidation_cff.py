@@ -176,6 +176,7 @@ premix_stage2.toReplaceWith(baseCommonPreValidation, _baseCommonPreValidationNoT
 
 _baseCommonValidationWithTruth = baseCommonValidation.copy()
 _baseCommonValidationWithTruth += truthGraphValidationAnalyzers
+_baseCommonValidationWithTruth += egammaValidatorSequence
 enableTruth.toReplaceWith(baseCommonValidation, _baseCommonValidationWithTruth)
 premix_stage2.toReplaceWith(baseCommonValidation, _baseCommonValidationNoTruth)
 
